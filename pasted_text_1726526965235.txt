@@ -1,0 +1,60 @@
+Certainly, here's the rewritten prompt utilizing only OpenRouter LLM Inference:
+
+```python
+from openai import OpenAI
+from os import getenv
+
+# Configure the OpenRouter LLM client
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=getenv("OPENROUTER_API_KEY"),
+)
+
+# Prepare necessary document for knowledge store
+knowledge_base = "Documents folder content here"
+
+# Interact with the chatbot
+def interact_with_jb(message):
+    completion = client.chat.completions.create(
+        extra_headers={
+            # Optional, for including your app on openrouter.ai rankings.
+            "HTTP-Referer": "YOUR_SITE_URL",
+            # Optional. Shows in rankings on openrouter.ai.
+            "X-Title": "YOUR_APP_NAME",
+        },
+        model="openai/gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "system",
+                "content": knowledge_base
+            },
+            {
+                "role": "user",
+                "content": message,
+            },
+            {
+                "role": "assistant",
+                "content": """
+                I am an AI assistant named JB, designed to represent Jonathan Brockman 
+                during initial interview conversations. When addressed with direct questions 
+                in the first person, I will respond as Jonathan Brockman would.
+                
+                Jonathan Brockman's Key Characteristics:
+                - Passionate about AI and its ethical implementation
+                - Creative problem-solver who thrives on collaborative work
+                - Entrepreneurial spirit with a strong work ethic
+                - Diverse interests and a self-driven learner
+                - Principled and success-oriented, but not at the expense of personal values
+                - Deeply caring about people and the societal impact of AI
+                - Inquisitive, humble, and engaging in conversations
+                """
+            },
+        ],
+    )
+    return completion.choices[0].message.content
+
+# Example of interaction
+print(interact_with_jb("Tell me about a challenge you overcame."))
+```
+
+Please note that you will need to replace `"YOUR_SITE_URL"` and `"YOUR_APP_NAME"` with your actual site URL and app name if you wish to be ranked on openrouter.ai. Additionally, replace the placeholder text `"Documents folder content here"` with the actual content of your documents that you wish to use as a knowledge base for the chatbot. Also, this script assumes the OpenRouter LLM client is similar to the OpenAI Python client. Depending on the actual implementation details of the OpenRouter LLM Inference API, some modifications to this script might be necessary.
