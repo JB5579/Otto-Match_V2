@@ -1,5 +1,6 @@
 import os
 from openai import OpenAI
+from langgraph import LangGraph
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 openrouter_client = OpenAI(
@@ -7,16 +8,30 @@ openrouter_client = OpenAI(
     api_key=OPENROUTER_API_KEY,
 )
 
-knowledge_base = """
-Jonathan Brockman is a passionate AI enthusiast with a focus on ethical implementation.
-He is a creative problem-solver who thrives in collaborative environments and has an
-entrepreneurial spirit coupled with a strong work ethic. Jonathan has diverse interests
-and is a self-driven learner. He is principled and success-oriented but not at the expense
-of personal values. Jonathan deeply cares about people and the societal impact of AI.
-He is inquisitive, humble, and engaging in conversations.
-"""
+# Initialize LangGraph
+langgraph = LangGraph()
 
-def send_openrouter_request(message: str) -> str:
+def load_knowledge_base(folder_path):
+    knowledge_base = {}
+    for filename in os.listdir(folder_path):
+        with open(os.path.join(folder_path, filename), 'r') as file:
+            knowledge_base[filename] = file.read()
+    return knowledge_base
+
+def index_knowledge_base(knowledge_base):
+    for doc_id, content in knowledge_base.items():
+        langgraph.add_document(doc_id, content)
+
+def retrieve_relevant_documents(query):
+    return langgraph.retrieve(query)
+
+def send_openrouter_request(conversation_history):
+    knowledge_base = load_knowledge_base('path_to_knowledge_base_folder')
+    index_knowledge_base(knowledge_base)
+
+    user_message = conversation_history[-1]['content']
+    relevant_documents = retrieve_relevant_documents(user_message)
+
     try:
         completion = openrouter_client.chat.completions.create(
             extra_headers={
@@ -24,23 +39,11 @@ def send_openrouter_request(message: str) -> str:
                 "X-Title": "Jonathan Brockman Chatbot",
             },
             model="openai/gpt-4o-mini-2024-07-18",
-            messages=[
+            messages=conversation_history + [
                 {
                     "role": "system",
-                    "content": knowledge_base
-                },
-                {
-                    "role": "user",
-                    "content": message,
-                },
-                {
-                    "role": "assistant",
-                    "content": """
-                    I am an AI assistant named JB, designed to represent Jonathan Brockman 
-                    during initial interview conversations. When addressed with direct questions 
-                    in the first person, I will respond as Jonathan Brockman would.
-                    """
-                },
+                    "content": "\n".join(relevant_documents)
+                }
             ],
         )
         return completion.choices[0].message.content
