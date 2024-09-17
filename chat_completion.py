@@ -16,55 +16,33 @@ of personal values. Jonathan deeply cares about people and the societal impact o
 He is inquisitive, humble, and engaging in conversations.
 """
 
-conversation_history = []
-
 def send_openrouter_request(message: str) -> str:
-    global conversation_history
-    
     try:
-        # Add user message to conversation history
-        conversation_history.append({"role": "user", "content": message})
-        
-        # Prepare messages for the API request
-        messages = [
-            {
-                "role": "system",
-                "content": knowledge_base
-            },
-            {
-                "role": "assistant",
-                "content": """
-                I am an AI assistant named JB, designed to represent Jonathan Brockman 
-                during initial interview conversations. When addressed with direct questions 
-                in the first person, I will respond as Jonathan Brockman would.
-                """
-            }
-        ]
-        
-        # Add conversation history to messages
-        messages.extend(conversation_history[-5:])  # Include last 5 messages for context
-        
         completion = openrouter_client.chat.completions.create(
             extra_headers={
                 "HTTP-Referer": "https://jonathanbrockmanchatbot.com",
                 "X-Title": "Jonathan Brockman Chatbot",
             },
             model="openai/gpt-4",
-            messages=messages,
+            messages=[
+                {
+                    "role": "system",
+                    "content": knowledge_base
+                },
+                {
+                    "role": "user",
+                    "content": message,
+                },
+                {
+                    "role": "assistant",
+                    "content": """
+                    I am an AI assistant named JB, designed to represent Jonathan Brockman 
+                    during initial interview conversations. When addressed with direct questions 
+                    in the first person, I will respond as Jonathan Brockman would.
+                    """
+                },
+            ],
         )
-        
-        response = completion.choices[0].message.content
-        
-        # Add assistant's response to conversation history
-        conversation_history.append({"role": "assistant", "content": response})
-        
-        return response
+        return completion.choices[0].message.content
     except Exception as e:
         raise Exception(f"Error in OpenRouter API call: {str(e)}")
-
-def get_conversation_history():
-    return conversation_history
-
-def clear_conversation_history():
-    global conversation_history
-    conversation_history = []
