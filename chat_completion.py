@@ -22,13 +22,15 @@ def index_knowledge_base(knowledge_base):
     for doc_id, content in knowledge_base.items():
         langgraph.add_document(doc_id, content)
 
+# Load and index the knowledge base at startup
+KNOWLEDGE_BASE_FOLDER = 'path_to_knowledge_base_folder'
+knowledge_base = load_knowledge_base(KNOWLEDGE_BASE_FOLDER)
+index_knowledge_base(knowledge_base)
+
 def retrieve_relevant_documents(query):
     return langgraph.retrieve(query)
 
 def send_openrouter_request(conversation_history):
-    knowledge_base = load_knowledge_base('path_to_knowledge_base_folder')
-    index_knowledge_base(knowledge_base)
-
     user_message = conversation_history[-1]['content']
     relevant_documents = retrieve_relevant_documents(user_message)
 
