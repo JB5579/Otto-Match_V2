@@ -23,7 +23,7 @@ def send_openrouter_request(message: str) -> str:
                 "HTTP-Referer": "https://jonathanbrockmanchatbot.com",
                 "X-Title": "Jonathan Brockman Chatbot",
             },
-            model="openai/gpt-4",
+            model="openai/gpt-4o-mini-2024-07-18",
             messages=[
                 {
                     "role": "system",
