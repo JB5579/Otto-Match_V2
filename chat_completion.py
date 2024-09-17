@@ -28,7 +28,19 @@ knowledge_base = load_knowledge_base(KNOWLEDGE_BASE_FOLDER)
 index_knowledge_base(knowledge_base)
 
 def retrieve_relevant_documents(query):
-    return langgraph.retrieve(query)
+    # Retrieve documents based on the query
+    documents = langgraph.retrieve(query)
+    
+    # Sort documents by relevance score (assuming langgraph.retrieve returns a list of tuples (doc_id, score))
+    sorted_documents = sorted(documents, key=lambda x: x[1], reverse=True)
+    
+    # Extract the document IDs from the sorted list
+    relevant_doc_ids = [doc_id for doc_id, score in sorted_documents]
+    
+    # Return the content of the relevant documents
+    relevant_documents = [knowledge_base[doc_id] for doc_id in relevant_doc_ids if doc_id in knowledge_base]
+    
+    return relevant_documents
 
 def send_openrouter_request(conversation_history):
     user_message = conversation_history[-1]['content']
