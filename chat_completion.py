@@ -1,8 +1,12 @@
 import os
 from openai import OpenAI
-from langgraph import LangGraph
 import markdown
 import docx
+
+try:
+    from langgraph import LangGraph
+except ImportError:
+    raise ImportError("The 'langgraph' package is not installed. Please install it using 'pip install langgraph'.")
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 openrouter_client = OpenAI(
