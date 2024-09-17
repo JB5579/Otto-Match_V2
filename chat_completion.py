@@ -23,7 +23,7 @@ def index_knowledge_base(knowledge_base):
         langgraph.add_document(doc_id, content)
 
 # Load and index the knowledge base at startup
-KNOWLEDGE_BASE_FOLDER = 'path_to_knowledge_base_folder'
+KNOWLEDGE_BASE_FOLDER = 'Knowledge_File'
 knowledge_base = load_knowledge_base(KNOWLEDGE_BASE_FOLDER)
 index_knowledge_base(knowledge_base)
 
