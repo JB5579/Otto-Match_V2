@@ -1,6 +1,7 @@
 import os
 from openai import OpenAI
 from langgraph import LangGraph
+import markdown
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 openrouter_client = OpenAI(
@@ -14,8 +15,15 @@ langgraph = LangGraph()
 def load_knowledge_base(folder_path):
     knowledge_base = {}
     for filename in os.listdir(folder_path):
-        with open(os.path.join(folder_path, filename), 'r') as file:
-            knowledge_base[filename] = file.read()
+        file_path = os.path.join(folder_path, filename)
+        if filename.endswith('.txt'):
+            with open(file_path, 'r') as file:
+                knowledge_base[filename] = file.read()
+        elif filename.endswith('.md'):
+            with open(file_path, 'r') as file:
+                md_content = file.read()
+                knowledge_base[filename] = markdown.markdown(md_content)
+        # Add more file type handling here as needed
     return knowledge_base
 
 def index_knowledge_base(knowledge_base):
