@@ -2,6 +2,7 @@ import os
 from openai import OpenAI
 from langgraph import LangGraph
 import markdown
+import docx
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 openrouter_client = OpenAI(
@@ -23,6 +24,10 @@ def load_knowledge_base(folder_path):
             with open(file_path, 'r') as file:
                 md_content = file.read()
                 knowledge_base[filename] = markdown.markdown(md_content)
+        elif filename.endswith('.docx'):
+            doc = docx.Document(file_path)
+            doc_content = "\n".join([para.text for para in doc.paragraphs])
+            knowledge_base[filename] = doc_content
         # Add more file type handling here as needed
     return knowledge_base
 
