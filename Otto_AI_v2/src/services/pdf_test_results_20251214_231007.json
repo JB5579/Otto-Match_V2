@@ -1,0 +1,84 @@
+{
+  "test_timestamp": "2025-12-14T23:10:07.340870",
+  "summary": {
+    "total_files": 7,
+    "successful": 0,
+    "failed": 7,
+    "success_rate": "0.0%"
+  },
+  "detailed_results": [
+    {
+      "success": false,
+      "filename": "2008F-250 (1).pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2014BMWi3V28503 (1).pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2018GMCCanyon.pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2019CherokeeLatitudePlus326765.pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2022LexusES350117484.pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2023ChevyEquinox (1).pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "ACVMercedes.pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    }
+  ],
+  "successful_vehicles": [],
+  "failed_processing": [
+    {
+      "success": false,
+      "filename": "2008F-250 (1).pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2014BMWi3V28503 (1).pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2018GMCCanyon.pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2019CherokeeLatitudePlus326765.pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2022LexusES350117484.pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "2023ChevyEquinox (1).pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    },
+    {
+      "success": false,
+      "filename": "ACVMercedes.pdf",
+      "error": "'ConditionData' object has no attribute 'get'"
+    }
+  ]
+}

@@ -1,0 +1,476 @@
+{
+  "test_timestamp": "2025-12-14T23:11:29.108249",
+  "summary": {
+    "total_files": 7,
+    "successful": 7,
+    "failed": 0,
+    "success_rate": "100.0%"
+  },
+  "detailed_results": [
+    {
+      "success": true,
+      "filename": "2008F-250 (1).pdf",
+      "file_size_bytes": 5692975,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU9A65D457123456789",
+        "year": 2020,
+        "make": "Ford",
+        "model": "F-250",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2014BMWi3V28503 (1).pdf",
+      "file_size_bytes": 1182109,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU10E80E76123456789",
+        "year": 2020,
+        "make": "BMW",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2018GMCCanyon.pdf",
+      "file_size_bytes": 267229,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMUD311DA30123456789",
+        "year": 2020,
+        "make": "GMC",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2019CherokeeLatitudePlus326765.pdf",
+      "file_size_bytes": 11743139,
+      "processing_time": 0.001003,
+      "vehicle": {
+        "vin": "SIMU18444C7B123456789",
+        "year": 2020,
+        "make": "Jeep",
+        "model": "Cherokee",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2022LexusES350117484.pdf",
+      "file_size_bytes": 654652,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU832B0D5D123456789",
+        "year": 2020,
+        "make": "Lexus",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2023ChevyEquinox (1).pdf",
+      "file_size_bytes": 5723670,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU3A36E4A7123456789",
+        "year": 2020,
+        "make": "Chevrolet",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "ACVMercedes.pdf",
+      "file_size_bytes": 28351734,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU58CEE997123456789",
+        "year": 2020,
+        "make": "Mercedes-Benz",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    }
+  ],
+  "successful_vehicles": [
+    {
+      "success": true,
+      "filename": "2008F-250 (1).pdf",
+      "file_size_bytes": 5692975,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU9A65D457123456789",
+        "year": 2020,
+        "make": "Ford",
+        "model": "F-250",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2014BMWi3V28503 (1).pdf",
+      "file_size_bytes": 1182109,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU10E80E76123456789",
+        "year": 2020,
+        "make": "BMW",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2018GMCCanyon.pdf",
+      "file_size_bytes": 267229,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMUD311DA30123456789",
+        "year": 2020,
+        "make": "GMC",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2019CherokeeLatitudePlus326765.pdf",
+      "file_size_bytes": 11743139,
+      "processing_time": 0.001003,
+      "vehicle": {
+        "vin": "SIMU18444C7B123456789",
+        "year": 2020,
+        "make": "Jeep",
+        "model": "Cherokee",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2022LexusES350117484.pdf",
+      "file_size_bytes": 654652,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU832B0D5D123456789",
+        "year": 2020,
+        "make": "Lexus",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "2023ChevyEquinox (1).pdf",
+      "file_size_bytes": 5723670,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU3A36E4A7123456789",
+        "year": 2020,
+        "make": "Chevrolet",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    },
+    {
+      "success": true,
+      "filename": "ACVMercedes.pdf",
+      "file_size_bytes": 28351734,
+      "processing_time": 0.0,
+      "vehicle": {
+        "vin": "SIMU58CEE997123456789",
+        "year": 2020,
+        "make": "Mercedes-Benz",
+        "model": "Unknown",
+        "trim": null,
+        "odometer": 50000,
+        "engine": "V6 3.0L",
+        "exterior_color": "Black",
+        "interior_color": "Black"
+      },
+      "condition": {
+        "score": 4.2,
+        "grade": "Average",
+        "issues_count": 0
+      },
+      "images": {
+        "total_count": 1,
+        "categories": {
+          "hero": 1
+        },
+        "avg_quality_score": 8.0
+      },
+      "seller": {
+        "name": "Simulated Dealer",
+        "type": "dealer"
+      }
+    }
+  ],
+  "failed_processing": []
+}

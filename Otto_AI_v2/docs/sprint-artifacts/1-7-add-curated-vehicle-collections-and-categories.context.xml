@@ -1,0 +1,150 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>7</storyId>
+    <title>Add Curated Vehicle Collections and Categories</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-7-add-curated-vehicle-collections-and-categories.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>browse vehicles by curated categories and collections</iWant>
+    <soThat>I can discover vehicles that match specific use cases or trending categories</soThat>
+    <tasks>- [ ] Create database schema for collections management (AC: #1, #2, #3)
+  - [ ] Design vehicle_collections table with name, description, type, criteria columns
+  - [ ] Create collection_vehicle_mappings table for vehicle-collection relationships
+  - [ ] Add collection_analytics table for engagement tracking
+  - [ ] Create indexes for optimal query performance
+  - [ ] Add database triggers for automatic collection updates
+
+- [ ] Implement CollectionEngine for dynamic collection generation (AC: #4)
+  - [ ] Create base CollectionEngine class with rule processing
+  - [ ] Implement collection_template_manager for different use cases
+  - [ ] Add vehicle scoring algorithm based on multiple factors
+  - [ ] Create collection_ranking system with relevance, price, popularity
+  - [ ] Implement automatic collection refresh on inventory changes
+
+- [ ] Build admin API endpoints for collection management (AC: #3)
+  - [ ] Implement POST /api/admin/collections/create endpoint
+  - [ ] Create PUT /api/admin/collections/{id}/update endpoint
+  - [ ] Add DELETE /api/admin/collections/{id}/delete endpoint
+  - [ ] Implement GET /api/admin/collections list with pagination
+  - [ ] Add collection ordering and featured status management
+
+- [ ] Create public API endpoints for collection browsing (AC: #1, #2)
+  - [ ] Implement GET /api/collections endpoint for all collections
+  - [ ] Create GET /api/collections/{id}/vehicles endpoint with pagination
+  - [ ] Add GET /api/collections/trending endpoint for trending collections
+  - [ ] Implement collection filtering and sorting options
+  - [ ] Add real-time collection updates via WebSocket
+
+- [ ] Implement trending algorithm for collections (AC: #2, #5)
+  - [ ] Create trending_algorithm based on engagement metrics
+  - [ ] Implement market_trend_detector using external data sources
+  - [ ] Add collection_score_calculator with multiple factors
+  - [ ] Create trending_collection_scheduler for periodic updates
+  - [ ] Implement trend_decay mechanism for stale collections
+
+- [ ] Build collection templates and use cases (AC: #1, #4)
+  - [ ] Create template system for different vehicle categories
+  - [ ] Implement use_case_templates (commuting, family, luxury, off-road)
+  - [ ] Add price_range_templates for budget-based collections
+  - [ ] Create feature_based_templates (EV, hybrid, performance)
+  - [ ] Implement seasonal_templates for timely collections
+
+- [ ] Add A/B testing framework for collections (AC: #5)
+  - [ ] Implement collection_placement_tester
+  - [ ] Create clickthrough_rate_tracker for collection performance
+  - [ ] Add ab_test_analyzer for statistical significance
+  - [ ] Implement collection_variation_generator
+  - [ ] Create test_result_reporter with recommendations
+
+- [ ] Create analytics dashboard for collection insights (AC: #5)
+  - [ ] Implement collection_engagement_tracker
+  - [ ] Create performance_metrics_calculator
+  - [ ] Build collection_comparison_tool
+  - [ ] Add user_behavior_analyzer for collection interactions
+  - [ ] Implement export_functionality for analytics data
+
+- [ ] Create comprehensive testing suite (All ACs)
+  - [ ] Write unit tests for CollectionEngine methods
+  - [ ] Create integration tests for collection API endpoints
+  - [ ] Implement trending algorithm testing with mock data
+  - [ ] Add end-to-end tests for complete collection workflow
+  - [ ] Create performance tests for large collection datasets</tasks>
+  </story>
+
+  <acceptanceCriteria>1. **Category Browsing**: Given I'm exploring vehicle options, when I browse by category (Electric, SUVs, Luxury, etc.), then I see curated collections of vehicles matching that category, each collection has description explaining what makes vehicles fit the category, and vehicles are ranked by relevance, price, and popularity within the category
+
+2. **Trending Collections**: Given there are trending vehicle categories, when I view the homepage or search page, then I see trending collections like "Best Electric Cars Under $30k" or "Family SUVs", collections update based on market trends and user engagement, and I can explore collections with filters and sorting options
+
+3. **Admin Management**: Given I'm an administrator, when I access the collection management interface, then I can create, edit, and delete curated collections, set collection rules and criteria, and manage collection display order and featured status
+
+4. **Dynamic Generation**: Given the system has vehicle data and engagement metrics, when generating collections automatically, then collections are created based on predefined rules and templates, vehicles are scored and ranked by multiple factors, and collections update automatically as inventory changes
+
+5. **Collection Analytics**: Given collections are being displayed to users, when analyzing engagement data, then click-through rates are tracked per collection, user interactions with collections are logged, and A/B testing results inform collection optimization</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Otto.AI Architecture" section="Database Strategy" snippet="Supabase PostgreSQL + pgvector for vector similarity + relational data in single system"/>
+      <doc path="docs/architecture.md" title="Otto.AI Architecture" section="Real-time Updates" snippet="SSE + WebSockets hybrid for vehicle grid updates and chat"/>
+      <doc path="docs/architecture.md" title="Otto.AI Architecture" section="Caching Strategy" snippet="Cloudflare Edge + Redis + Supabase hybrid for global edge distribution"/>
+      <doc path="docs/architecture.md" title="Otto.AI Architecture" section="Service Architecture" snippet="Modular monolith designed for intelligent microservices extraction"/>
+      <doc path="docs/sprint-artifacts/1-6-implement-vehicle-favorites-and-notifications.md" title="Story 1.6 Implementation" section="Dev Agent Record" snippet="NotificationService: Multi-channel notifications (email, SMS, in-app) with user preferences and batching"/>
+    </docs>
+    <code>
+      <file path="src/semantic/database_schema.sql" kind="schema" symbol="vehicle_categories" lines="108-122" reason="Existing category table structure to understand current implementation pattern"/>
+      <file path="src/semantic/database_schema.sql" kind="schema" symbol="CREATE TABLE" lines="30-56" reason="Database schema patterns for creating new collection tables"/>
+      <file path="src/semantic/database_schema.sql" kind="schema" symbol="CREATE INDEX" lines="87-105" reason="Index creation patterns for performance optimization"/>
+      <file path="src/semantic/database_schema.sql" kind="schema" symbol="CREATE TRIGGER" lines="180-183" reason="Trigger patterns for automatic timestamp updates"/>
+      <file path="src/api/favorites_api.py" kind="controller" symbol="APIRouter" lines="86-91" reason="FastAPI router pattern for implementing collection endpoints"/>
+      <file path="src/api/favorites_api.py" kind="controller" symbol="BaseModel" lines="38-50" reason="Pydantic model patterns for request/response objects"/>
+      <file path="src/analytics/favorites_analytics_service.py" kind="service" symbol="FavoritesAnalyticsService" lines="51-80" reason="Service class pattern with initialization and database connection"/>
+      <file path="src/realtime/favorites_websocket_service.py" kind="service" symbol="FavoritesWebSocketService" lines="48-60" reason="WebSocket service pattern for real-time collection updates"/>
+    </code>
+    <dependencies>
+      <python version="3.11">
+        <package name="raganything[all]" version="latest" purpose="Multimodal semantic search"/>
+        <package name="supabase" version="latest" purpose="Database client"/>
+        <package name="pgvector" version="latest" purpose="Vector similarity"/>
+        <package name="psycopg[binary]" version="latest" purpose="PostgreSQL adapter"/>
+        <package name="fastapi" version="latest" purpose="API framework"/>
+        <package name="pydantic" version="latest" purpose="Data validation"/>
+        <package name="uvicorn[standard]" version="latest" purpose="ASGI server"/>
+        <package name="pytest" version="latest" purpose="Testing framework"/>
+        <package name="pytest-asyncio" version="latest" purpose="Async testing"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Modular monolith pattern - collection services should follow established service patterns from favorites and analytics</constraint>
+    <constraint type="database">Use Supabase PostgreSQL with pgvector - collection tables should follow existing schema patterns</constraint>
+    <constraint type="performance">Implement proper indexing following pattern: idx_table_name_column(s) for optimal query performance</constraint>
+    <constraint type="real-time">Use WebSocket infrastructure from Story 1-6 for live collection updates and trending changes</constraint>
+    <constraint type="authentication">Admin endpoints must include authentication checks (currently placeholder JWT)</constraint>
+    <constraint type="testing">TARB compliance with real database operations required for all tests</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="CollectionEngine" kind="class" signature="class CollectionEngine: def __init__(self): def generate_collection(self, rules: Dict) -> Collection: def rank_vehicles(self, vehicles: List[Vehicle], criteria: Dict) -> List[Vehicle]:" path="src/collections/collection_engine.py"/>
+    <interface name="Collections API" kind="REST endpoints" signature="GET /api/collections, GET /api/collections/{id}/vehicles, GET /api/collections/trending" path="src/api/collections_api.py"/>
+    <interface name="Admin Collections API" kind="REST endpoints" signature="POST /api/admin/collections/create, PUT /api/admin/collections/{id}/update, DELETE /api/admin/collections/{id}/delete" path="src/api/admin/collections_api.py"/>
+    <interface name="Collections WebSocket" kind="WebSocket" signature="ws://localhost:8000/ws/collections" path="src/realtime/collections_websocket_service.py"/>
+  </interfaces>
+
+  <tests>
+    <standards>Unit tests for all service methods using pytest with real Supabase database connection. Integration tests for API endpoints using httpx. Performance tests for large datasets. TARB compliance with real database operations required.</standards>
+    <locations>tests/unit/collections/, tests/integration/collections/, tests/performance/collections/</locations>
+    <ideas>
+      <test idea="test_collection_generation" ac="4">Test dynamic collection generation with various rules and templates</test>
+      <test idea="test_trending_algorithm" ac="2">Test trending collection algorithm with mock engagement data</test>
+      <test idea="test_admin_endpoints" ac="3">Test CRUD operations for collection management</test>
+      <test idea="test_collection_analytics" ac="5">Test click-through tracking and A/B testing framework</test>
+      <test idea="test_real_time_updates" ac="2">Test WebSocket updates for trending collections</test>
+    </ideas>
+  </tests>
+</story-context>

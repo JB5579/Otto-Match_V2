@@ -1,0 +1,259 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Windows specific
+desktop.ini
+$RECYCLE.BIN/
+
+# Temporary files
+*.tmp
+*.temp
+DumpStack.log.tmp
+
+# Cache and local directories
+.cache/
+.local/
+.files/
+.pythonlibs/
+.upm/
+
+# External tools and projects not part of Otto AI
+Archon/
+AssessIQ-Assessments/
+AutoAgent/
+AutoGenStudio/
+AutoGroq/
+BMAD-METHOD/
+BirdsEye/
+Calance-Edge/
+CalancePropose.py
+Calance_Apps/
+Calance_POC_Lander/
+Calance_Proposal_GenAI/
+CapitolTrades/
+Chat_Bot_Improve.md
+Claude_Flow/
+Crawl/
+Crawlee/
+DDrive Archive/
+Designers/
+Dev_Container_Setup/
+Docker/
+Docker_Images/
+DownHillTrader/
+EV_Reserve/
+Empire_Chef/
+GraphRAG-Local-UI/
+Groq-Chat-App/
+Groq/
+Integuru/
+JB_Interview_Chatbot/
+LLM Storage/
+LangGraph_Bot/
+LinkedIn_Oauth_info/
+LiteLLM/
+MH155a/
+MPAX_Core/
+MS_CoPilot_Tool/
+Minddump/
+Mindump_xRx/
+MiniCPM-Llama3-V-2_5/
+mcp-crawl4ai-rag- Delete_me/
+mcp-crawl4ai-rag/
+meta_expert/
+neese backup files/
+neese-transmission4.5/
+neese-transmission4/
+openui/
+ottomator-agents/
+output/
+parakeet-tdt-1.1b/
+product_gpt/
+prompts/
+property_tax_liens/
+prp_framework_core/
+public/
+pulsechain-explorer-server.exe/
+root/
+rtrA9B2.tmp/
+saas-brainstorming-app/
+settings.yaml/
+storm/
+taskingai/
+tinytroupe/
+tools.py/
+vibe-kanban/
+workshops/
+xrx-sample-apps/
+
+# Replit files (deleted)
+.replit/
+chat_completion.py
+main.py
+pasted_text_1726526965235.txt
+poetry.lock
+pyproject.toml
+replit.nix
+test_chat_completion.py
+
+# Binary and media files (keep important ones)
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.ico
+*.mov
+*.mp4
+*.avi
+*.flv
+*.wmv
+
+# Keep these important files but exclude large binaries
+!045B55FF-8A1A-4478-BF3C-88C9BA10C77F.jpeg
+!1764256631030.png
+!Conversation_UI.png
+!enhanced_improve_quality.jpg
+!enhanced_professional_styling.jpg
+!enhanced_ui_optimization.jpg
+!Otto_Interface_Updated_Cards.png
+!Otto_Vehicle_Details_With_Carousel.png
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Node modules (if any frontend development)
+node_modules/
+
+# Build artifacts
+build/
+dist/

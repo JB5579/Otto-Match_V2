@@ -1,0 +1,97 @@
+<story-context id="{bmad_folder}/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>6</storyId>
+    <title>Add Voice Input and Speech-to-Text Conversion</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-6-add-voice-input-and-speech-to-text-conversion.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>mobile user</asA>
+    <iWant>speak with Otto AI using voice input instead of typing</iWant>
+    <soThat>I can have natural conversations about vehicles while on the go</soThat>
+    <tasks>
+      - 2-6.1: Research and select speech-to-text technology
+      - 2-6.2: Implement voice input service
+      - 2-6.3: Enhance conversation agent for voice input
+      - 2-6.4: Build voice UI components
+      - 2-6.5: Integrate WebSocket support for voice streaming
+      - 2-6.6: Add voice error handling and fallbacks
+      - 2-6.7: Performance optimization for mobile
+      - 2-6.8: Testing and validation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - AC1: Mobile Voice Input Interface - Tap microphone, speak naturally, accurate capture
+    - AC2: Noise Resilience and Error Handling - Background noise filtering, confidence feedback
+    - AC3: Real-Time Voice Processing - <500ms latency, visual feedback, context maintenance
+    - AC4: Voice Command Support - Natural language commands, context preservation
+    - AC5: Cross-Platform Compatibility - Consistent behavior, graceful degradation
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Voice Interface" snippet="FR15: System supports voice input for mobile users with speech-to-text conversion. Voice input support critical for mobile users and hands-free car shopping experience." />
+      <doc path="docs/ux-design-specification.md" title="UX Design Specification" section="Mobile Design" snippet="Mobile Adaptations: Vehicle grid: 1 column, full-width cards. Sidebars: Collapse to bottom sheet drawers. Otto Chat: Full-screen overlay mode." />
+      <doc path="docs/epics.md" title="Epics and Stories" section="Epic 2 - Conversational Discovery Interface" snippet="FR8: Users can engage in natural language conversations with Otto AI. FR9: Otto AI maintains conversation context and memory across sessions." />
+      <doc path="docs/architecture.md" title="System Architecture" section="WebSocket Integration" snippet="WebSocket Notifications Integration for real-time favorites notifications" />
+    </docs>
+    <code>
+      <file path="src/conversation/conversation_agent.py" kind="service" symbol="ConversationAgent" lines="1-1134" reason="Core conversation processing with NLU, preferences, and memory management - will need voice input integration" />
+      <file path="src/api/websocket_endpoints.py" kind="controller" symbol="ConnectionManager" lines="56-190" reason="Manages WebSocket connections for real-time communication - will need voice streaming support" />
+      <file path="src/api/websocket_endpoints.py" kind="controller" symbol="conversation_endpoint" lines="399-489" reason="Main WebSocket endpoint - needs extension for voice data handling" />
+      <file path="src/memory/zep_client.py" kind="service" symbol="ZepClient" lines="1-200" reason="Temporal memory service for storing voice interactions" />
+      <file path="src/config/conversation_config.py" kind="config" symbol="get_conversation_config" lines="1-100" reason="Configuration management for voice settings" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="raganything" version="1.2.8" />
+        <package name="fastapi" />
+        <package name="pydantic" />
+        <package name="supabase" />
+        <package name="pgvector" />
+        <package name="openai" />
+        <package name="uvicorn" />
+        <package name="pytest" />
+        <package name="websockets" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="performance" description="Voice processing latency: &lt;500ms end-to-end" />
+    <constraint type="mobile" description="Mobile-first design with responsive breakpoints: mobile(375px), tablet(768px), desktop(1024px)" />
+    <constraint type="browser" description="Support Chrome 90+, Safari 14+, Firefox 88+, Edge 90+ with progressive enhancement" />
+    <constraint type="accessibility" description="WCAG 2.1 AA compliance with voice input support for users with mobility limitations" />
+    <constraint type="architecture" description="Follow existing patterns: snake_case for Python files, PascalCase for TypeScript components" />
+    <constraint type="architecture" description="Voice service fits in src/services/ following established pattern" />
+  </constraints>
+
+  <interfaces>
+    <interface name="WebSocket Voice Stream" kind="WebSocket" signature="ws://localhost/ws/conversation/{user_id}" path="src/api/websocket_endpoints.py" />
+    <interface name="Conversation Agent" kind="function" signature="async process_message(user_id: str, message: str, session_id: Optional[str]) -> ConversationResponse" path="src/conversation/conversation_agent.py" />
+    <interface name="Connection Manager" kind="class" signature="async send_message(connection_id: str, message: Dict[str, Any]) -> bool" path="src/api/websocket_endpoints.py" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing uses pytest framework with unit tests in tests/unit/ and integration tests in tests/integration/. Performance tests validate sub-500ms voice processing latency requirements.
+    </standards>
+    <locations>
+      <location pattern="tests/unit/*_test.py" />
+      <location pattern="tests/integration/*_test.py" />
+      <location pattern="src/**/test_*.py" />
+    </locations>
+    <ideas>
+      <test for="AC1" idea="Test voice-to-text accuracy with mobile microphone input in quiet environment" />
+      <test for="AC2" idea="Test noise resilience with background audio recordings" />
+      <test for="AC3" idea="Measure voice processing latency to ensure &lt;500ms requirement" />
+      <test for="AC4" idea="Test voice command recognition for vehicle search queries" />
+      <test for="AC5" idea="Cross-browser compatibility testing for Web Speech API" />
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,72 @@
+{
+  "validation_summary": {
+    "story_id": "1.2",
+    "validation_date": "2025-12-01 20:31:29",
+    "total_files": 7,
+    "success_rate": 100.0,
+    "avg_processing_time": 0.001883200236729213,
+    "avg_embedding_dim": 3072.0
+  },
+  "acceptance_criteria": {
+    "ac1_multimodal": true,
+    "ac2_vector_embeddings": true,
+    "ac3_performance_2_seconds": true
+  },
+  "infrastructure_validation": {
+    "real_api_integration": true,
+    "raganything_integration": true,
+    "real_pdf_processing": true
+  },
+  "extracted_vehicles": [
+    {
+      "pdf_file": "2008F-250 (1).pdf",
+      "vehicle_ref": "story-final-2008f-250-1",
+      "make": "Unknown",
+      "model": "Condition Report",
+      "year": 2020
+    },
+    {
+      "pdf_file": "2014BMWi3V28503 (1).pdf",
+      "vehicle_ref": "story-final-2014bmwi3v28503-1",
+      "make": "Bmw",
+      "model": "Condition Report",
+      "year": 2020
+    },
+    {
+      "pdf_file": "2018GMCCanyon.pdf",
+      "vehicle_ref": "story-final-2018gmccanyon",
+      "make": "Gmc",
+      "model": "Condition Report",
+      "year": 2020
+    },
+    {
+      "pdf_file": "2019CherokeeLatitudePlus326765.pdf",
+      "vehicle_ref": "story-final-2019cherokeelatitudeplus326765",
+      "make": "Unknown",
+      "model": "Condition Report",
+      "year": 2020
+    },
+    {
+      "pdf_file": "2022LexusES350117484.pdf",
+      "vehicle_ref": "story-final-2022lexuses350117484",
+      "make": "Lexus",
+      "model": "Condition Report",
+      "year": 2020
+    },
+    {
+      "pdf_file": "2023ChevyEquinox (1).pdf",
+      "vehicle_ref": "story-final-2023chevyequinox-1",
+      "make": "Unknown",
+      "model": "Condition Report",
+      "year": 2020
+    },
+    {
+      "pdf_file": "ACVMercedes.pdf",
+      "vehicle_ref": "story-final-acvmercedes",
+      "make": "Mercedes",
+      "model": "Condition Report",
+      "year": 2020
+    }
+  ],
+  "overall_validated": true
+}

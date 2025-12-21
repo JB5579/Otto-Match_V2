@@ -1,0 +1,45 @@
+# Otto.AI Semantic Search Dependencies
+# Story 1.1: Initialize Semantic Search Infrastructure
+
+# Core RAG-Anything (includes lightrag as dependency)
+raganything[all]
+
+# Database
+supabase
+pgvector
+psycopg[binary]
+
+# OpenAI API
+openai
+
+# Web framework
+fastapi
+pydantic
+uvicorn[standard]
+
+# Async & utilities
+aiohttp
+tiktoken
+sentence-transformers
+numpy
+
+# Testing
+pytest
+pytest-asyncio
+httpx
+
+# Development
+python-dotenv
+black
+isort
+flake8
+
+# Utilities
+python-multipart
+aiofiles
+requests
+
+# Story 2.1: Conversational AI Infrastructure
+websockets
+zep-python
+# Note: Groq access is through OpenRouter API which uses the openai library

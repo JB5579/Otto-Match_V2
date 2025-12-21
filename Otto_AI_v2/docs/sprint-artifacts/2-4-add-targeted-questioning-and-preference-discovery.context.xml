@@ -1,0 +1,186 @@
+<story-context id="{bmad_folder}/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>4</storyId>
+    <title>Add Targeted Questioning and Preference Discovery</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-4-add-targeted-questioning-and-preference-discovery.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Otto AI</asA>
+    <iWant>ask intelligent, targeted questions to understand user preferences more deeply</iWant>
+    <soThat>I can provide increasingly accurate and personalized vehicle recommendations</soThat>
+    <tasks>- [ ] Create questioning_strategy.py with adaptive question selection algorithms (AC: #1, #3, #5)
+  - [ ] Build question priority scoring based on information value and engagement
+  - [ ] Implement question categorization (family, performance, budget, lifestyle)
+  - [ ] Create adaptive difficulty adjustment based on user responses
+  - [ ] Add conversation flow optimization to maintain natural dialogue
+  - [ ] Build question timing and pacing algorithms
+
+- [ ] Implement preference_conflict_detector.py to identify contradictory preferences (AC: #2)
+  - [ ] Build conflict detection rules for common preference contradictions
+  - [ ] Create conflict severity scoring (direct contradiction vs complementary)
+  - [ ] Implement explanation generation for how technologies resolve conflicts
+  - [ ] Add trade-off clarification question templates
+  - [ ] Build consensus-seeking question strategies
+
+- [ ] Create question_memory.py to track questions across sessions using Zep Cloud (AC: #4)
+  - [ ] Build question history tracking with temporal metadata
+  - [ ] Implement question duplication detection algorithms
+  - [ ] Create preference change detection over time
+  - [ ] Add question effectiveness scoring for future selection
+  - [ ] Build cross-session question context awareness
+
+- [ ] Build family_need_questioning.py module for targeted family-oriented questions (AC: #1)
+  - [ ] Create family size dynamic questioning (number of members, ages)
+  - [ ] Build usage pattern detection (commuting, school runs, road trips)
+  - [ ] Implement safety feature prioritization questions
+  - [ ] Add lifestyle integration questions (sports, pets, cargo)
+  - [ ] Create evolving question paths based on family composition
+
+- [ ] Integrate with existing preference_engine.py for question-learned preferences loop (AC: #3, #4)
+  - [ ] Connect question outcomes to preference weight updates
+  - [ ] Build question effectiveness feedback to preference learning
+  - [ ] Implement question-driven preference validation
+  - [ ] Add preference confidence adjustment through questioning
+  - [ ] Create question-preference correlation analytics
+
+- [ ] Add engagement tracking to maintain natural conversation flow (AC: #5)
+  - [ ] Build user engagement metrics from response patterns
+  - [ ] Implement conversation fatigue detection
+  - [ ] Create question variety optimization
+  - [ ] Add conversational bridge phrases and transitions
+  - [ ] Build active listening acknowledgment patterns
+
+- [ ] Create comprehensive testing suite
+  - [ ] Build unit tests for question selection algorithms (>90% accuracy)
+  - [ ] Add integration tests for conflict detection accuracy
+  - [ ] Create user engagement testing with mock conversations
+  - [ ] Implement cross-session memory persistence tests
+  - [ ] Add user acceptance testing for natural conversation feel</tasks>
+  </story>
+
+  <acceptanceCriteria>1. **Family Need Targeting**: Given a user mentions they need a "family car", when Otto AI responds, then it asks specific questions about family size, children's ages, and typical usage patterns, questions evolve based on previous answers to avoid repetition, each question is designed to reveal actionable preference information, and the user feels engaged rather than interrogated
+
+2. **Preference Conflict Resolution**: Given a user has mentioned both "good gas mileage" and "performance", when Otto AI detects these potentially conflicting preferences, then it asks clarifying questions about priority and trade-offs, provides information about vehicles that balance these needs, and explains how different technologies (hybrid, turbo, etc.) address both concerns
+
+3. **Adaptive Questioning Strategy**: Given an ongoing conversation, when Otto AI needs more information, then it selects questions based on information value and user engagement patterns, avoids asking questions already answered in previous sessions, maintains a natural dialogue flow without interrogating the user, and adapts question complexity based on user responses
+
+4. **Question Memory and Tracking**: Given multiple conversations with a user, when Otto AI asks questions, then it tracks all questions asked across sessions, avoids repetition of questions already answered, recognizes when user preferences may have changed over time, and uses temporal memory to inform question selection
+
+5. **Natural Conversation Flow**: Given the conversation is progressing, when Otto AI asks questions, then questions are phrased naturally and conversationally, the user doesn't feel like they're being interrogated, questions build upon previous responses logically, and Otto AI acknowledges and learns from each answer</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Conversational AI System (FR8-FR15) & AI Memory & Personalization (FR51-FR57)</section>
+        <snippet>FR12: Otto AI asks targeted questions to understand user preferences and use cases. FR51-FR57: Otto AI remembers user preferences, past conversations, and learned insights across sessions, providing personalized recommendations based on accumulated user data.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Conversational AI Architecture Patterns</section>
+        <snippet>Temporal Knowledge Graph Pattern: Zep Cloud stores conversation history as temporal graph, tracks preference evolution and decision patterns, enables predictive matching based on similar user journeys. Conversational Orchestration Pattern: Tracks conversation stage, maintains multi-turn context, identifies user needs and emotional states.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 2: Conversational Discovery Interface</title>
+        <section>Epic Overview and Story Breakdown</section>
+        <snippet>Goal: Create Otto AI conversation system with persistent memory via Zep Cloud. Architecture Components: WebSocket_manager, cascade_engine.py, Zep Cloud temporal memory, Groq compound-beta.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/conversation/conversation_agent.py</path>
+        <kind>service</kind>
+        <symbol>ConversationAgent</symbol>
+        <lines>1-100</lines>
+        <reason>Core conversation processing with NLU, intent classification, and response generation. Integration point for questioning strategy.</reason>
+      </artifact>
+      <artifact>
+        <path>src/memory/temporal_memory.py</path>
+        <kind>service</kind>
+        <symbol>TemporalMemoryManager</symbol>
+        <lines>1-100</lines>
+        <reason>Manages hierarchical memory with working, episodic, and semantic memory types. Foundation for question tracking across sessions.</reason>
+      </artifact>
+      <artifact>
+        <path>src/intelligence/preference_engine.py</path>
+        <kind>service</kind>
+        <symbol>PreferenceEngine</symbol>
+        <lines>1-100</lines>
+        <reason>Extracts and evolves user preferences. Handles preference conflicts and confidence scoring. Integration point for question-learned preferences loop.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package>fastapi</package>
+        <version>>=0.104.0</version>
+      </python>
+      <python>
+        <package>pydantic</package>
+        <version>>=2.0.0</version>
+      </python>
+      <python>
+        <package>zep-python</package>
+        <version>>=1.0.0</version>
+      </python>
+      <python>
+        <package>groq</package>
+        <version>>=0.4.0</version>
+      </python>
+      <python>
+        <package>numpy</package>
+        <version>>=1.24.0</version>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+  <constraint type="architecture">Questions must integrate with existing ConversationAgent via questioning_strategy module</constraint>
+  <constraint type="memory">All question tracking must use Zep Cloud temporal memory infrastructure</constraint>
+  <constraint type="privacy">Question data must follow established privacy controls in temporal_memory.py</constraint>
+  <constraint type="performance">Question selection and generation must complete within <2s response time requirement</constraint>
+  <constraint type="conversation">Questions must maintain natural dialogue flow without interrogating users</constraint>
+  <constraint type="learning">Question outcomes must feed into PreferenceEngine for continuous learning</constraint>
+  <constraint type="testing">All question algorithms require >90% accuracy validation</constraint>
+</constraints>
+  <interfaces>
+    <interface name="QuestioningStrategy" kind="class">
+      <path>src/intelligence/questioning_strategy.py</path>
+      <signature>class QuestioningStrategy: async def select_next_question(self, user_context: UserContext) -> Question</signature>
+    </interface>
+    <interface name="PreferenceConflictDetector" kind="class">
+      <path>src/intelligence/preference_conflict_detector.py</path>
+      <signature>class PreferenceConflictDetector: async def detect_conflicts(self, preferences: List[Preference]) -> List[Conflict]</signature>
+    </interface>
+    <interface name="QuestionMemory" kind="class">
+      <path>src/memory/question_memory.py</path>
+      <signature>class QuestionMemory: async def track_question(self, user_id: str, question: Question, response: str) -> None</signature>
+    </interface>
+    <interface name="ConversationAgent Integration" kind="method">
+      <path>src/conversation/conversation_agent.py</path>
+      <signature>async def process_message(self, user_id: str, message: str) -> ConversationResponse</signature>
+    </interface>
+    <interface name="TemporalMemory Extension" kind="method">
+      <path>src/memory/temporal_memory.py</path>
+      <signature>async def store_question_memory(self, user_id: str, question_data: QuestionData) -> None</signature>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Question selection accuracy testing with labeled conversation scenarios. Conflict detection validation with contradictory preference examples. User engagement measurement through mock conversation testing. Cross-session memory persistence for question history. User acceptance testing for natural conversation feel. All tests targeting >90% accuracy as specified in story requirements.</standards>
+    <locations>src/intelligence/tests/test_questioning_strategy.py, src/intelligence/tests/test_preference_conflict_detector.py, src/memory/tests/test_question_memory.py, src/conversation/tests/test_question_integration.py, tests/performance/test_question_response_time.py</locations>
+    <ideas>
+      <test idea="AC1" description="Test family need questioning with various family sizes and compositions">Create mock conversations with "family car" requests, verify Otto asks about family size, children's ages, usage patterns, and evolves questions based on responses</test>
+      <test idea="AC2" description="Test preference conflict detection and resolution">Simulate users mentioning both "good gas mileage" and "performance", verify conflict detection and clarifying questions about priorities</test>
+      <test idea="AC3" description="Test adaptive question selection">Create scenarios with different information values, verify questions selected based on engagement patterns and avoid repetition</test>
+      <test idea="AC4" description="Test cross-session question tracking">Simulate multiple conversations, verify no question repetition and preference change detection over time</test>
+      <test idea="AC5" description="Test natural conversation flow">Create conversations, verify questions are conversational, build logically, and include acknowledgments</test>
+    </ideas>
+  </tests>
+</story-context>

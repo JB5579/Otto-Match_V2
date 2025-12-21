@@ -1,0 +1,104 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2-2</storyId>
+    <title>Build Natural Language Understanding and Response Generation</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-2-build-natural-language-understanding-and-response-generation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>Otto AI to understand my natural language queries about vehicles and provide helpful, contextual responses</iWant>
+    <soThat>I can discover vehicles through conversation rather than traditional search</soThat>
+    <tasks>
+      - Implement conversation context management using Zep Cloud temporal graphs
+      - Create intent detection for vehicle-related queries
+      - Build response generation using Groq compound-beta with vehicle knowledge base
+      - Add conversation flow management to guide users through discovery process
+      - Implement semantic understanding of vehicle features and user preferences
+      - Create conversation templates for common vehicle discovery scenarios
+      - Add personality and tone management for consistent Otto AI character
+      - Create comprehensive testing suite
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Natural Language Query Understanding: Given I'm using the Otto AI conversation interface, when I ask "I'm looking for a safe family SUV under $30,000", then Otto AI responds with questions about family size, safety priorities, and usage needs, the response maintains a friendly, conversational tone, Otto suggests relevant vehicle categories based on my query, and the conversation is stored with semantic understanding of my preferences
+
+    2. Contextual Conversation Memory: Given I've been discussing electric vehicles, when I ask "What about charging infrastructure in my area?", then Otto AI understands the context from previous conversation turns, provides relevant information about EV charging options and availability, and maintains consistency with previously discussed preferences
+
+    3. Intent Recognition and Response: Given the conversation infrastructure is in place, when I provide any vehicle-related query, then the system correctly identifies my intent (search, compare, advice, information), generates a contextually appropriate response using Groq compound-beta, and maintains Otto's personality throughout the interaction
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      - PRD sections FR8-FR15 (Conversational AI System) and FR51-FR57 (AI Memory & Personalization)
+      - Architecture patterns for Conversational Orchestration Pattern (Epic 2)
+      - Epic 2 dependencies from Epic 1 semantic search components
+      - Story 2.1 infrastructure components (WebSocket, Zep Cloud, Groq integration)
+    </docs>
+    <code>
+      - Existing: src/conversation/conversation_agent.py (basic conversation processing)
+      - Existing: src/api/websocket_endpoints.py (WebSocket infrastructure)
+      - Existing: src/memory/zep_client.py (temporal memory client)
+      - Existing: src/config/conversation_config.py (conversation settings)
+      - To Create: src/conversation/nlu_service.py (natural language understanding)
+      - To Create: src/conversation/intent_models.py (intent classification)
+      - To Create: src/conversation/response_generator.py (Groq-based responses)
+      - To Create: src/conversation/template_engine.py (conversation templates)
+    </code>
+    <dependencies>
+      - Zep Cloud temporal memory for conversation context
+      - Groq compound-beta model for response generation
+      - WebSocket infrastructure from Story 2.1
+      - Semantic search service from Epic 1 for vehicle data
+      - RAG-Anything for multimodal vehicle understanding
+      - Circuit breaker pattern for <2 second response times
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Response time: Must maintain &lt;2 second response time for all conversation turns
+    - Memory hierarchy: Working memory (5-10 turns), episodic memory (key points), semantic memory (general knowledge)
+    - Personality consistency: Otto AI must maintain consistent character traits throughout conversations
+    - Context retention: Must understand and maintain context across multiple conversation turns
+    - Performance: Circuit breaker pattern enforcement from Story 2.1
+  </constraints>
+
+  <interfaces>
+    - WebSocket endpoint: /ws/conversation/{user_id} (from Story 2.1)
+    - Zep Cloud API for temporal memory storage
+    - Groq API via OpenRouter for compound-beta model access
+    - Semantic search API: /api/search/semantic (from Epic 1)
+    - Internal: conversation_agent.py ↔ nlu_service.py for intent processing
+    - Internal: nlu_service.py → response_generator.py for response creation
+  </interfaces>
+
+  <tests>
+    <standards>
+      - NLU accuracy testing with confusion matrix analysis (&gt;95% accuracy)
+      - Multi-turn conversation coherence validation
+      - Performance testing for &lt;2 second response requirement
+      - Personality consistency evaluation
+      - Context retention accuracy across conversation turns
+      - Integration testing with Zep Cloud and Groq APIs
+    </standards>
+    <locations>
+      - Unit tests: tests/conversation/test_nlu_service.py
+      - Unit tests: tests/conversation/test_intent_models.py
+      - Unit tests: tests/conversation/test_response_generator.py
+      - Integration tests: tests/conversation/test_conversation_flow.py
+      - Performance tests: tests/conversation/test_response_time.py
+    </locations>
+    <ideas>
+      - Create test scenarios for common vehicle discovery conversations
+      - Test intent classification with ambiguous queries
+      - Validate context preservation across 20+ turn conversations
+      - Performance test with concurrent WebSocket connections
+      - Test personality consistency across different conversation topics
+    </ideas>
+  </tests>
+</story-context>

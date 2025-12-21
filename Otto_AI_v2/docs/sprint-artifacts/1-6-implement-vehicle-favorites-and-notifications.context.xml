@@ -1,0 +1,76 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>6</storyId>
+    <title>implement-vehicle-favorites-and-notifications</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-6-implement-vehicle-favorites-and-notifications.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>save vehicles to favorites and receive notifications for relevant updates</iWant>
+    <soThat>I can track vehicles I'm interested in and stay informed about price or availability changes</soThat>
+    <tasks>Implement FavoritesService, NotificationService, API endpoints, WebSocket integration, notification preferences, analytics tracking, recommendation engine for unavailable favorites, comprehensive testing suite</tasks>
+  </story>
+
+  <acceptanceCriteria>1. Favorites Management: Add vehicles to favorites with timestamp and confirmation
+2. Price Drop Notifications: Email alerts for 5%+ price drops within 1 hour
+3. Availability Notifications: Alerts when favorited vehicles become unavailable
+4. Notification Preferences: User controls for notification types
+5. Real-time Updates: Live UI updates for price/status changes</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="System Architecture" section="Database Strategy">Use Supabase PostgreSQL with pgvector for vehicle tracking</doc>
+      <doc path="docs/architecture.md" title="System Architecture" section="Real-time Updates">WebSocket infrastructure for live price updates and notifications</doc>
+      <doc path="docs/architecture.md" title="System Architecture" section="Service Architecture">Microservices pattern for notification service</doc>
+      <doc path="docs/epics.md" title="Epics" section="Story 1.6">Original story requirements and acceptance criteria</doc>
+      <doc path="docs/sprint-artifacts/1-5-build-vehicle-comparison-and-recommendation-engine.md" title="Previous Story" section="Dev Agent Record">ComparisonEngine and RecommendationEngine service patterns, Redis caching, user interaction tracking</doc>
+    </docs>
+    <code>
+      <artifact path="src/semantic/embedding_service.py" kind="service" symbol="OttoAIEmbeddingService" lines="126-139" reason="Base embedding service for vehicle tracking integration"/>
+      <artifact path="src/api/semantic_search_api.py" kind="controller" symbol="SemanticSearchService" lines="210-229" reason="Rate limiting pattern to apply to favorites endpoints"/>
+      <artifact path="src/search/filter_service.py" kind="service" symbol="IntelligentFilterService" lines="117-127" reason="Service initialization patterns and Redis caching strategy"/>
+      <artifact path="src/api/filter_management_api.py" kind="controller" symbol="filter_router" lines="89-93" reason="API router pattern for favorites endpoints"/>
+      <artifact path="src/semantic/vehicle_database_service.py" kind="service" symbol="VehicleDatabaseService" lines="Various" reason="Database service patterns for favorites table operations"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="raganything[all]" version="1.2.8"/>
+        <package name="fastapi" version="Latest"/>
+        <package name="pydantic" version="Latest"/>
+        <package name="supabase" version="Latest"/>
+        <package name="pgvector" version="0.8.0"/>
+        <package name="redis" version="Latest"/>
+        <package name="uvicorn" version="Latest"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>Follow established async/await patterns. Use Supabase PostgreSQL with pgvector. Implement proper authentication middleware. TARB compliance required (real database connections only). Apply Redis caching for popular operations. Use WebSocket infrastructure from Story 1-3. Follow established API patterns (/api/favorites/*, /api/notifications/*)</constraints>
+
+  <interfaces>
+    <interface name="FavoritesService.add_to_favorites" kind="function" signature="async add_to_favorites(user_id: str, vehicle_id: str) -> bool" path="src/user/favorites_service.py"/>
+    <interface name="FavoritesService.remove_from_favorites" kind="function" signature="async remove_from_favorites(user_id: str, vehicle_id: str) -> bool" path="src/user/favorites_service.py"/>
+    <interface name="FavoritesService.get_user_favorites" kind="function" signature="async get_user_favorites(user_id: str, limit: int, offset: int) -> List[Vehicle]" path="src/user/favorites_service.py"/>
+    <interface name="NotificationService.send_price_drop_notification" kind="function" signature="async send_price_drop_notification(user_id: str, vehicle_id: str, old_price: float, new_price: float) -> bool" path="src/notifications/notification_service.py"/>
+    <interface name="POST /api/favorites/add" kind="REST endpoint" signature="POST /api/favorites/add - Add vehicle to user favorites" path="src/api/favorites_api.py"/>
+    <interface name="GET /api/favorites/list" kind="REST endpoint" signature="GET /api/favorites/list - Get paginated user favorites" path="src/api/favorites_api.py"/>
+    <interface name="WebSocket /ws/favorites" kind="WebSocket endpoint" signature="WebSocket connection for real-time favorites updates" path="src/api/favorites_websocket.py"/>
+  </interfaces>
+
+  <tests>
+    <standards>Unit tests for service methods using pytest. Integration tests with real Supabase connections (TARB compliance). WebSocket testing for real-time updates. Performance tests for notification batch processing. End-to-end tests for complete workflow. Use established testing patterns from previous stories.</standards>
+    <locations>tests/unit/favorites_service.py, tests/integration/test_favorites_integration.py, tests/test_websocket_favorites.py, tests/performance/test_notification_batch.py</locations>
+    <ideas>
+      <test idea="Test add to favorites duplicate prevention" ac="1"/>
+      <test idea="Test price drop notification with 5% threshold" ac="2"/>
+      <test idea="Test availability notification for sold vehicles" ac="3"/>
+      <test idea="Test notification preferences enable/disable" ac="4"/>
+      <test idea="Test real-time WebSocket updates for price changes" ac="5"/>
+    </ideas>
+  </tests>
+</story-context>
