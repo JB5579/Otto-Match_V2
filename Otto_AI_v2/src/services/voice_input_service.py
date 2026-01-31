@@ -1,6 +1,17 @@
 """
 Voice Input Service for Otto.AI
 Handles speech-to-text conversion using Web Speech API
+
+================================================================================
+STATUS: DEFERRED (2026-01-22)
+================================================================================
+This feature has been moved to future enhancements backlog.
+Rationale: Voice input is an enhancement feature, not core functionality.
+           Text-based conversation validates the discovery journey UX.
+
+Implementation preserved for future integration when core MVP is validated.
+See: docs/future-features.md for tracking and reactivation criteria.
+================================================================================
 """
 
 import asyncio

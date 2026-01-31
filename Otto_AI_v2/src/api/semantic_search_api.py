@@ -36,6 +36,13 @@ from src.semantic.embedding_service import OttoAIEmbeddingService, EmbeddingRequ
 from src.semantic.vehicle_processing_service import VehicleProcessingService
 from src.semantic.vehicle_database_service import VehicleDatabaseService
 
+# RAG Strategy services (Story 1-9 through 1-12)
+from src.search.search_orchestrator import SearchOrchestrator, SearchRequest as OrchestratorRequest
+from src.search.query_expansion_service import QueryExpansionService
+from src.search.hybrid_search_service import HybridSearchService
+from src.search.reranking_service import RerankingService
+from src.search.contextual_embedding_service import ContextualEmbeddingService
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,15 +52,30 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 class SearchFilters(BaseModel):
-    """Traditional search filters for hybrid search"""
+    """Traditional search filters for hybrid search
+
+    Story 3-7 Updates:
+    - Added multi-select support for makes and vehicle_types
+    - Uses effective_price for price filtering (handles NULL prices)
+    - Removed features filter (no database support)
+    """
+    # Single-select filters (backward compatibility)
     make: Optional[str] = Field(None, description="Vehicle make (e.g., 'Toyota', 'Honda')")
     model: Optional[str] = Field(None, description="Vehicle model (e.g., 'Camry', 'Pilot')")
+    vehicle_type: Optional[str] = Field(None, description="Vehicle type (e.g., 'SUV', 'Sedan', 'Truck')")
+
+    # Multi-select filters (NEW - Story 3-7)
+    makes: Optional[List[str]] = Field(None, description="Multiple vehicle makes (e.g., ['Toyota', 'Honda'])")
+    vehicle_types: Optional[List[str]] = Field(None, description="Multiple vehicle types (e.g., ['SUV', 'Sedan'])")
+
+    # Range filters
     year_min: Optional[int] = Field(None, ge=1900, le=2030, description="Minimum model year")
     year_max: Optional[int] = Field(None, ge=1900, le=2030, description="Maximum model year")
-    price_min: Optional[float] = Field(None, ge=0, description="Minimum price")
-    price_max: Optional[float] = Field(None, ge=0, description="Maximum price")
+    price_min: Optional[float] = Field(None, ge=0, description="Minimum price (uses effective_price)")
+    price_max: Optional[float] = Field(None, ge=0, description="Maximum price (uses effective_price)")
     mileage_max: Optional[int] = Field(None, ge=0, description="Maximum mileage")
-    vehicle_type: Optional[str] = Field(None, description="Vehicle type (e.g., 'SUV', 'Sedan', 'Truck')")
+
+    # Other filters
     fuel_type: Optional[str] = Field(None, description="Fuel type (e.g., 'Gasoline', 'Electric', 'Hybrid')")
     transmission: Optional[str] = Field(None, description="Transmission type")
     exterior_color: Optional[str] = Field(None, description="Exterior color preference")
@@ -84,6 +106,12 @@ class SemanticSearchRequest(BaseModel):
     sort_order: str = Field("desc", description="Sort order: asc, desc")
     include_similarity_scores: bool = Field(True, description="Include similarity scores in response")
     search_id: Optional[str] = Field(None, description="Unique search identifier for tracking")
+
+    # RAG Strategy enhancements (Story 1-9 through 1-12)
+    enable_expansion: bool = Field(True, description="Enable LLM query expansion")
+    enable_reranking: bool = Field(True, description="Enable cross-encoder re-ranking")
+    enable_hybrid: bool = Field(True, description="Enable hybrid search (vector + keyword + filters)")
+    use_rag_pipeline: bool = Field(True, description="Use advanced RAG pipeline")
 
     @validator('sort_by')
     def validate_sort_by(cls, v):
@@ -211,7 +239,7 @@ class RateLimiter:
 # ============================================================================
 
 class SemanticSearchService:
-    """Core semantic search service"""
+    """Core semantic search service with RAG pipeline integration"""
 
     def __init__(self):
         self.embedding_service: Optional[OttoAIEmbeddingService] = None
@@ -219,12 +247,18 @@ class SemanticSearchService:
         self.vehicle_processing_service: Optional[VehicleProcessingService] = None
         self.rate_limiter = RateLimiter(max_requests=10, window_minutes=1)
 
+        # RAG Pipeline components (Story 1-9 through 1-12)
+        self.search_orchestrator: Optional[SearchOrchestrator] = None
+        self.rag_enabled = True  # Feature flag for RAG pipeline
+
         # Performance tracking
         self.search_stats = {
             "total_searches": 0,
             "avg_processing_time": 0.0,
             "cache_hits": 0,
-            "cache_misses": 0
+            "cache_misses": 0,
+            "rag_searches": 0,
+            "legacy_searches": 0
         }
 
         # Simple cache for frequent queries
@@ -250,6 +284,21 @@ class SemanticSearchService:
             self.vehicle_processing_service = VehicleProcessingService()
             if not await self.vehicle_processing_service.initialize(supabase_url, supabase_key):
                 raise Exception("Failed to initialize vehicle processing service")
+
+            # Initialize RAG Pipeline (Story 1-9 through 1-12)
+            try:
+                self.search_orchestrator = SearchOrchestrator()
+                if await self.search_orchestrator.initialize(
+                    supabase_url, supabase_key, self.embedding_service
+                ):
+                    logger.info("✅ RAG Pipeline initialized (hybrid search + query expansion + re-ranking)")
+                    self.rag_enabled = True
+                else:
+                    logger.warning("⚠️ RAG Pipeline initialization failed, using legacy search")
+                    self.rag_enabled = False
+            except Exception as rag_error:
+                logger.warning(f"⚠️ RAG Pipeline not available: {rag_error}")
+                self.rag_enabled = False
 
             logger.info("✅ Semantic Search Service initialized successfully")
             return True
@@ -294,7 +343,7 @@ class SemanticSearchService:
             del self.query_cache[oldest_key]
 
     async def semantic_search(self, request: SemanticSearchRequest, client_id: str) -> SemanticSearchResponse:
-        """Perform semantic vehicle search"""
+        """Perform semantic vehicle search with optional RAG pipeline"""
         start_time = time.time()
 
         # Generate search ID if not provided
@@ -309,85 +358,22 @@ class SemanticSearchService:
                 logger.info(f"Cache hit for search: {request.query[:50]}...")
                 return SemanticSearchResponse(**cached_results)
 
-            # Generate embedding for search query
-            embedding_request = EmbeddingRequest(text=request.query)
-            embedding_response = await self.embedding_service.generate_embedding(embedding_request)
-            query_embedding = embedding_response.embedding
-
             # Build database filters
             db_filters = {}
             if request.filters:
                 filter_dict = request.filters.dict(exclude_unset=True)
                 db_filters.update(filter_dict)
 
-            # Perform hybrid search (vector similarity + traditional filters)
-            search_results = await self.vehicle_db_service.hybrid_search(
-                query_embedding=query_embedding,
-                filters=db_filters,
-                limit=request.limit,
-                offset=request.offset,
-                sort_by=request.sort_by,
-                sort_order=request.sort_order
-            )
-
-            # Convert to API response format
-            vehicle_results = []
-            for result in search_results["results"]:
-                vehicle_data = result["vehicle"]
-
-                vehicle_result = VehicleResult(
-                    id=vehicle_data.get("id", ""),
-                    vin=vehicle_data.get("vin", ""),
-                    year=vehicle_data.get("year", 0),
-                    make=vehicle_data.get("make", ""),
-                    model=vehicle_data.get("model", ""),
-                    trim=vehicle_data.get("trim"),
-                    vehicle_type=vehicle_data.get("vehicle_type", ""),
-                    price=float(vehicle_data.get("price", 0)),
-                    mileage=vehicle_data.get("mileage"),
-                    description=vehicle_data.get("description", ""),
-                    features=vehicle_data.get("features", []),
-                    exterior_color=vehicle_data.get("exterior_color", ""),
-                    interior_color=vehicle_data.get("interior_color", ""),
-                    city=vehicle_data.get("city", ""),
-                    state=vehicle_data.get("state", ""),
-                    condition=vehicle_data.get("condition", ""),
-                    images=vehicle_data.get("images", []),
-                    similarity_score=result.get("similarity_score"),
-                    match_explanation=result.get("match_explanation"),
-                    preference_score=result.get("preference_score")
+            # Use RAG Pipeline if enabled and requested
+            if self.rag_enabled and request.use_rag_pipeline and self.search_orchestrator:
+                return await self._rag_pipeline_search(
+                    request, search_id, db_filters, client_id, start_time, cache_key
                 )
-                vehicle_results.append(vehicle_result)
 
-            # Build response
-            processing_time = time.time() - start_time
-            response = SemanticSearchResponse(
-                query=request.query,
-                search_id=search_id,
-                total_results=search_results["total_count"],
-                processing_time=processing_time,
-                results=vehicle_results,
-                filters_applied=db_filters if db_filters else None,
-                search_metadata={
-                    "embedding_dim": len(query_embedding),
-                    "search_type": "hybrid",
-                    "client_id": client_id,
-                    "cache_used": False
-                }
+            # Fallback to legacy search
+            return await self._legacy_search(
+                request, search_id, db_filters, client_id, start_time, cache_key
             )
-
-            # Cache results
-            response_dict = response.dict()
-            self._store_in_cache(cache_key, response_dict)
-
-            # Update statistics
-            self.search_stats["total_searches"] += 1
-            total_time = self.search_stats["avg_processing_time"] * (self.search_stats["total_searches"] - 1)
-            self.search_stats["avg_processing_time"] = (total_time + processing_time) / self.search_stats["total_searches"]
-
-            logger.info(f"✅ Search completed: {len(vehicle_results)} results in {processing_time:.3f}s")
-
-            return response
 
         except Exception as e:
             processing_time = time.time() - start_time
@@ -396,6 +382,185 @@ class SemanticSearchService:
                 status_code=500,
                 detail=f"Semantic search failed: {str(e)}"
             )
+
+    async def _rag_pipeline_search(
+        self,
+        request: SemanticSearchRequest,
+        search_id: str,
+        db_filters: Dict,
+        client_id: str,
+        start_time: float,
+        cache_key: str
+    ) -> SemanticSearchResponse:
+        """Execute search using RAG pipeline (Story 1-9 through 1-12)"""
+        self.search_stats["rag_searches"] += 1
+
+        # Create orchestrator request
+        orch_request = OrchestratorRequest(
+            query=request.query,
+            filters=db_filters,
+            limit=request.limit,
+            offset=request.offset,
+            enable_expansion=request.enable_expansion,
+            enable_reranking=request.enable_reranking,
+            enable_contextual=True
+        )
+
+        # Execute RAG pipeline
+        orch_response = await self.search_orchestrator.search(orch_request)
+
+        # Convert to API response format
+        vehicle_results = []
+        for result in orch_response.results:
+            vehicle_result = VehicleResult(
+                id=result.id,
+                vin=result.vin,
+                year=result.year,
+                make=result.make,
+                model=result.model,
+                trim=result.trim,
+                vehicle_type=result.vehicle_type or "",
+                price=float(result.price) if result.price else 0,
+                mileage=result.mileage,
+                description=result.description or "",
+                features=[],
+                exterior_color="",
+                interior_color="",
+                city="",
+                state="",
+                condition="",
+                images=[],
+                similarity_score=result.similarity_score,
+                match_explanation=None,
+                preference_score=result.rerank_score
+            )
+            vehicle_results.append(vehicle_result)
+
+        processing_time = time.time() - start_time
+        response = SemanticSearchResponse(
+            query=request.query,
+            search_id=search_id,
+            total_results=orch_response.total_results,
+            processing_time=processing_time,
+            results=vehicle_results,
+            filters_applied=db_filters if db_filters else None,
+            search_metadata={
+                "search_type": "rag_pipeline",
+                "client_id": client_id,
+                "cache_used": False,
+                "expansion_enabled": request.enable_expansion,
+                "reranking_enabled": request.enable_reranking,
+                "expansion_latency_ms": orch_response.expansion_latency_ms,
+                "search_latency_ms": orch_response.search_latency_ms,
+                "rerank_latency_ms": orch_response.rerank_latency_ms,
+                "expanded_query": orch_response.metadata.get("expanded_query"),
+                "extracted_filters": orch_response.metadata.get("extracted_filters")
+            }
+        )
+
+        # Cache results
+        response_dict = response.dict()
+        self._store_in_cache(cache_key, response_dict)
+
+        # Update statistics
+        self.search_stats["total_searches"] += 1
+        total_time = self.search_stats["avg_processing_time"] * (self.search_stats["total_searches"] - 1)
+        self.search_stats["avg_processing_time"] = (total_time + processing_time) / self.search_stats["total_searches"]
+
+        logger.info(
+            f"✅ RAG search completed: {len(vehicle_results)} results in {processing_time:.3f}s "
+            f"(expand: {orch_response.expansion_latency_ms:.0f}ms, "
+            f"search: {orch_response.search_latency_ms:.0f}ms, "
+            f"rerank: {orch_response.rerank_latency_ms:.0f}ms)"
+        )
+
+        return response
+
+    async def _legacy_search(
+        self,
+        request: SemanticSearchRequest,
+        search_id: str,
+        db_filters: Dict,
+        client_id: str,
+        start_time: float,
+        cache_key: str
+    ) -> SemanticSearchResponse:
+        """Execute legacy vector-only search"""
+        self.search_stats["legacy_searches"] += 1
+
+        # Generate embedding for search query
+        embedding_request = EmbeddingRequest(text=request.query)
+        embedding_response = await self.embedding_service.generate_embedding(embedding_request)
+        query_embedding = embedding_response.embedding
+
+        # Perform hybrid search (vector similarity + traditional filters)
+        search_results = await self.vehicle_db_service.hybrid_search(
+            query_embedding=query_embedding,
+            filters=db_filters,
+            limit=request.limit,
+            offset=request.offset,
+            sort_by=request.sort_by,
+            sort_order=request.sort_order
+        )
+
+        # Convert to API response format
+        vehicle_results = []
+        for result in search_results["results"]:
+            vehicle_data = result["vehicle"]
+
+            vehicle_result = VehicleResult(
+                id=vehicle_data.get("id", ""),
+                vin=vehicle_data.get("vin", ""),
+                year=vehicle_data.get("year", 0),
+                make=vehicle_data.get("make", ""),
+                model=vehicle_data.get("model", ""),
+                trim=vehicle_data.get("trim"),
+                vehicle_type=vehicle_data.get("vehicle_type", ""),
+                price=float(vehicle_data.get("price", 0)),
+                mileage=vehicle_data.get("mileage"),
+                description=vehicle_data.get("description", ""),
+                features=vehicle_data.get("features", []),
+                exterior_color=vehicle_data.get("exterior_color", ""),
+                interior_color=vehicle_data.get("interior_color", ""),
+                city=vehicle_data.get("city", ""),
+                state=vehicle_data.get("state", ""),
+                condition=vehicle_data.get("condition", ""),
+                images=vehicle_data.get("images", []),
+                similarity_score=result.get("similarity_score"),
+                match_explanation=result.get("match_explanation"),
+                preference_score=result.get("preference_score")
+            )
+            vehicle_results.append(vehicle_result)
+
+        # Build response
+        processing_time = time.time() - start_time
+        response = SemanticSearchResponse(
+            query=request.query,
+            search_id=search_id,
+            total_results=search_results["total_count"],
+            processing_time=processing_time,
+            results=vehicle_results,
+            filters_applied=db_filters if db_filters else None,
+            search_metadata={
+                "embedding_dim": len(query_embedding),
+                "search_type": "legacy",
+                "client_id": client_id,
+                "cache_used": False
+            }
+        )
+
+        # Cache results
+        response_dict = response.dict()
+        self._store_in_cache(cache_key, response_dict)
+
+        # Update statistics
+        self.search_stats["total_searches"] += 1
+        total_time = self.search_stats["avg_processing_time"] * (self.search_stats["total_searches"] - 1)
+        self.search_stats["avg_processing_time"] = (total_time + processing_time) / self.search_stats["total_searches"]
+
+        logger.info(f"✅ Legacy search completed: {len(vehicle_results)} results in {processing_time:.3f}s")
+
+        return response
 
     def get_search_stats(self) -> Dict[str, Any]:
         """Get search performance statistics"""

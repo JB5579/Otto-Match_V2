@@ -1,8 +1,15 @@
 # Vehicle Ingestion Pipeline Documentation
 
+**Implementation Status:** ⚠️ PARTIAL (Backend Only)
+**Last Verified:** 2026-01-02
+**Implemented:** PDF extraction pipeline (Story 5-4b)
+- `src/services/pdf_ingestion_service.py` (34 KB)
+- `src/semantic/vehicle_processing_service.py` (50 KB)
+**Missing:** Seller upload UI, batch processing dashboard, API integration (Epic 6)
+
 **Version:** 1.0
 **Last Updated:** 2025-12-14
-**Status:** Production Ready ✅
+**Original Status Claim:** Production Ready ✅ _(Corrected 2026-01-02 - Backend only, no frontend)_
 
 ---
 

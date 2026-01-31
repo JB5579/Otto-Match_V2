@@ -147,6 +147,170 @@ Success for Otto.AI is defined by creating value for both sides of the marketpla
 - Community features and user-generated content
 - Expansion into additional vehicle categories (motorcycles, RVs)
 
+---
+
+## Access Control & Authentication Strategy
+
+Otto.AI implements a **progressive authentication** pattern that maximizes user engagement while enabling personalized features. The platform balances public accessibility (for discovery and SEO) with authenticated personalization (for persistent memory and transactions).
+
+### Public Access Features (No Authentication Required)
+
+**Available to All Visitors Without Login:**
+
+- **Homepage and vehicle browsing** - Full access to vehicle inventory, search, and filtering
+- **Natural language semantic search** - Discover vehicles using conversational queries
+- **Vehicle detail views** - Comprehensive information including photos, specifications, pricing, and market data
+- **Otto AI conversational assistance** - Chat with Otto using session-based memory (anonymous sessions)
+- **Category browsing and collections** - Explore curated vehicle categories (SUVs, Electric, Luxury, etc.)
+- **Market comparisons and analysis** - Vehicle comparison tools and ownership cost calculations
+
+**Rationale for Public Access:**
+
+1. **SEO Optimization** - Search crawlers index homepage and vehicle listings, driving organic traffic
+2. **Conversion Funnel** - Users experience value before any authentication gate, reducing bounce rates
+3. **Competitive Parity** - Industry standard (Carvana, Vroom, CarMax) is public browsing → account at purchase
+4. **Viral Discovery** - Users can share vehicle links without requiring recipients to create accounts
+5. **Low Friction Entry** - No barrier to initial exploration, maximizing top-of-funnel engagement
+
+### Authenticated Features (Sign In Required)
+
+**Available to Registered Users:**
+
+- **Save vehicles to favorites** - Personal favorites list with price drop and availability notifications
+- **Conversation history and persistent memory** - Otto remembers preferences across sessions and devices
+- **User profile with saved searches** - Store search preferences, viewed vehicles, and browsing history
+- **Hold/reserve vehicles** - One-click reservation system with deposit processing
+- **Seller tools and lead management** - Vehicle listing management, analytics, and lead intelligence
+- **Cross-device synchronization** - Seamless experience across desktop, tablet, and mobile
+
+**Rationale for Authentication Gates:**
+
+1. **Value Exchange** - Users commit to account creation after experiencing value (not before)
+2. **Data Persistence** - Personalization requires persistent user identity for memory and preferences
+3. **Transaction Security** - Reservations and seller tools need verified identity for fraud prevention
+4. **Compliance** - User data access requests, GDPR rights, and privacy controls require account linkage
+
+### Progressive Authentication Pattern
+
+**Step 1: Guest Discovery (No Account Required)**
+
+- User arrives via organic search, referral, social media, or direct navigation
+- Browse vehicles, search, filter, and view details without any prompts
+- Chat with Otto using anonymous session ID (UUID v4 stored in HTTP-only cookie)
+- Session stored in browser cookie with 30-day sliding window expiry
+- Otto provides personalized recommendations based on session conversation
+
+**Step 2: Engagement Point (Motivation for Account Creation)**
+
+- User attempts gated action (favorite a vehicle, hold a vehicle, save conversation history)
+- System displays friendly prompt: **"Sign In to save favorites"** or **"Create an account to hold this vehicle"**
+- Clear value proposition: **"Save your preferences and pick up where you left off"**
+- User can continue browsing without signing up (soft gate, not hard wall)
+
+**Step 3: Account Creation (Preserve Context)**
+
+- User completes signup (email/password or social authentication via Google/Apple)
+- **Critical Feature:** Anonymous session memory automatically merged to user account
+- Zep-cloud session transferred from `guest:session_id` to `user@email.com`
+- Previous conversation context preserved and accessible in account
+- Cookie cleared after successful merge (user now authenticated)
+
+**Step 4: Return Visit Recognition**
+
+- Cookie detection identifies returning visitor: `otto_session_id` present
+- Retrieve last session: Otto greets **"Welcome back! Last time you were looking at family SUVs under $30k"**
+- Seamless continuation: Otto remembers preferences without requiring login
+- Session cookie expiry extended (sliding window resets on each visit)
+
+**Step 5: Authenticated Experience (Full Personalization)**
+
+- All features available without restrictions
+- Cross-device sync (mobile → desktop → tablet)
+- Persistent memory across sessions and devices
+- Conversation history accessible and searchable
+- Advanced features: multiple conversation threads, voice input, exclusive content
+
+### Session-Based Memory Architecture
+
+**Anonymous Session Management:**
+
+```
+Guest Visit → Generate UUID v4 session ID
+           → Store in HTTP-only cookie (otto_session_id, 30-day expiry)
+           → Create Zep-cloud session with user_id = "guest:{session_id}"
+           → Chat with Otto using session context
+           → Extract preferences from conversation for personalization
+```
+
+**Session-to-Account Merge Flow:**
+
+```
+Guest Signs Up → Extract session_id from cookie
+              → Retrieve all messages from guest Zep session
+              → Create authenticated user session
+              → Transfer all messages to user account
+              → Update conversation ownership in database
+              → Mark guest session as "merged" (audit trail)
+              → Clear session cookie
+              → User sees preserved conversation context
+```
+
+**Cookie-Based Recognition:**
+
+```
+Returning Guest → Browser sends otto_session_id cookie
+              → Server retrieves last session data from Zep-cloud
+              → Extract: last visit date, previous preferences, message count
+              → Generate personalized greeting: "Welcome back! Last time you were looking at..."
+              → Extend cookie expiry (reset 30-day timer)
+              → Seamless experience without authentication prompt
+```
+
+### SEO and Search Crawler Requirements
+
+**Public Pages for Search Indexing:**
+
+- Homepage (`/`) - Must be accessible to search crawlers without authentication
+- Vehicle listing pages - Category pages (SUVs, Electric, Luxury, etc.)
+- Vehicle detail pages - Individual vehicle pages with full specifications
+- Blog content (future) - Vehicle reviews, buying guides, market analysis
+
+**SEO Requirements:**
+
+- Server-side rendering (SSR) or static generation for core pages
+- Structured data markup (JSON-LD) for vehicles and pricing
+- Meta tags and Open Graph tags for social sharing
+- Fast page load times (< 2 seconds) for search ranking
+- Mobile-optimized responsive design
+
+**Authentication and SEO Compatibility:**
+
+- Critical: Homepage and vehicle pages **must be public** for search crawlers
+- Forced authentication would block all SEO traffic
+- Progressive authentication pattern aligns perfectly with SEO requirements
+- Guest content indexed → User clicks search result → Experiences value → Signs up (conversion)
+
+### Implementation Notes
+
+**Frontend:**
+- `SessionService` class in `frontend/src/app/services/sessionService.ts`
+- `useSession` React hook for component integration
+- Guest vs authenticated navigation components
+
+**Backend:**
+- `auth_api.py` with session merge and context endpoints
+- `ZepClient` extended with guest session support (`create_guest_session`, `merge_session_to_user`, `get_last_visit_context`)
+- Anonymous session IDs: UUID v4 format stored in HTTP-only cookies
+
+**Security Considerations:**
+- Session cookies are HTTP-only and Secure flag (HTTPS only)
+- SameSite=Lax for CSRF protection
+- Session IDs are cryptographically random (UUID v4)
+- Guest sessions expire after 30 days of inactivity
+- Session-to-account merge requires valid authentication token
+
+---
+
 ### Visual Design Requirements
 
 **Glass-Morphism UI Treatment:**
@@ -442,6 +606,62 @@ Otto: "Absolutely! In that range, the Honda Civic and Toyota Corolla hybrids wou
 ---
 
 ## Functional Requirements
+
+**Last Updated:** 2026-01-02 | **Overall FR Implementation:** 28/82 (34%) Complete or Partial
+
+### Implementation Status Summary
+
+| FR Category | FRs | Status | Implementation Notes |
+|-------------|-----|--------|---------------------|
+| **FR1-FR7: Authentication** | 7 | 📋 0% | Epic 4 (0/9 stories) - No auth system |
+| **FR8-FR15: Conversation AI** | 8 | ⚠️ 60% | Epic 2 (6/10 stories) - Core implemented, voice/history pending |
+| **FR16-FR23: Search** | 8 | ✅ 100% | Epic 1 (12/12 stories) - Fully implemented |
+| **FR24-FR30: Vehicle Info** | 7 | ⚠️ 30% | Partial - Backend API, no frontend display |
+| **FR31-FR37: Reservations** | 7 | 📋 0% | Epic 5 (2/8 partial) - No reservation system |
+| **FR38-FR44: Seller Dashboard** | 7 | ⚠️ 15% | Epic 6 (0/8 stories) - Backend only, no UI |
+| **FR45-FR50: Notifications** | 6 | ⚠️ 50% | WebSocket implemented, email/SMS not implemented |
+| **FR51-FR57: Memory** | 7 | ✅ 85% | Epic 2 - Zep Cloud implemented, preference learning active |
+| **FR58-FR64: Multi-tenancy** | 7 | 📋 0% | Epic 4 - No multi-tenancy or RBAC |
+| **FR65-FR70: Analytics** | 6 | ⚠️ 20% | Basic analytics, no BI tools |
+| **FR71-FR76: Integrations** | 6 | ⚠️ 15% | PDF integration only, no CRM/payment |
+| **FR77-FR82: Admin** | 6 | 📋 0% | Epic 7 (0/6 stories) - No admin infrastructure |
+| **Total** | **82** | **⚠️ 34%** | **28 FRs complete/partial, 54 FRs not started** |
+
+**Legend:**
+- ✅ **100%** = Fully implemented and verified
+- ⚠️ **>0%** = Partially implemented (backend only, some features missing)
+- 📋 **0%** = Not started
+
+### Detailed FR Implementation Status
+
+**✅ Fully Implemented (18 FRs):**
+- FR16-FR23: All search and discovery features (Epic 1)
+- FR51, FR52, FR53, FR56, FR57: Memory and personalization (Zep Cloud)
+- FR9, FR10, FR12: Core conversation features
+
+**⚠️ Partially Implemented (10 FRs):**
+- FR8, FR11: Conversation features (no voice, no multi-thread)
+- FR24-FR26: Vehicle info (API exists, no frontend)
+- FR38: Seller listings (PDF backend only)
+- FR45: Notifications (WebSocket only)
+- FR71: Integrations (PDF only)
+
+**📋 Not Started (54 FRs):**
+- FR1-FR7: All authentication (Epic 4)
+- FR13-FR15: Conversation history, multi-thread, voice (Epic 2 pending)
+- FR27-FR30: Vehicle history, reviews (Epic 3 pending)
+- FR31-FR37: All reservations (Epic 5)
+- FR39-FR44: Seller dashboard UI (Epic 6)
+- FR46-FR50: Email/SMS notifications
+- FR54-FR55: Preference management UI
+- FR58-FR64: Multi-tenancy (Epic 4)
+- FR65-FR70: Analytics dashboards (Epic 8)
+- FR72-FR76: CRM/payment integrations
+- FR77-FR82: Platform admin (Epic 7)
+
+---
+
+### Functional Requirements Detail
 
 **User Account & Authentication**
 FR1: Users can create accounts using email or social authentication (Google, Apple)

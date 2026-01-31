@@ -1,0 +1,220 @@
+<story-context id="{bmad_folder}/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>2</storyId>
+    <title>Build Responsive Vehicle Grid Component (Core)</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-2-build-responsive-vehicle-grid-component.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to see vehicles displayed in an attractive, responsive grid that works seamlessly on all devices</iWant>
+    <soThat>I can browse vehicle inventory with optimal viewing experience regardless of screen size</soThat>
+    <tasks>24 implementation tasks organized across: Project Setup, Core Components (VehicleCard, VehicleGrid), Page Integration, Styling, Testing, Performance Optimization, Progressive Disclosure</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Vehicle Grid Displays Vehicles on Desktop - 3-column grid layout (optimized for modern screens), 4/2/1 responsive columns, glass-morphism styling</criterion>
+    <criterion id="AC2">Vehicle Grid Adapts to Tablet View - 2-column layout, no horizontal scrolling, touch interactions</criterion>
+    <criterion id="AC3">Vehicle Grid Adapts to Mobile View - 1-column layout, large images, prominent price/match score, no horizontal scroll</criterion>
+    <criterion id="AC4">Vehicle Card Displays Complete Information - Hero image (16:10), Match Score Badge, Otto's Pick badge (95%+), title, specs, price with savings, feature tags, thumbs up/down buttons, Add to compare button, Favorite button</criterion>
+    <criterion id="AC5">Match Score Badge Visual Design - Circular badge, color tiers (90%+ green, 80-89% lime, 70-79% yellow, <70% orange), pulsing animation for 95%+, Otto's Pick badge variant (star icon with cyan glow)</criterion>
+    <criterion id="AC6">Grid Integration with API Client - Authenticated fetch, skeleton loading, error handling, sorted by match score, pagination/infinite scroll</criterion>
+    <criterion id="AC7">Glass-Morphism Design System Applied - Light glass styling (rgba 255,255,255,0.85), 20px backdrop blur, hover transitions</criterion>
+    <criterion id="AC8">Performance and Accessibility - FCP < 1.5s, lazy-loaded images, React.memo optimization, keyboard navigation, ARIA labels, WCAG 2.1 AA compliance</criterion>
+    <criterion id="AC9">Progressive Disclosure of Information - Mobile collapsed state (image, badge, title, price), "Show more" chevron expands to reveal specs/features/tags, desktop hover shows all info, persistent state, smooth animations</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Dynamic Vehicle Grid Interface</title>
+        <section>Overview, Frontend Module Structure, Component Responsibilities</section>
+        <snippet>Epic 3 delivers the primary user interface for Otto.AI - a dynamic, real-time responsive web application that transforms car shopping into conversational discovery. Target state includes modern React 18+ frontend with glass-morphism design system and WCAG 2.1 AA accessibility compliance.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Otto.AI UX Design Specification</title>
+        <section>Design System Foundation, Glass-Morphism UI Treatment, Responsive Strategy</section>
+        <snippet>Selected design tokens: Glass-morphism Base (rgba 255,255,255,0.85, 20px blur), Otto Blue (#0EA5E9), Match Score Colors (green 90%+, lime 80-89%, yellow 70-79%, orange <70%). Breakpoints: mobile 375px, tablet 768px, desktop 1024px, wide 1440px.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture Documentation</title>
+        <section>Frontend Component Architecture, Vehicle Card Component Structure, Match Score Badge Component</section>
+        <snippet>Frontend follows atomic design pattern with atoms (Badge, Button, Input), molecules (FilterPill, PriceDisplay, MatchScore, VehicleSpec), organisms (VehicleCard, VehicleDetailModal, OttoConversation), templates (DiscoveryPage, VehicleDetailOverlay).</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Visual Design Requirements, Match Score Visualization, Responsive Design Requirements</section>
+        <snippet>Glass-morphism UI treatment with layered depth, soft geometry, subtle motion. Match score visualization with color-coded tiers and pulsing animation for 95%+ scores. Responsive breakpoints: mobile (<768px, 1 column), tablet (768-1199px, 2 columns), desktop (≥1200px, 3-4 columns).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/stories/3-1-initialize-real-time-grid-infrastructure.md</path>
+        <title>Story 3.1: Initialize Frontend Infrastructure with Supabase Auth</title>
+        <section>Completion Notes, Files Created</section>
+        <snippet>React 19.2.0 + TypeScript 5.9.3 + Vite 7.2.4 initialized. Supabase Auth client configured. AuthContext with useAuth() hook implemented. API client with JWT authentication (195 lines). Production build verified passing.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/app/contexts/AuthContext.tsx</path>
+        <kind>component</kind>
+        <symbol>AuthContext, AuthProvider, useAuth</symbol>
+        <lines>1-89</lines>
+        <reason>Provides Supabase authentication state and JWT token access for API requests. Reuse useAuth() hook for authenticated vehicle grid fetches.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/services/apiClient.ts</path>
+        <kind>service</kind>
+        <symbol>VehicleAPIClient, getAuthHeaders</symbol>
+        <lines>1-195</lines>
+        <reason>API client with JWT authentication. Extend or use VehicleAPIClient for vehicle data fetching from /api/vehicles endpoint.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/types/api.ts</path>
+        <kind>types</kind>
+        <symbol>API response types</symbol>
+        <lines>1-102</lines>
+        <reason>TypeScript type definitions for API responses. Extend with Vehicle, VehicleImage, VehicleSpecs interfaces for vehicle grid.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/lib/supabaseClient.ts</path>
+        <kind>library</kind>
+        <symbol>supabase, getAuthToken</symbol>
+        <lines>1-50</lines>
+        <reason>Supabase client configuration. Reuse for authentication and potentially favorites/collections (if RLS enabled).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/components/ProtectedRoute.tsx</path>
+        <kind>component</kind>
+        <symbol>ProtectedRoute</symbol>
+        <lines>1-40</lines>
+        <reason>Route protection wrapper. Vehicle grid page should be wrapped in ProtectedRoute to require authentication.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/pages/HomePage.tsx</path>
+        <kind>page</kind>
+        <symbol>HomePage</symbol>
+        <lines>1-50</lines>
+        <reason>Protected home page. Update to integrate VehicleGrid component (task 3-2.13).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/App.tsx</path>
+        <kind>component</kind>
+        <symbol>App, Router configuration</symbol>
+        <lines>1-80</lines>
+        <reason>Application routing setup. Vehicle grid route already configured as protected home page.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/package.json</path>
+        <kind>manifest</kind>
+        <symbol>dependencies</symbol>
+        <lines>1-50</lines>
+        <reason>Frontend dependencies. React 19.2.0, TypeScript 5.9.3, Vite 7.2.4, Supabase, ESLint, Prettier, Vitest configured. Add Framer Motion for animations (task 3-2.1).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^19.2.0" />
+        <package name="typescript" version="^5.9.3" />
+        <package name="vite" version="^7.2.4" />
+        <package name="@supabase/supabase-js" version="^2.39.0" />
+        <package name="react-router-dom" version="^6.20.0" />
+        <package name="vitest" version="^2.0.0" />
+        <package name="@testing-library/react" version="^16.0.0" />
+        <package name="playwright" version="^1.40.0" />
+        <package name="framer-motion" version="^11.0.0" to-install="true" />
+        <package name="tailwindcss" version="^3.4.0" optional="true" />
+        <package name="@radix-ui/react-*" version="^1.0.0" optional="true" />
+      </ecosystem>
+      <ecosystem name="python">
+        <note>Backend API runs separately. FastAPI endpoints: GET /api/vehicles, POST /api/favorites/{id}, POST /api/feedback</note>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Glass-morphism design system: Use rgba(255,255,255,0.85) background, 20px backdrop-filter blur, 1px solid rgba(255,255,255,0.18) border, 0 8px 32px rgba(0,0,0,0.08) shadow, 12px border-radius for cards.</constraint>
+    <constraint type="pattern">Atomic Design Pattern: Build atoms (Badge, Button), molecules (PriceDisplay, MatchScoreBadge), organisms (VehicleCard, VehicleGrid), templates (DiscoveryPage).</constraint>
+    <constraint type="pattern">Responsive Breakpoints: Mobile <768px (1 column), Tablet 768-1199px (2 columns), Desktop ≥1200px (3 columns - SCAMPER enhancement from original 4-column).</constraint>
+    <constraint type="accessibility">WCAG 2.1 AA compliance required: Color contrast ≥4.5:1, touch targets ≥44x44px, keyboard navigation (Tab, Enter, Escape), ARIA labels for interactive elements.</constraint>
+    <constraint type="performance">FCP (First Contentful Paint) must be <1.5s. Use lazy loading for images, React.memo for component optimization, virtual scrolling for >100 vehicles.</constraint>
+    <constraint type="testing">80% code coverage target for vehicle-grid components. Unit tests with Vitest + React Testing Library. Visual regression tests with Playwright screenshots at each breakpoint.</constraint>
+    <constraint type="architecture">No Redux required for MVP. Use React Context + hooks for state management. Story 3-2 uses local state only (global state deferred to later stories).</constraint>
+    <constraint type="integration">All API requests must include JWT token via Authorization header. Use VehicleAPIClient from apiClient.ts for authenticated requests to backend at http://localhost:8000.</constraint>
+    <constraint type="otto_integration">Story 3-2 implements visual grid only. Otto AI WebSocket integration deferred to Story 3-6 (conversational comparison). Add to compare button adds to local buffer only (no Otto interaction).</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /api/vehicles</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/vehicles?limit=50&amp;offset=0</signature>
+      <path>src/api/listings_api.py</path>
+      <returns>Vehicle[] with match scores, pagination metadata</returns>
+    </interface>
+    <interface>
+      <name>POST /api/favorites/{vehicle_id}</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /api/favorites/{id} with Authorization header</signature>
+      <path>src/api/ (to be created or existing)</path>
+      <returns>{success: boolean, message: string}</returns>
+    </interface>
+    <interface>
+      <name>POST /api/feedback</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /api/feedback with {type: "more" | "less", vehicle_id: string}</signature>
+      <path>src/api/ (preference learning endpoint)</path>
+      <returns>{success: boolean, preferences_updated: string[]}</returns>
+    </interface>
+    <interface>
+      <name>useAuth() hook</name>
+      <kind>React hook</kind>
+      <signature>const { user, session, signIn, signUp, signOut } = useAuth()</signature>
+      <path>frontend/src/app/contexts/AuthContext.tsx</path>
+      <returns>AuthState object with user, session, and auth methods</returns>
+    </interface>
+    <interface>
+      <name>VehicleAPIClient class</name>
+      <kind>TypeScript class</kind>
+      <signature>class VehicleAPIClient { async getVehicles(filters?: SearchFilters): Promise&lt;Vehicle[]&gt; }</signature>
+      <path>frontend/src/app/services/apiClient.ts</path>
+      <returns>Vehicle array with JWT-authenticated requests</returns>
+    </interface>
+    <interface>
+      <name>Vehicle type</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface Vehicle { id: string, vin: string, make: string, model: string, year: number, mileage: number, price: number, matchScore?: number, images: VehicleImage[], features: string[] }</signature>
+      <path>frontend/src/app/types/api.ts (to be extended)</path>
+      <returns>Vehicle data structure matching backend Pydantic model</returns>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Unit Tests: Vitest + React Testing Library for components and hooks. Test utilities include renderWithProviders() wrapper for AuthProvider. Coverage target: 80% for vehicle-grid components. Accessibility Tests: @testing-library/jest-dom for a11y assertions, keyboard navigation verification. Visual Regression: Playwright screenshots at mobile (375px), tablet (768px), desktop (1200px) breakpoints. Performance Tests: Lighthouse CI for FCP, LCP metrics during build.</standards>
+    <locations>
+      <location>frontend/src/components/vehicle-grid/__tests__/ - Component unit tests</location>
+      <location>frontend/src/test/__tests__/ - Integration tests for API client</location>
+      <location>frontend/tests/e2e/ - Playwright E2E tests for grid interactions</location>
+    </locations>
+    <ideas>
+      <test_idea ac="AC1, AC2, AC3">Test responsive grid layout: Render VehicleGrid with 20 vehicles, verify 3-column layout on desktop (≥1200px), 2-column on tablet (768-1199px), 1-column on mobile (<768px).</test_idea>
+      <test_idea ac="AC4">Test VehicleCard renders all elements: Verify hero image, MatchScoreBadge, Otto's Pick badge (95%+), title, specs, price, feature tags, thumbs up/down buttons, Add to compare button, Favorite button all present.</test_idea>
+      <test_idea ac="AC5">Test MatchScoreBadge color tiers: Render badges with scores 95%, 85%, 75%, 65%, verify green, lime, yellow, orange backgrounds respectively. Test pulsing animation for 95%+.</test_idea>
+      <test_idea ac="AC6">Test API integration: Mock VehicleAPIClient.getVehicles(), render VehicleGrid, verify skeleton loading state shown, then vehicles displayed after fetch completes, error state handled on failure.</test_idea>
+      <test_idea ac="AC7">Test glass-morphism styling: Render VehicleCard, verify background rgba(255,255,255,0.85), backdrop-filter blur 20px, border rgba(255,255,255,0.18), shadow 0 8px 32px rgba(0,0,0,0.08).</test_idea>
+      <test_idea ac="AC8">Test performance and accessibility: Measure FCP < 1.5s with Lighthouse. Verify Tab key navigates cards, Enter selects card. Test ARIA labels present on all interactive elements. Verify color contrast ratios ≥4.5:1.</test_idea>
+      <test_idea ac="AC9">Test progressive disclosure: Render ExpandableVehicleCard on mobile viewport, verify collapsed state (image, badge, title, price only), tap "Show more" expands to show specs/features/tags, smooth animation 200ms ease-out, state persists.</test_idea>
+      <test_idea ac="All">Test keyboard navigation: Tab through grid, verify focus indicators visible, Enter opens vehicle detail, Escape closes. Test screen reader announces vehicle information correctly.</test_idea>
+      <test_idea ac="Story 3-2 split">Verify Otto integration NOT present: Add to compare button should only update local state, no WebSocket messages sent. Confirm defer to Story 3-6.</test_idea>
+      <test_idea ac="SCAMPER enhancements">Test 3-column desktop layout (not 4-column). Test Otto's Pick badge appears for 95%+ match scores (star icon with cyan glow). Test VehicleCard variant prop accepts "default" | "compact" | "comparison".</test_idea>
+    </ideas>
+  </tests>
+</story-context>
+

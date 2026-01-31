@@ -640,6 +640,32 @@ So that we can build an intelligent conversation system for vehicle discovery.
 **And** the conversation is logged in Zep Cloud with temporal metadata
 **And** error handling gracefully manages disconnections and API failures
 
+**Guest User Access (Progressive Authentication):**
+
+**Given** I'm a guest user on the homepage (not authenticated)
+**When** I start chatting with Otto AI
+**Then** the system generates an anonymous session ID (UUID v4 format)
+**And** stores the session ID in browser cookie (otto_session_id, 30-day sliding expiry)
+**And** the WebSocket connection uses `/ws/conversation/session/{session_id}` endpoint
+**And** Zep Cloud creates a guest session with `guest:{session_id}` user_id
+**And** Otto responds to my messages with full conversational AI capabilities
+**And** no authentication prompt appears during the conversation
+
+**Given** I'm a guest user with an existing session cookie
+**When** I return to the homepage after 7 days
+**Then** the system recognizes my session from the cookie
+**And** retrieves my previous conversation context from Zep Cloud
+**And** Otto greets me with "Welcome back!" message referencing our last discussion
+**And** my conversation history is available in the current session
+
+**Given** I'm a guest user who has been chatting with Otto
+**When** I click "Sign In" and complete authentication
+**Then** the system merges my guest session to my authenticated account
+**And** all conversation messages are transferred to my user account
+**And** preferences extracted from conversations are preserved
+**And** the guest session cookie is cleared after successful merge
+**And** I'm redirected to the homepage with personalized experience
+
 **Prerequisites:** Story 1.1 (Semantic Search Infrastructure)
 
 **Technical Notes:**
@@ -673,6 +699,28 @@ So that I can discover vehicles through conversation rather than traditional sea
 **Then** Otto AI understands the context from previous conversation turns
 **And** provides relevant information about EV charging options and availability
 **And** maintains consistency with previously discussed preferences
+
+**Guest User Access (Session-Based Context):**
+
+**Given** I'm a guest user (not authenticated)
+**When** I ask Otto AI "I'm looking for a safe family SUV under $30,000"
+**Then** Otto AI responds with questions about family size, safety priorities, and usage needs
+**And** maintains conversation context within my session
+**And** stores my preferences in Zep Cloud guest session
+**And** the response maintains a friendly, conversational tone
+
+**Given** I'm a guest user discussing electric vehicles
+**When** I ask "What about charging infrastructure in my area?"
+**Then** Otto AI understands context from previous conversation turns in my session
+**And** provides relevant information about EV charging options
+**And** maintains consistency with previously discussed preferences
+**And** no authentication prompt appears during conversation
+
+**Given** I'm a guest user who has discussed preferences
+**When** I later sign in to my account
+**Then** my guest session preferences are merged to my account
+**And** Otto AI continues conversation with preserved context
+**And** the session cookie is cleared after successful merge
 
 **Prerequisites:** Story 2.1
 
@@ -708,6 +756,28 @@ So that the vehicle discovery experience becomes more personalized and efficient
 **And** asks if I'd like to consider other brands with similar reliability ratings
 **And** explains why it's suggesting certain brands based on my historical preferences
 
+**Guest User Access (Session-Based Memory):**
+
+**Given** I'm a guest user who has had conversations with Otto AI over multiple days
+**When** I return with the same session cookie (within 30-day window)
+**Then** Otto AI greets me with context from previous guest sessions
+**And** asks relevant follow-up questions about my evolving preferences
+**And** remembers key details from previous conversations within the session
+**And** provides increasingly relevant vehicle recommendations based on learned session preferences
+
+**Given** I'm a guest user who previously mentioned preferring Japanese brands
+**When** I return and search for vehicles
+**Then** Otto AI prioritizes Japanese brands in recommendations
+**And** asks if I'd like to consider other brands with similar reliability ratings
+**And** explains why it's suggesting certain brands based on my guest session preferences
+**And** no authentication prompt appears during conversation
+
+**Given** I'm a guest user with established session preferences
+**When** I sign in to my account
+**Then** all guest session preferences are merged to my user account
+**And** Otto AI continues with preserved context and learned preferences
+**And** the guest session is marked as merged in Zep Cloud
+
 **Prerequisites:** Story 2.2
 
 **Technical Notes:**
@@ -742,6 +812,27 @@ So that I can provide increasingly accurate and personalized vehicle recommendat
 **And** provides information about vehicles that balance these needs
 **And** explains how different technologies (hybrid, turbo, etc.) address both concerns
 
+**Guest User Access (Session-Based Questioning):**
+
+**Given** I'm a guest user who mentions needing a "family car"
+**When** Otto AI responds
+**Then** it asks specific questions about family size, children's ages, and usage patterns
+**And** questions evolve based on my previous answers within the session
+**And** each question is designed to reveal actionable preference information
+**And** no authentication prompt appears during conversation
+
+**Given** I'm a guest user who has mentioned both "good gas mileage" and "performance"
+**When** Otto AI detects these potentially conflicting preferences
+**Then** it asks clarifying questions about priority and trade-offs
+**And** provides information about vehicles that balance these needs
+**And** explains how different technologies address both concerns
+**And** stores the clarified preferences in my guest session
+
+**Given** I'm a guest user with established preference answers
+**When** I sign in to my account
+**Then** all preference answers from my guest session are merged to my account
+**And** Otto AI continues asking relevant follow-up questions with preserved context
+
 **Prerequisites:** Story 2.3
 
 **Technical Notes:**
@@ -775,6 +866,27 @@ So that I can make informed decisions based on current market conditions.
 **Then** Otto AI provides detailed specification comparisons with real-world data
 **And** includes ownership cost estimates including fuel, insurance, and maintenance
 **And** explains key differences in practical terms for my usage patterns
+
+**Guest User Access (Real-Time Market Data):**
+
+**Given** I'm a guest user discussing a specific vehicle with Otto AI
+**When** I ask "What's the current market price for this model?"
+**Then** Otto AI provides current pricing from multiple sources with market analysis
+**And** explains price factors like condition, mileage, and location variations
+**And** provides information about recent market trends for this vehicle type
+**And** no authentication prompt appears during conversation
+
+**Given** I'm a guest user comparing two vehicles
+**When** I ask "How do these compare on fuel efficiency and maintenance costs?"
+**Then** Otto AI provides detailed specification comparisons with real-world data
+**And** includes ownership cost estimates including fuel, insurance, and maintenance
+**And** explains key differences in practical terms for my usage patterns
+**And** stores my comparison preferences in the guest session
+
+**Given** I'm a guest user with vehicle comparison research
+**When** I sign in to my account
+**Then** my guest session research context is preserved
+**And** Otto AI continues with all market data and comparisons intact
 
 **Prerequisites:** Story 2.4
 
@@ -1000,6 +1112,22 @@ So that we can build a dynamic vehicle interface that updates instantly based on
 **And** error handling gracefully manages connection failures
 **And** performance metrics show < 100ms average update delivery time
 
+**Public Access (No Authentication Required):**
+
+**Given** I'm a guest user on the homepage (not authenticated)
+**When** the vehicle grid infrastructure initializes
+**Then** SSE endpoints work with session-based user IDs (`guest:{session_id}`)
+**And** cascade_engine.py processes events for guest sessions
+**And** basic grid rendering works with vehicle data from semantic search
+**And** no authentication prompt appears during grid initialization
+
+**Given** I'm a guest user with a session cookie
+**When** I trigger cascade events through conversation or filters
+**Then** the SSE stream delivers vehicle updates within 200ms
+**And** grid animations show smooth transitions between states
+**And** error handling gracefully manages connection failures
+**And** the system maintains session context without requiring authentication
+
 **Prerequisites:** Story 1.3 (Semantic Search API), Story 2.1 (Conversational AI Infrastructure)
 
 **Technical Notes:**
@@ -1035,6 +1163,24 @@ So that I can browse vehicle inventory with optimal viewing experience regardles
 **And** touch interactions work smoothly with proper tap targets (44x44px minimum)
 **And** the grid remains performant with smooth scrolling
 
+**Public Access (No Authentication Required):**
+
+**Given** I'm a guest user on a desktop computer (not authenticated)
+**When** the vehicle grid loads
+**Then** I see vehicles displayed in a 3-4 column grid with high-quality images
+**And** each vehicle card shows key information: image, make/model, price, year, mileage
+**And** cards are sized consistently with proper aspect ratios for images
+**And** hover effects provide additional vehicle details
+**And** no authentication prompt appears during browsing
+
+**Given** I'm a guest user on a mobile phone
+**When** the vehicle grid loads
+**Then** the layout adapts to a single column optimized for touch interaction
+**And** vehicle cards are sized appropriately for mobile viewing
+**And** touch interactions work smoothly with proper tap targets (44x44px minimum)
+**And** the grid remains performant with smooth scrolling
+**And** I can browse, search, and filter vehicles without signing in
+
 **Prerequisites:** Story 3.1
 
 **Technical Notes:**
@@ -1068,6 +1214,28 @@ So that I can instantly see how my conversation choices affect available vehicle
 **Then** the grid instantly filters to show only AWD vehicles within my budget
 **And** existing vehicles smoothly rearrange with top-to-bottom cascade animation
 **And** Otto AI provides context: "Found 12 vehicles matching your updated criteria"
+
+**Public Access (Session-Based Cascade):**
+
+**Given** I'm a guest user in a conversation with Otto AI (not authenticated)
+**When** I mention "I need something with good gas mileage under $25,000"
+**Then** the vehicle grid immediately updates with vehicles matching these criteria
+**And** cascade animation shows new vehicles appearing from top to bottom
+**And** vehicles that don't match smoothly fade out or reposition
+**And** the update completes within 500ms with smooth animations
+**And** no authentication prompt appears during cascade updates
+
+**Given** I'm a guest user who refines preferences to "all-wheel drive for winter weather"
+**When** Otto AI acknowledges this new preference
+**Then** the grid instantly filters to show only AWD vehicles within my budget
+**And** existing vehicles smoothly rearrange with top-to-bottom cascade animation
+**And** Otto AI provides context: "Found 12 vehicles matching your updated criteria"
+**And** the system maintains my guest session context throughout the cascade
+
+**Given** I'm a guest user with cascade-filtered vehicles
+**When** I sign in to my account
+**Then** my guest session cascade preferences are preserved
+**And** the grid maintains the filtered state with all preferences intact
 
 **Prerequisites:** Story 3.2, Story 2.3 (Persistent Memory)
 
@@ -1105,6 +1273,27 @@ So that I can make informed decisions without leaving the grid interface.
 **And** navigate between photos with smooth transitions
 **And** see image captions describing key vehicle features
 **And** access 360-degree views when available
+
+**Public Access (No Authentication Required):**
+
+**Given** I'm a guest user browsing the vehicle grid (not authenticated)
+**When** I click on a vehicle card
+**Then** a detailed view opens with:
+  - High-resolution photo gallery with zoom functionality
+  - Complete specifications (engine, transmission, dimensions, features)
+  - Price analysis with market comparisons
+  - Basic seller information
+**And** no authentication prompt appears for viewing vehicle details
+**And** I can explore all vehicle information without signing in
+
+**Given** I'm a guest user viewing vehicle photos in the gallery
+**When** I interact with the photo viewer
+**Then** I can zoom in on high-resolution images without quality loss
+**And** navigate between photos with smooth transitions
+**And** see image captions describing key vehicle features
+**And** access 360-degree views when available
+
+**Note:** Vehicle history reports and detailed seller contact may require authentication for full access (see Epic 4: Authentication)
 
 **Prerequisites:** Story 3.3
 

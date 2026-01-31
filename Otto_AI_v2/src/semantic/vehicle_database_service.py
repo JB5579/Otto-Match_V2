@@ -23,12 +23,12 @@ class VehicleDatabaseService:
     Provides optimized storage, retrieval, and similarity search for vehicle data
     """
 
-    def __init__(self, embedding_dim: int = 3072):
+    def __init__(self, embedding_dim: int = 1536):
         """
         Initialize vehicle database service
 
         Args:
-            embedding_dim: Dimension of embedding vectors (default 3072 for Gemini)
+            embedding_dim: Dimension of embedding vectors (default 1536 for HNSW compatibility)
         """
         self.db_conn = None
         self.embedding_dim = embedding_dim
@@ -563,9 +563,19 @@ class VehicleDatabaseService:
         """
         Perform hybrid search combining vector similarity with traditional filters
 
+        Story 3-7 Updates:
+        - Added multi-select support for makes and vehicle_types arrays
+        - Uses effective_price (asking > auction > estimated) for price filtering
+        - Handles NULL prices correctly (excludes from price ranges, sorts last)
+
         Args:
             query_embedding: Query embedding vector for similarity search
-            filters: Dictionary of traditional filters (make, model, year, price, etc.)
+            filters: Dictionary of traditional filters including:
+                - make (str): Single make filter (backward compatibility)
+                - makes (List[str]): Multi-select makes filter
+                - vehicle_type (str): Single vehicle type filter (backward compatibility)
+                - vehicle_types (List[str]): Multi-select vehicle types filter
+                - model, year_min, year_max, price_min, price_max, mileage_max
             limit: Maximum number of results to return
             offset: Number of results to skip (for pagination)
             sort_by: Sort field ('relevance', 'price', 'year', 'mileage')
@@ -619,11 +629,34 @@ class VehicleDatabaseService:
             params = [embedding_str, embedding_str]
             param_count = 2
 
-            # Apply traditional filters
+            # Apply traditional filters (Story 3-7: Added multi-select support)
             if filters:
-                if filters.get('make'):
+                # Multi-select makes (NEW - Story 3-7)
+                if filters.get('makes') and isinstance(filters['makes'], list):
+                    makes_list = filters['makes']
+                    if makes_list:
+                        # Use ANY clause for array matching
+                        base_query += f" AND ve.vehicle_make = ANY(${param_count + 1}::text[])"
+                        params.append(makes_list)
+                        param_count += 1
+                # Fallback to single-select make for backward compatibility
+                elif filters.get('make'):
                     base_query += f" AND ve.vehicle_make ILIKE ${param_count + 1}"
                     params.append(f"%{filters['make']}%")
+                    param_count += 1
+
+                # Multi-select vehicle_types (NEW - Story 3-7)
+                if filters.get('vehicle_types') and isinstance(filters['vehicle_types'], list):
+                    types_list = filters['vehicle_types']
+                    if types_list:
+                        # Use ANY clause for array matching
+                        base_query += f" AND v.vehicle_type = ANY(${param_count + 1}::text[])"
+                        params.append(types_list)
+                        param_count += 1
+                # Fallback to single-select vehicle_type for backward compatibility
+                elif filters.get('vehicle_type'):
+                    base_query += f" AND v.vehicle_type ILIKE ${param_count + 1}"
+                    params.append(f"%{filters['vehicle_type']}%")
                     param_count += 1
 
                 if filters.get('model'):
@@ -641,24 +674,20 @@ class VehicleDatabaseService:
                     params.append(filters['year_max'])
                     param_count += 1
 
+                # Price filtering using effective_price (Story 3-7: handles NULL prices)
                 if filters.get('price_min'):
-                    base_query += f" AND v.price >= ${param_count + 1}"
+                    base_query += f" AND COALESCE(v.asking_price, v.estimated_price, v.auction_forecast) >= ${param_count + 1}"
                     params.append(filters['price_min'])
                     param_count += 1
 
                 if filters.get('price_max'):
-                    base_query += f" AND v.price <= ${param_count + 1}"
+                    base_query += f" AND COALESCE(v.asking_price, v.estimated_price, v.auction_forecast) <= ${param_count + 1}"
                     params.append(filters['price_max'])
                     param_count += 1
 
                 if filters.get('mileage_max'):
-                    base_query += f" AND v.mileage <= ${param_count + 1}"
+                    base_query += f" AND COALESCE(v.mileage, 999999) <= ${param_count + 1}"
                     params.append(filters['mileage_max'])
-                    param_count += 1
-
-                if filters.get('vehicle_type'):
-                    base_query += f" AND v.vehicle_type ILIKE ${param_count + 1}"
-                    params.append(f"%{filters['vehicle_type']}%")
                     param_count += 1
 
                 if filters.get('fuel_type'):
@@ -676,15 +705,20 @@ class VehicleDatabaseService:
                     params.append(f"%{filters['state']}%")
                     param_count += 1
 
-            # Add sorting
+            # Add sorting (Story 3-7: Use effective_price for price sorting, NULLs last)
             if sort_by == "relevance":
                 order_clause = "similarity_score"
             elif sort_by == "price":
-                order_clause = "price"
+                # Use effective_price with COALESCE to handle NULL prices
+                # Put NULL prices at the end (high value for ASC, low/negative for DESC)
+                null_value = 999999999 if sort_order.lower() == "asc" else -1
+                order_clause = f"COALESCE(v.asking_price, v.estimated_price, v.auction_forecast, {null_value})"
             elif sort_by == "year":
                 order_clause = "COALESCE(ve.vehicle_year, v.year)"
             elif sort_by == "mileage":
-                order_clause = "mileage"
+                # Put NULL mileage at the end for ASC sort (treat as very high mileage)
+                null_value = 999999 if sort_order.lower() == "asc" else -1
+                order_clause = f"COALESCE(v.mileage, {null_value})"
             else:
                 order_clause = "similarity_score"  # Default
 

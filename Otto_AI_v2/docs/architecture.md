@@ -4,13 +4,31 @@
 
 Otto.AI is an AI-powered vehicle discovery platform with a functional semantic search and vehicle ingestion system. The current implementation focuses on PDF-based vehicle ingestion, semantic search using RAG-Anything with pgvector, and basic REST APIs for vehicle management.
 
-The system successfully implements a hybrid PDF processing pipeline using OpenRouter AI and PyMuPDF for vehicle data extraction, combined with semantic search capabilities powered by RAG-Anything and Supabase pgvector. The platform includes basic WebSocket support for real-time features and a comprehensive API layer for vehicle operations.
+The system successfully implements a hybrid PDF processing pipeline using OpenRouter AI and PyMuPDF for vehicle data extraction, combined with semantic search capabilities powered by RAG-Anything and Supabase pgvector. The platform includes WebSocket support for Otto AI chat and Server-Sent Events (SSE) for vehicle updates (Story 3-3b migration), plus a comprehensive API layer for vehicle operations.
 
-**Current Implementation**: Vehicle ingestion pipeline with 99.5% PDF processing success rate, semantic search with multimodal understanding, and REST APIs for vehicle management. The architecture supports collections, favorites, and basic real-time notifications through WebSocket connections.
+**Current Implementation**: Vehicle ingestion pipeline with 99.5% PDF processing success rate, semantic search with multimodal understanding, and REST APIs for vehicle management. The architecture supports collections, favorites, and real-time notifications through WebSocket (chat) and SSE (vehicle updates) connections.
 
 **Vehicle Ingestion Achievement**: Hybrid AI-powered PDF processing system combining OpenRouter's advanced extraction with PyMuPDF's robust parsing, successfully converting dealer PDFs to structured vehicle listings with embedded images and metadata.
 
 **Architecture Philosophy**: Modular structure implemented in Python with FastAPI, prioritizing functional semantic search and reliable vehicle data ingestion. The codebase follows clean separation of concerns with dedicated services for different functionalities.
+
+## Recent Architectural Enhancements (2025-12-31)
+
+**Phase 1: Enhanced Entity Extraction** ✅ Complete
+- Extended NLU with 10 advisory intent types and 11 lifestyle entity types
+- Implemented lifestyle context extraction (commute, work pattern, current vehicle)
+- Added priority ranking detection and decision signal analysis
+- Full integration with `conversation_agent.py` and `nlu_service.py`
+- See: `docs/conversation-architecture-analysis.md` and `docs/phase1-phase2-implementation-summary.md`
+
+**Phase 2: External Research Service** ✅ Complete
+- Created `ExternalResearchService` using Groq Compound for ownership research
+- Implemented 4 research types: ownership costs, owner experiences, lease vs buy, insurance delta
+- Integrated with conversation flow for automatic research query detection
+- Personalized using Phase 1 lifestyle profile data
+- See: `docs/conversation-architecture-analysis.md` and `docs/phase1-phase2-implementation-summary.md`
+
+These enhancements were implemented as architectural improvements to stories 2-2 (NLU) and 2-5 (Market Data) based on conversation simulation analysis.
 
 ## Decision Summary
 
@@ -20,9 +38,12 @@ The system successfully implements a hybrid PDF processing pipeline using OpenRo
 | **Semantic Search** | RAG-Anything + Supabase pgvector | v1.0 | Semantic Search | Multimodal search (text, images) with vector similarity |
 | **PDF Processing** | OpenRouter + PyMuPDF hybrid | v1.0 | Vehicle Ingestion | AI extraction + traditional parsing for 99.5% success rate |
 | **API Framework** | FastAPI | v1.0 | All APIs | High performance, automatic docs, type hints |
-| **Real-time Communication** | WebSockets | v1.0 | Notifications | Basic real-time updates for favorites and collections |
+| **Frontend Framework** | React + TypeScript | 19.2.0 + 5.9.3 | Epic 3 (91 files) | Component-based UI with type safety, Vite 7.2.4 build system |
+| **Real-time Communication** | WebSocket + SSE | v2.0 | Notifications, Chat, Updates | WebSocket for Otto chat, SSE for vehicle updates (Story 3-3b) |
 | **Database Strategy** | Supabase PostgreSQL + pgvector | v1.0 | Data Persistence | Vector similarity + relational data in single system |
-| **Project Structure** | Modular Python packages | v1.0 | All Components | Clean separation of concerns with service modules |
+| **Project Structure** | Modular Python + React packages | v1.0 | All Components | Clean separation of concerns with service modules |
+| **Repository Pattern** | Repository layer | v1.0 | Data access | Separates data access from business logic (repositories/) |
+| **Progressive Auth** | Session-based → JWT | v1.0 | Authentication | Low-friction conversion with guest sessions (auth_api.py) |
 
 ## Project Structure
 
@@ -31,14 +52,21 @@ otto-ai/
 ├── src/                           # Main source code
 │   ├── api/                       # FastAPI endpoints
 │   │   ├── main_app.py           # Main FastAPI application
+│   │   ├── auth_api.py           # Authentication: session merge, guest management (8.7KB)
 │   │   ├── listings_api.py       # Vehicle listing management
-│   │   ├── semantic_search_api.py # Semantic search endpoints
+│   │   ├── semantic_search_api.py # Semantic search endpoints (with multi-select)
 │   │   ├── vehicle_comparison_api.py # Vehicle comparison
+│   │   ├── vehicles_api.py       # Vehicle search API with multi-select (11.1KB)
+│   │   ├── vehicle_updates_sse.py # SSE endpoint for vehicle updates (10KB)
 │   │   ├── filter_management_api.py # Search filtering
 │   │   ├── collections_api.py    # Vehicle collections
 │   │   ├── analytics_api.py      # Analytics endpoints
 │   │   ├── websocket_endpoints.py # WebSocket endpoints
 │   │   └── admin/                # Admin-specific APIs
+│   ├── repositories/              # Repository pattern layer (NEW)
+│   │   ├── __init__.py
+│   │   ├── image_repository.py   # Image data access (12.9KB)
+│   │   └── listing_repository.py # Listing data access (11.2KB)
 │   ├── semantic/                  # Semantic search and processing
 │   │   ├── vehicle_processing_service.py # RAG-Anything integration
 │   │   ├── embedding_service.py  # Vector embeddings
@@ -47,6 +75,7 @@ otto-ai/
 │   │   ├── performance_optimizer.py # Performance tuning
 │   │   └── setup_database.py     # Database initialization
 │   ├── services/                  # Core services
+│   │   ├── supabase_client.py   # Centralized Supabase client singleton (60 lines)
 │   │   ├── pdf_ingestion_service.py # PDF processing (OpenRouter + PyMuPDF)
 │   │   ├── vehicle_image_enhancement_service.py # Image processing
 │   │   ├── vehicle_embedding_service.py # Vehicle embeddings
@@ -98,6 +127,29 @@ otto-ai/
 │   │   └── __init__.py
 │   └── database/                  # Database utilities
 │       └── __init__.py
+├── frontend/                      # React 19.2.0 + TypeScript 5.9.3 frontend (Epic 3)
+│   ├── src/
+│   │   ├── app/                   # React Router setup, auth pages
+│   │   ├── components/            # UI components (91 files, ~2,283 lines)
+│   │   │   ├── availability/       # Real-time availability status
+│   │   │   ├── comparison/         # Vehicle comparison tools
+│   │   │   ├── filters/            # Multi-select filters, SortDropdown
+│   │   │   ├── notifications/     # Notification system
+│   │   │   ├── otto-chat/          # Otto AI chat interface
+│   │   │   ├── vehicle-detail/    # Vehicle detail modal
+│   │   │   └── vehicle-grid/       # Responsive vehicle grid
+│   │   ├── context/               # React contexts (5 files, 1,526 lines)
+│   │   │   ├── ComparisonContext.tsx
+│   │   │   ├── ConversationContext.tsx
+│   │   │   ├── FilterContext.tsx
+│   │   │   ├── NotificationContext.tsx
+│   │   │   └── VehicleContext.tsx
+│   │   ├── lib/                   # Supabase client, API utilities
+│   │   ├── services/              # API client, session service
+│   │   └── types/                 # TypeScript type definitions
+│   ├── package.json               # NPM dependencies
+│   ├── vite.config.ts             # Vite 7.2.4 configuration
+│   └── tsconfig.json              # TypeScript 5.9.3 configuration
 ├── tests/                         # Test suite
 │   ├── unit/
 │   ├── integration/
@@ -116,27 +168,75 @@ otto-ai/
 
 ## Implemented Features Summary
 
+**Last Verified:** 2026-01-19 | **Overall Implementation:** ~50% backend, ~30% frontend (Epic 3)
+
+### Epic 1: Semantic Vehicle Intelligence ✅ COMPLETE
+
 | Feature | Status | Implementation Details |
 | ------- | ------ | --------------------- |
-| **Vehicle Ingestion** | ✅ Implemented | PDF processing with OpenRouter + PyMuPDF hybrid approach |
-| **Semantic Search** | ✅ Implemented | RAG-Anything with Supabase pgvector for vector similarity |
-| **Vehicle Listings API** | ✅ Implemented | REST endpoints for CRUD operations |
-| **Image Enhancement** | ✅ Implemented | Vehicle image processing and optimization |
-| **Vehicle Comparison** | ✅ Implemented | Multi-vehicle comparison API |
-| **Search Filtering** | ✅ Implemented | Intelligent filtering service |
-| **Collections System** | ✅ Implemented | Vehicle collections with analytics |
-| **Favorites System** | ✅ Implemented | User favorites with WebSocket notifications |
-| **Recommendation Engine** | ✅ Implemented | Basic vehicle recommendations |
-| **Real-time Notifications** | ✅ Implemented | WebSocket-based notifications |
-| **Analytics Dashboard** | ✅ Implemented | Basic analytics for collections |
+| **Vehicle Ingestion** | ✅ IMPLEMENTED | PDF processing with OpenRouter + PyMuPDF (Story 5-4b backend only) |
+| **Semantic Search** | ✅ IMPLEMENTED | RAG-Anything with Supabase pgvector for vector similarity |
+| **Hybrid FTS Search** | ✅ IMPLEMENTED | Vector + full-text search hybrid (Story 1-9) |
+| **Query Expansion** | ✅ IMPLEMENTED | LLM-powered query expansion service (Story 1-10) |
+| **Re-ranking Layer** | ✅ IMPLEMENTED | BGE cross-encoder re-ranking (Story 1-11) |
+| **Contextual Embeddings** | ✅ IMPLEMENTED | Category-aware embedding service (Story 1-12) |
+| **Vehicle Listings API** | ✅ IMPLEMENTED | REST endpoints for CRUD operations |
+| **Image Enhancement** | ✅ IMPLEMENTED | Vehicle image processing and optimization |
+| **Vehicle Comparison** | ✅ IMPLEMENTED | Multi-vehicle comparison API |
+| **Search Filtering** | ✅ IMPLEMENTED | Intelligent filtering service |
+| **Collections System** | ✅ IMPLEMENTED | Vehicle collections with analytics |
+| **Favorites System** | ✅ IMPLEMENTED | User favorites with WebSocket notifications |
+| **Recommendation Engine** | ✅ IMPLEMENTED | Basic vehicle recommendations |
+| **Real-time Notifications** | ✅ IMPLEMENTED | WebSocket-based notifications |
+| **Analytics Dashboard** | ✅ IMPLEMENTED | Basic analytics for collections |
 
-| Planned Feature | Status | Notes |
-| --------------- | ------ | ----- |
-| **Conversational AI** | ⚠️ Basic Only | Basic conversation agent implemented |
-| **Dynamic Vehicle Grid** | ❌ Not Implemented | Aspirational feature |
-| **Real-time Cascade Discovery** | ❌ Not Implemented | Aspirational feature |
-| **Lead Intelligence** | ❌ Not Implemented | Aspirational feature |
-| **Seller Dashboard** | ❌ Not Implemented | Aspirational feature |
+### Epic 2: Conversational Discovery ⚠️ PARTIAL (6/10 stories)
+
+| Feature | Status | Implementation Details |
+| ------- | ------ | --------------------- |
+| **Conversation Agent** | ✅ IMPLEMENTED | Main Otto orchestrator (84KB, Story 2-1) |
+| **NLU Service** | ✅ IMPLEMENTED | Natural language understanding (40KB, Story 2-2) |
+| **Zep Memory** | ✅ IMPLEMENTED | Temporal memory & preference learning (Story 2-3) |
+| **Questioning Strategy** | ✅ IMPLEMENTED | Smart question generation (Story 2-4) |
+| **Market Data Integration** | ✅ IMPLEMENTED | Real-time vehicle information (Story 2-5) |
+| **Advisory Extractors** | ✅ IMPLEMENTED | **Phase 1:** Lifestyle entities, 1,073 lines (Story 2-2 enhancement) |
+| **External Research** | ✅ IMPLEMENTED | **Phase 2:** Ownership costs, 871 lines (Story 2-5 enhancement) |
+| **Voice Input** | 📋 PLANNED | Story 2-6 not started |
+| **Conversation History** | 📋 PLANNED | Story 2-7 not started |
+| **Multi-threading** | 📋 PLANNED | Stories 2-8 to 2-10 not started |
+
+### Epic 3: Dynamic Vehicle Grid Interface ⚠️ PARTIAL (5/13 stories)
+
+| Feature | Status | Implementation Details |
+| ------- | ------ | --------------------- |
+| **Real-time Grid Infrastructure** | ✅ IMPLEMENTED | React 19.2.0 + TypeScript 5.9.3 (Story 3-1) |
+| **Responsive Vehicle Grid** | ✅ IMPLEMENTED | 3/2/1 column layout, glass-morphism, 46 tests (Story 3-2) |
+| **Dynamic Cascade Updates** | ⚠️ PARTIAL | AC1, AC4 complete; AC2/AC3 via SSE migration (Story 3-3/3-3b) |
+| **Vehicle Details Modal** | ✅ IMPLEMENTED | Image carousel, comprehensive tests (Story 3-4) |
+| **Real-time Availability** | ✅ IMPLEMENTED | Status badges, notifications (Story 3-5) |
+| **Vehicle Comparison** | ✅ IMPLEMENTED | Table view, sessionStorage (Story 3-6) |
+| **Grid Filtering & Sorting** | ✅ IMPLEMENTED | Multi-select, effective_price, SortDropdown (Story 3-7) |
+| **Performance Optimization** | 📋 PLANNED | Story 3-8 not started |
+| **Analytics & Tracking** | 📋 PLANNED | Story 3-9 not started |
+| **Design System Components** | 📋 PLANNED | Story 3-10 not started |
+| **Match Score Badge** | 📋 PLANNED | Story 3-11 not started |
+| **Detail Modal Carousel** | 📋 PLANNED | Story 3-12 not started |
+| **Otto Chat Widget** | 📋 PLANNED | Story 3-13 not started |
+
+**Frontend Implementation:** 91 TypeScript/React files (~2,283 lines)
+- Components: availability, comparison, filters, notifications, otto-chat, vehicle-detail, vehicle-grid
+- Contexts: Comparison (290 lines), Conversation (273 lines), Filter (436 lines), Notification (167 lines), Vehicle (360 lines)
+- Build: Vite 7.2.4, Vitest 4.0.16 testing
+
+### Epic 4-8: Remaining Epics 📋 PLANNED
+
+| Feature | Status | Notes |
+| ------- | ------ | ----- |
+| **User Authentication** | 📋 PLANNED | Epic 4: 0/9 stories - progressive auth endpoints exist (auth_api.py) |
+| **Lead Intelligence UI** | 📋 PLANNED | Epic 5: 2/8 backend only (PDF pipeline works, no seller UI) |
+| **Seller Dashboard** | 📋 PLANNED | Epic 6: 0/8 stories - backend services exist, no UI |
+| **Deployment Infrastructure** | 📋 PLANNED | Epic 7: 0/6 stories - no production infrastructure |
+| **Performance Optimization** | 📋 PLANNED | Epic 8: 0/7 stories - some code exists but not story-organized |
 
 ## Technology Stack Details
 
@@ -159,9 +259,17 @@ otto-ai/
 - **Pillow (PIL)**: Image processing and enhancement
 
 **Frontend Stack:**
-- **React**: UI library (planned but not implemented)
-- **TypeScript**: Type-safe JavaScript (planned)
-- **HTML/CSS**: Basic styling for documentation
+- **React 19.2.0**: UI library (VERIFIED 2026-01-19)
+- **TypeScript 5.9.3**: Type-safe JavaScript (VERIFIED 2026-01-19)
+- **Vite 7.2.4**: Fast build tool and dev server (VERIFIED 2026-01-19)
+- **Framer Motion 12.23.26**: Animation library for cascade effects
+- **Radix UI 1.1.15**: Accessible modal/dialog components
+- **Lucide React 0.562.0**: Icon library
+- **React Router DOM 7.11.0**: Client-side routing
+- **Supabase JS 2.89.0**: Database client
+- **Vitest 4.0.16**: Fast unit testing
+- **Testing Library**: React testing utilities
+- **MSW 2.7.2**: API mocking
 
 **Infrastructure Stack:**
 - **Supabase**: Database hosting and management
@@ -973,6 +1081,92 @@ async def get_trending_collections(limit: int = 10):
     return await trending_algorithm.get_trending(limit)
 ```
 
+**Authentication API (Progressive Auth):**
+```python
+# Session management endpoints (auth_api.py)
+auth_router = APIRouter(prefix="/api/auth")
+
+@auth_router.post("/merge-session", response_model=MergeSessionResponse)
+async def merge_session_to_account(request: MergeSessionRequest):
+    """Merge guest session to authenticated user account
+
+    Preserves conversation context from anonymous session before authentication.
+    Transfers all Zep messages to user session.
+    """
+    result = await zep_client.merge_session_to_user(
+        session_id=request.session_id,
+        user_id=request.user_id
+    )
+    return MergeSessionResponse(
+        success=True,
+        messages_transferred=result['messages_transferred'],
+        guest_session_id=request.session_id,
+        user_session_id=result['user_session_id']
+    )
+
+@auth_router.get("/session/{session_id}/context", response_model=SessionContextResponse)
+async def get_session_context(session_id: str):
+    """Get guest session context for 'Welcome back!' greeting
+
+    Enables returning visitor detection and personalized greetings.
+    """
+    context = await zep_client.get_last_visit_context(session_id)
+    return SessionContextResponse(
+        is_returning_visitor=context.get('is_returning_visitor', False),
+        last_visit_date=context.get('last_visit_date'),
+        previous_preferences=context.get('previous_preferences', []),
+        message_count=context.get('message_count', 0)
+    )
+```
+
+**Vehicles API (Story 3-7):**
+```python
+# Vehicle search with multi-select support (vehicles_api.py)
+vehicles_router = APIRouter(prefix="/api/v1/vehicles")
+
+@vehicles_router.get("/search", response_model=VehicleSearchResponse)
+async def search_vehicles(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    # Multi-select filters (Story 3-7)
+    makes: Optional[str] = Query(None, description="Comma-separated makes (e.g., 'Toyota,Honda')"),
+    vehicle_types: Optional[str] = Query(None, description="Comma-separated types (e.g., 'SUV,Sedan')"),
+    # Sorting (Story 3-7)
+    sort_by: Optional[str] = Query(None, description="Sort by: created_at, year, price, mileage"),
+    sort_order: Optional[str] = Query("desc", description="Sort order: asc, desc"),
+    # Range filters
+    year_min: Optional[int] = None,
+    year_max: Optional[int] = None,
+    price_min: Optional[float] = None,
+    price_max: Optional[float] = None
+):
+    """Search vehicles with multi-select and sorting support (Story 3-7)
+
+    - Multi-select makes using .in_() clause
+    - effective_price sorting with NULL handling
+    - Frontend uses sessionStorage for 30-min expiry
+    """
+```
+
+**SSE Vehicle Updates API (Story 3-3b):**
+```python
+# SSE endpoint for real-time vehicle updates (vehicle_updates_sse.py)
+@vehicle_updates_router.get("/updates")
+async def get_vehicle_updates(
+    request: Request,
+    token: str = Query(..., description="JWT authentication token")
+):
+    """SSE endpoint for real-time vehicle updates (Story 3-3b)
+
+    Returns StreamingResponse with text/event-stream Content-Type.
+    Events:
+    - vehicle_update: When vehicles list changes
+    - availability_status_update: When vehicle status changes
+
+    Replaces WebSocket for vehicle updates (simpler architecture, better testing).
+    """
+```
+
 ## Security Architecture
 
 ### Authentication & Authorization
@@ -1021,6 +1215,153 @@ def require_permission(permission: str):
         return wrapper
     return decorator
 ```
+
+**Progressive Authentication Pattern (2025-01-12):**
+
+Otto.AI implements a **progressive authentication** model that enables users to browse and interact with the platform before creating an account. This creates a low-friction conversion funnel while maintaining personalization capabilities through session-based memory.
+
+**Session-Based Memory Architecture:**
+
+```python
+# Guest session management with UUID v4 anonymous session IDs
+class SessionService:
+    SESSION_COOKIE = 'otto_session_id'
+    SESSION_EXPIRY_DAYS = 30  # 30-day sliding window
+
+    @staticmethod
+    def getSessionId(): string {
+        let sessionId = SessionService.getCookie(SESSION_COOKIE);
+        if (!sessionId) {
+            sessionId = SessionService.generateSessionId();  # UUID v4
+            SessionService.setCookie(SESSION_COOKIE, sessionId, SESSION_EXPIRY_DAYS);
+        }
+        return sessionId;
+    }
+
+    @staticmethod
+    async mergeSessionToAccount(userId: string): Promise<SessionMergeResult> {
+        // Merge guest session to authenticated user account
+        const response = await fetch('/api/auth/merge-session', {
+            method: 'POST',
+            body: JSON.stringify({ session_id: sessionId, user_id: userId })
+        });
+        // Clear session cookie after successful merge
+    }
+}
+```
+
+**Zep Cloud Guest Session Support:**
+
+```python
+# Zep client with anonymous session support
+class ZepClient:
+    async def create_guest_session(self, session_id: str) -> str:
+        """Create Zep session for anonymous guest user"""
+        guest_user_id = f"guest:{session_id}"
+        await self.client.session.add(
+            session_id=session_id,
+            user_id=guest_user_id,
+            metadata={
+                'is_guest': True,
+                'guest_session': True,
+                'created_at': datetime.now().isoformat(),
+                'platform': 'otto-ai',
+                'last_seen': datetime.now().isoformat()
+            }
+        )
+        return session_id
+
+    async def merge_session_to_user(self, session_id: str, user_id: str) -> Dict:
+        """Transfer guest session memory to authenticated user"""
+        # 1. Retrieve all guest session messages
+        guest_messages = await self.client.message.get(session_id, limit=1000)
+
+        # 2. Create user session
+        user_session_id = await self.create_session(user_id)
+
+        # 3. Transfer messages to user session
+        await self.client.session.add(
+            session_id=user_session_id,
+            messages=guest_messages
+        )
+
+        # 4. Mark guest session for cleanup (audit trail preserved)
+        await self.client.session.update(
+            session_id=session_id,
+            metadata={'status': 'merged', 'merged_to_user': user_id}
+        )
+
+        return {'messages_transferred': len(guest_messages)}
+```
+
+**Auth API Endpoints:**
+
+```python
+# Session management endpoints
+auth_router = APIRouter(prefix="/api/auth")
+
+@auth_router.post("/session/create")
+async def create_guest_session():
+    """Create new anonymous session for guest users"""
+    session_id = str(uuid.uuid4())
+    await zep_client.create_guest_session(session_id)
+    return {
+        "session_id": session_id,
+        "created_at": datetime.now().isoformat(),
+        "expires_at": (datetime.now() + timedelta(days=30)).isoformat()
+    }
+
+@auth_router.post("/merge-session")
+async def merge_session_to_account(request: MergeSessionRequest):
+    """Merge guest session to authenticated user account"""
+    result = await zep_client.merge_session_to_user(
+        session_id=request.session_id,
+        user_id=request.user_id
+    )
+    return result
+
+@auth_router.get("/session/{session_id}/context")
+async def get_session_context(session_id: str):
+    """Get guest session context for 'Welcome back!' greeting"""
+    context = await zep_client.get_last_visit_context(session_id)
+    return {
+        "is_returning_visitor": context.get('is_returning_visitor', False),
+        "last_visit_date": context.get('last_visit_date'),
+        "previous_preferences": context.get('previous_preferences', []),
+        "greeting": "Welcome back! Last time you were looking at..."
+    }
+```
+
+**Access Control Strategy:**
+
+| Feature | Guest Access | Auth Required |
+|---------|-------------|---------------|
+| **Homepage & Vehicle Browsing** | ✅ Public | ❌ No |
+| **Vehicle Search & Filters** | ✅ Public | ❌ No |
+| **Vehicle Details** | ✅ Public (basic) | ✅ Full history reports |
+| **Otto AI Chat** | ✅ Session-based | ✅ Persistent history |
+| **Cascade Updates** | ✅ Session-based | ❌ No |
+| **Favorites** | ❌ Prompt login | ✅ Yes |
+| **Collections** | ❌ Prompt login | ✅ Yes |
+| **Conversation History** | ⏱️ Session only (30-day) | ✅ Yes |
+| **Hold Vehicle** | ❌ Prompt login | ✅ Yes |
+| **Contact Seller** | ❌ Prompt login | ✅ Yes |
+
+**Cookie Security:**
+
+- **HTTP-only**: Prevents JavaScript access to session cookies
+- **Secure**: HTTPS-only transmission
+- **SameSite=Lax**: CSRF protection while allowing navigation
+- **30-day sliding window**: Extends on each visit
+- **UUID v4**: Cryptographically random session IDs
+
+**Benefits:**
+
+1. **Conversion Funnel**: Users experience value before authentication wall
+2. **SEO Optimization**: Public homepage accessible to search crawlers
+3. **Personalization**: Session-based memory enables "Welcome back!" greetings
+4. **Frictionless Onboarding**: No barriers to initial exploration
+5. **Seamless Transition**: Guest session merge preserves conversation context
 
 ### Data Security
 
@@ -1170,21 +1511,50 @@ Implement RAG-Anything for multimodal processing combined with Supabase pgvector
 
 ### ADR-003: Real-time Communication Strategy
 **Date:** 2025-11-29
-**Status:** Partially Implemented
-**Decision:** Use WebSockets for basic real-time notifications
+**Status:** Implemented (Updated 2026-01-15 for Story 3-3b SSE Migration)
+**Decision:** Use WebSocket + SSE for specialized real-time communication
 
 **Context:**
-Need to notify users about price changes and availability for favorited vehicles.
+Need to notify users about price changes and availability for favorited vehicles, and provide real-time vehicle updates when conversation preferences change.
+
+**Story 3-3b Migration (2026-01-15):**
+After experiencing test reliability issues with WebSocket reconnection loops, the architecture was updated to use Server-Sent Events (SSE) for vehicle updates while keeping WebSocket for Otto chat messages only.
 
 **Decision:**
-Implement WebSocket approach using:
-- WebSockets for real-time notifications (price drops, availability changes)
-- Basic connection management for favorites and collections
-- Simple message broadcasting to connected users
+Implement hybrid real-time approach using:
+- **WebSocket** (`ws://localhost:8000/ws/conversation`): Otto AI chat messages only (bidirectional)
+- **SSE** (`GET /api/vehicles/updates`): Vehicle updates only (server → client)
+- Separation of concerns: Chat (WebSocket) vs Updates (SSE)
+- Native browser APIs: EventSource (SSE) no library needed, WebSocket for chat
+
+**Architecture Before (Story 3-3):**
+```
+WebSocket: ws://localhost:8000/ws/conversation
+├── Otto chat messages (bidirectional)
+└── Vehicle updates (server push)
+```
+
+**Architecture After (Story 3-3b):**
+```
+WebSocket: ws://localhost:8000/ws/conversation
+└── Otto chat messages ONLY (bidirectional)
+
+SSE: GET /api/vehicles/updates?token=JWT
+└── Vehicle updates ONLY (server push)
+```
+
+**Benefits of SSE Migration:**
+1. **Simpler Architecture**: Unidirectional (server→client) for vehicle updates
+2. **Easier Testing**: EventSource trivial to mock (no reconnection loops in tests)
+3. **Native API**: No library needed, built into all browsers
+4. **Better Alignment**: SSE designed specifically for server→push events
+5. **Test Reliability**: Fixed infinite reconnection loop issue from Story 3-3
 
 **Consequences:**
 - Users receive real-time updates for favorited vehicles
-- Scalable notification system for price monitoring
+- Vehicle grid updates via SSE when conversation preferences change
+- Otto chat continues via WebSocket (unchanged functionality)
+- Improved test reliability and simpler mocking
 - Foundation for future real-time features
 
 ### ADR-004: Caching Strategy
@@ -1250,9 +1620,43 @@ Implement dual-path extraction strategy:
 - Reduced manual data entry for dealers
 - Foundation for scalable vehicle inventory management
 
+### ADR-007: Architecture Documentation Update (2026-01-19)
+**Date:** 2026-01-19
+**Status:** Completed
+**Decision:** Update architecture documentation to match verified code implementation
+
+**Context:**
+Architecture validation revealed significant gaps between documented architecture and actual codebase:
+- Epic 3 claimed 0/13 stories with "NO FRONTEND CODE EXISTS" but 91 TypeScript files verified
+- New backend files (repositories, auth_api, vehicles_api, vehicle_updates_sse) not documented
+- Technology stack versions incomplete
+
+**Decision:**
+Comprehensive architecture update to reflect code reality:
+- Epic 3 status corrected to PARTIAL (5/13 stories complete)
+- Frontend technology stack documented with actual versions
+- Project structure updated with missing directories
+- New API endpoints documented (auth, vehicles, SSE)
+- Repository pattern layer added
+
+**Verification Method:**
+All changes based on actual code review, not documentation assumptions:
+- `find frontend/src -name "*.tsx" -o -name "*.ts"` → 91 files confirmed
+- `ls -la src/repositories/` → 24KB code confirmed
+- `ls -la src/api/` → New API files confirmed
+- File content reviewed for implementation details
+
+**Consequences:**
+- AI agents now have accurate architecture for implementation
+- Frontend development can continue with proper guidance
+- Prevents duplicate code creation from missing documentation
+- Architecture.md now matches sprint-status.yaml reality
+
 ---
 
 _Generated by BMAD Decision Architecture Workflow v1.0_
 _Original Date: 2025-11-29_
 _Updated: 2025-12-14 (ADR-006 added)_
+_Architecture Validation: 2026-01-19 (validation-report-architecture-2026-01-19.md)_
+_Architecture Update: 2026-01-19 (Epic 3 frontend, new APIs documented)_
 _For: Otto.AI Team_

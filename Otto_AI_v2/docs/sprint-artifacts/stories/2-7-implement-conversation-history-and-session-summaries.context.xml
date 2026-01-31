@@ -1,0 +1,318 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>7</storyId>
+    <title>Implement Conversation History and Session Summaries</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-7-implement-conversation-history-and-session-summaries.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>review my conversation history and receive summaries of my vehicle discovery journey</iWant>
+    <soThat>track my progress and remember key insights from my interactions with Otto AI</soThat>
+    <tasks>
+      <task id="2-7.1" title="Design conversation history database schema">
+        <subtask>Create conversation_history table with fields: user_id/session_id, conversation_id, timestamp, summary, preferences_json, vehicles_discussed</subtask>
+        <subtask>Create conversation_messages table for storing full dialogue</subtask>
+        <subtask>Add indexes for efficient querying by user, date, keywords</subtask>
+        <subtask>Design GDPR-compliant data retention policies</subtask>
+      </task>
+      <task id="2-7.2" title="Implement conversation summarization service">
+        <subtask>Create src/services/conversation_summary_service.py</subtask>
+        <subtask>Integrate GPT-4 API for generating conversation summaries</subtask>
+        <subtask>Extract key preferences from conversations (budget, brands, features)</subtask>
+        <subtask>Track vehicles discussed with relevance scores</subtask>
+        <subtask>Implement preference evolution detection</subtask>
+      </task>
+      <task id="2-7.3" title="Build conversation history API endpoints">
+        <subtask>GET /api/conversations/history - List all conversations</subtask>
+        <subtask>GET /api/conversations/{conversation_id} - Full conversation details</subtask>
+        <subtask>GET /api/conversations/summary - Journey summary</subtask>
+        <subtask>GET /api/conversations/search - Search functionality</subtask>
+        <subtask>DELETE /api/conversations/{conversation_id} - Delete specific conversation</subtask>
+      </task>
+      <task id="2-7.4" title="Integrate with Zep Cloud for conversation retrieval">
+        <subtask>Extend Zep client to fetch conversation history</subtask>
+        <subtask>Map Zep session IDs to internal conversation records</subtask>
+        <subtask>Handle guest session vs authenticated user differentiation</subtask>
+        <subtask>Implement session merge for guest→auth transitions</subtask>
+      </task>
+      <task id="2-7.5" title="Implement export functionality">
+        <subtask>Create src/services/conversation_export_service.py</subtask>
+        <subtask>Generate PDF exports with formatted conversation</subtask>
+        <subtask>Generate JSON exports for data portability</subtask>
+        <subtask>Add export metadata (export date, user info)</subtask>
+      </task>
+      <task id="2-7.6" title="Add data retention and privacy controls">
+        <subtask>Implement automatic data deletion based on retention policy</subtask>
+        <subtask>Create GDPR data export endpoint</subtask>
+        <subtask>Add conversation deletion endpoints</subtask>
+        <subtask>Log all data access for audit trail</subtask>
+      </task>
+      <task id="2-7.7" title="Create conversation history UI component">
+        <subtask>Create frontend/src/components/conversations/ConversationHistory.tsx</subtask>
+        <subtask>Display chronological list of conversations</subtask>
+        <subtask>Show conversation summaries and key preferences</subtask>
+        <subtask>Implement pagination for large histories</subtask>
+        <subtask>Add loading states and error handling</subtask>
+      </task>
+      <task id="2-7.8" title="Build conversation detail view">
+        <subtask>Create frontend/src/components/conversations/ConversationDetail.tsx</subtask>
+        <subtask>Display full conversation dialogue</subtask>
+        <subtask>Highlight key preferences and vehicles discussed</subtask>
+        <subtask>Show preference evolution over time</subtask>
+        <subtask>Add share and export buttons</subtask>
+      </task>
+      <task id="2-7.9" title="Implement journey summary view">
+        <subtask>Create frontend/src/components/conversations/JourneySummary.tsx</subtask>
+        <subtask>Visual dashboard of vehicle discovery progress</subtask>
+        <subtask>Top categories and models discussed</subtask>
+        <subtask>Preference evolution timeline</subtask>
+        <subtask>Recommended next steps</subtask>
+      </task>
+      <task id="2-7.10" title="Build search and filter interface">
+        <subtask>Create frontend/src/components/conversations/ConversationSearch.tsx</subtask>
+        <subtask>Search by vehicle make/model</subtask>
+        <subtask>Filter by date range</subtask>
+        <subtask>Keyword search</subtask>
+        <subtask>Preference-based filters</subtask>
+      </task>
+      <task id="2-7.11" title="Add export UI">
+        <subtask>Export button in conversation history</subtask>
+        <subtask>Format selection (PDF/JSON)</subtask>
+        <subtask>Export progress indicator</subtask>
+        <subtask>Download completion notification</subtask>
+      </task>
+      <task id="2-7.12" title="Implement privacy settings UI">
+        <subtask>Data retention period selector</subtask>
+        <subtask>Delete conversation button</subtask>
+        <subtask>Request full data export button</subtask>
+        <subtask>Clear all history confirmation</subtask>
+      </task>
+      <task id="2-7.13" title="Create backend test suite">
+        <subtask>Unit tests for conversation summarization</subtask>
+        <subtask>Integration tests with Zep Cloud</subtask>
+        <subtask>API endpoint tests</subtask>
+        <subtask>Data retention policy tests</subtask>
+        <subtask>GDPR export compliance tests</subtask>
+      </task>
+      <task id="2-7.14" title="Create frontend test suite">
+        <subtask>Component tests for history/list views</subtask>
+        <subtask>Search functionality tests</subtask>
+        <subtask>Export functionality tests</subtask>
+        <subtask>Accessibility tests (ARIA compliance)</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">
+      <description>Chronological Conversation List</description>
+      <scenario>Given I've had multiple conversations with Otto AI over several weeks, When I view my conversation history, Then I see a chronological list of conversations with search summaries, And each conversation shows key preferences learned and vehicles discussed, And I can click into any conversation to see the full dialogue, And I see how my preferences have evolved over time</scenario>
+    </criterion>
+    <criterion id="AC2">
+      <description>Journey Summary</description>
+      <scenario>Given I've been researching vehicles for 2 months, When I ask Otto AI for a summary of my vehicle discovery journey, Then it provides a comprehensive summary including: My top vehicle categories and models discussed, Key preferences that emerged (budget, features, brands), How my criteria evolved based on new information, Next recommended steps in my vehicle search process</scenario>
+    </criterion>
+    <criterion id="AC3">
+      <description>Guest User Access (Session-Based History)</description>
+      <scenario>Given I'm a guest user (not authenticated) who has had conversations with Otto AI, When I view my conversation history, Then I see all conversations within my current session (identified by session cookie), And I can search and review conversations from the current session, And preferences learned are displayed for the session, And the history is preserved for 30 days via session cookie</scenario>
+    </criterion>
+    <criterion id="AC4">
+      <description>Search and Filter Conversations</description>
+      <scenario>Given I have an extensive conversation history, When I use the search functionality, Then I can find specific conversations by: Vehicle make/model discussed, Date range, Keywords in conversation, Preferences mentioned</scenario>
+    </criterion>
+    <criterion id="AC5">
+      <description>Export Conversation History</description>
+      <scenario>Given I want to keep a record of my vehicle research, When I click export, Then I can download my conversation history as: PDF document with formatted dialogue, JSON file for data portability, And the export includes all preferences, vehicles discussed, and timestamps</scenario>
+    </criterion>
+    <criterion id="AC6">
+      <description>Data Retention and Privacy</description>
+      <scenario>Given I want control over my conversation data, When I view my privacy settings, Then I can: Set automatic data retention period (30/90/180 days or indefinite), Manually delete specific conversations, Request full data export (GDPR compliance), Clear all conversation history</scenario>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR13: Conversation History and Session Summaries</section>
+        <snippet>FR13: System maintains conversation history and provides session summaries for users. This includes storing conversation metadata, summaries, and providing users with the ability to review their complete vehicle discovery journey.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Zep Cloud Integration - Progressive Authentication Pattern</section>
+        <snippet>Progressive Authentication Pattern: Guest users access conversation history via otto_session_id cookie with 30-day sliding window expiry. Zep Cloud stores conversations with user_id format "guest:{session_id}" for anonymous users. Session merge transfers all messages to authenticated user account.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 2: Conversational Discovery Interface</title>
+        <section>Story 2.7: Conversation History and Session Summaries</section>
+        <snippet>Users can review conversation history, receive session summaries, track preference evolution over time, and export conversations (PDF/JSON). Guest users receive session-based history (30-day cookie expiry), authenticated users get persistent cross-device history.</snippet>
+      </doc>
+      <doc>
+        <path>docs/phase1-phase2-implementation-summary.md</path>
+        <title>Phase 1/2 Implementation Summary</title>
+        <section>Lifestyle Profile and Preference Extraction</section>
+        <snippet>Phase 1 (completed 2025-12-31): Advisory extractors with 10 advisory intent types and 11 lifestyle entity types implemented in src/conversation/advisory_extractors.py (1,073 lines). This provides structured preference extraction from conversations that can be stored and displayed in history view.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Component Library - Organisms</section>
+        <snippet>OttoConversation: expandable chat with history component. Conversation history should display with glass-morphism styling, showing chronological list with summaries, key preferences learned, and vehicles discussed. Privacy settings UI for data retention controls.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/memory/zep_client.py</path>
+        <kind>service</kind>
+        <symbol>ZepClient</symbol>
+        <lines>55-200</lines>
+        <reason>Core Zep Cloud integration with session management, conversation storage, and guest session support. Key methods: create_session(), store_conversation(), get_memory(). Already implements guest session pattern with is_guest parameter and session_id handling.</reason>
+      </artifact>
+      <artifact>
+        <path>src/conversation/conversation_agent.py</path>
+        <kind>service</kind>
+        <symbol>ConversationAgent</symbol>
+        <lines>86-150</lines>
+        <reason>Main Otto orchestrator with temporal_memory, preference_engine, conversation_summarizer, and questioning_strategy integration. Uses ZepClient for memory storage and retrieval. Pattern for dependency injection and async operations.</reason>
+      </artifact>
+      <artifact>
+        <path>src/intelligence/conversation_summarizer.py</path>
+        <kind>service</kind>
+        <symbol>ConversationSummarizer</symbol>
+        <lines>1-50</lines>
+        <reason>Conversation summarization service using Groq LLM. Already generates summaries with SummaryType enum. Can be extended for journey summaries with preference evolution tracking.</reason>
+      </artifact>
+      <artifact>
+        <path>src/api/auth_api.py</path>
+        <kind>controller</kind>
+        <symbol>auth_router</symbol>
+        <lines>1-100</lines>
+        <reason>Authentication endpoints including session merge pattern for guest→auth transitions. Reference for implementing conversation history merge on authentication.</reason>
+      </artifact>
+      <artifact>
+        <path>src/api/websocket_endpoints.py</path>
+        <kind>controller</kind>
+        <symbol>websocket_endpoints</symbol>
+        <lines>1-100</lines>
+        <reason>WebSocket endpoint pattern for real-time Otto chat conversations. Reference for implementing conversation history WebSocket updates or SSE notifications.</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/external_research_service.py</path>
+        <kind>service</kind>
+        <symbol>ExternalResearchService</symbol>
+        <lines>1-100</lines>
+        <reason>Phase 2 service (871 lines) with ownership cost research. Pattern for async service integration with Groq API and caching. Can follow similar structure for conversation history service.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="fastapi" version="^0.104.0">Web framework for API endpoints</package>
+        <package name="pydantic" version="^2.0.0">Data validation and models</package>
+        <package name="zep-python" version="^0.45.0">Zep Cloud SDK for conversation memory</package>
+        <package name="openai" version="^1.0.0">OpenAI API for GPT-4 summarization</package>
+        <package name="PyPDF2" version="^3.0.0">PDF generation for exports (alternative: reportlab)</package>
+        <package name="aiofiles" version="^23.0.0">Async file operations for export generation</package>
+        <package name="python-multipart" version="^0.0.6">File upload handling for exports</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Service Pattern</type>
+      <description>Follow async service pattern with dependency injection</description>
+      <rationale>All services use async/await pattern with Optional[T] for dependencies to enable testability and modularity</rationale>
+    </constraint>
+    <constraint>
+      <type>API Pattern</type>
+      <description>FastAPI routers with typed Pydantic models</description>
+      <rationale>Consistent API structure with automatic OpenAPI documentation and type validation</rationale>
+    </constraint>
+    <constraint>
+      <type>Guest User Support</type>
+      <description>Progressive authentication with session cookies</description>
+      <rationale>Session-based history for guests (otto_session_id, 30-day expiry), merge to authenticated user on sign-in. No authentication prompts for viewing session history.</rationale>
+    </constraint>
+    <constraint>
+      <type>Zep Cloud Integration</type>
+      <description>Use existing ZepClient patterns</description>
+      <rationale>ZepClient in src/memory/zep_client.py already handles guest sessions, conversation storage, and session merge. Extend rather than replace.</rationale>
+    </constraint>
+    <constraint>
+      <type>GDPR Compliance</type>
+      <description>Data retention policies and export functionality</description>
+      <rationale>Must support configurable retention (30/90/180/indefinite), manual deletion, full data export, and audit logging for all data access.</rationale>
+    </constraint>
+    <constraint>
+      <type>Testing Requirements</type>
+      <description>pytest with markers (@pytest.mark.unit, @pytest.mark.integration)</description>
+      <rationale>Maintain test organization consistency. Unit tests for services, integration tests for Zep Cloud, API endpoint tests.</rationale>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /api/conversations/history</name>
+      <kind>REST endpoint</kind>
+      <signature>async def get_conversation_history(user_id: Optional[str], session_id: Optional[str], skip: int = 0, limit: int = 20) - ConversationListResponse</signature>
+      <path>src/api/conversations_api.py</path>
+      <description>Retrieves chronological list of conversations. Supports both authenticated (user_id from JWT) and guest (session_id from cookie) access patterns.</description>
+    </interface>
+    <interface>
+      <name>GET /api/conversations/{conversation_id}</name>
+      <kind>REST endpoint</kind>
+      <signature>async def get_conversation_detail(conversation_id: str, user_id: Optional[str], session_id: Optional[str]) - ConversationDetailResponse</signature>
+      <path>src/api/conversations_api.py</path>
+      <description>Retrieves full conversation dialogue with all messages, preferences, and vehicles discussed.</description>
+    </interface>
+    <interface>
+      <name>GET /api/conversations/summary</name>
+      <kind>REST endpoint</kind>
+      <signature>async def get_journey_summary(user_id: Optional[str], session_id: Optional[str]) - JourneySummaryResponse</signature>
+      <path>src/api/conversations_api.py</path>
+      <description>Generates comprehensive journey summary including top categories, preferences, evolution timeline, and next steps.</description>
+    </interface>
+    <interface>
+      <name>ZepClient.get_memory()</name>
+      <kind>Class method</kind>
+      <signature>async def get_memory(session_id: str, user_id: str) -> ConversationContext</signature>
+      <path>src/memory/zep_client.py</path>
+      <description>Retrieves conversation context from Zep Cloud including working memory, episodic memory, and user preferences. Used by conversation history service.</description>
+    </interface>
+    <interface>
+      <name>ConversationSummarizer.generate_summary()</name>
+      <kind>Class method</kind>
+      <signature>async def generate_summary(messages: List[Message], summary_type: SummaryType) -> str</signature>
+      <path>src/intelligence/conversation_summarizer.py</path>
+      <description>Uses Groq LLM to generate conversation summaries. Can be extended for journey summaries with preference evolution detection.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest with async/await patterns, pytest.mark.unit for service tests, pytest.mark.integration for Zep Cloud and API tests. Coverage threshold: 80%. Mock Zep Cloud responses for unit tests. Use httpx.AsyncClient for FastAPI endpoint testing.</standards>
+    <locations>
+      <location>tests/unit/test_services/test_conversation_summary_service.py</location>
+      <location>tests/unit/test_services/test_conversation_export_service.py</location>
+      <location>tests/integration/test_zep_conversation_history.py</location>
+      <location>tests/integration/test_conversations_api.py</location>
+      <location>tests/unit/test_models/test_conversation_models.py</location>
+    </locations>
+    <ideas>
+      <test_idea ac="AC1">Test chronological conversation list retrieval with pagination, verify summary and preferences display</test_idea>
+      <test_idea ac="AC2">Test journey summary generation with GPT-4, verify preference evolution timeline and next steps</test_idea>
+      <test_idea ac="AC3">Test guest user session-based history retrieval, verify 30-day cookie expiry and session merge</test_idea>
+      <test_idea ac="AC4">Test search and filter functionality by make/model, date range, keywords, preferences</test_idea>
+      <test_idea ac="AC5">Test PDF and JSON export generation, verify metadata and format compliance</test_idea>
+      <test_idea ac="AC6">Test data retention policies (30/90/180/indefinite), manual deletion, GDPR export compliance</test_idea>
+      <test_idea ac="ALL">Test Zep Cloud session merge from guest to authenticated user preserves conversation history</test_idea>
+    </ideas>
+  </tests>
+</story-context>

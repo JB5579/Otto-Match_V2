@@ -1,0 +1,420 @@
+<story-context id="3-7-add-intelligent-grid-filtering-and-sorting" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>7</storyId>
+    <title>Add Intelligent Grid Filtering and Sorting</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-18T22:30:00.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-7-add-intelligent-grid-filtering-and-sorting.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>buyer</asA>
+    <iWant>intelligent filtering and sorting options that work seamlessly with the dynamic grid updates</iWant>
+    <soThat>I can quickly narrow down vehicles based on my preferences and see the most relevant options first</soThat>
+    <tasks>14 tasks organized into 5 categories:
+- Frontend Components (3-7.1, 3-7.2, 3-7.3, 3-7.4, 3-7.5, 3-7.6): Create FilterContext, FilterBar, FilterModal, FilterChips, SortDropdown, EmptyState components
+- VehicleContext Integration (3-7.7, 3-7.8): Integrate filters with VehicleContext and SSE updates
+- Backend Integration (3-7.9): Verify backend filter API endpoints
+- Testing (3-7.10, 3-7.11, 3-7.12, 3-7.13, 3-7.14): Write unit, integration, and visual regression tests</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" title="Filter Bar Component">
+      <given>the vehicle grid is displayed with 20+ vehicles</given>
+      <when>the page loads</when>
+      <then>a filter bar is visible above the grid</then>
+      <and>filter bar contains: filter chips button, sort dropdown, clear filters button</and>
+      <and>filter bar is glass-morphism styled (consistent with other UI elements)</and>
+      <and>filter bar is responsive: horizontal scroll on mobile, full width on desktop</and>
+    </criterion>
+
+    <criterion id="AC2" title="Filter Modal with Multi-Select Options">
+      <given>user clicks the filter chips button</given>
+      <when>the filter modal opens</when>
+      <then>modal displays as overlay with backdrop blur</then>
+      <and>modal contains filter categories: Price Range, Make, Vehicle Type, Year Range, Mileage, Features</and>
+      <and>each filter category shows selected count badge</and>
+      <and>active filters are highlighted with filled background</and>
+      <and>user can select multiple options within each category</and>
+    </criterion>
+
+    <criterion id="AC3" title="Real-Time Filter Application">
+      <given>user has selected one or more filters</given>
+      <when>user clicks "Apply Filters" button</when>
+      <then>grid updates to show only matching vehicles</then>
+      <and>cascade animation triggers for filtered results</and>
+      <and>filter modal closes</and>
+      <and>filter bar shows active filter count</and>
+      <and>filter chips display applied filters as removable pills</and>
+      <and>matching vehicle count updates</and>
+    </criterion>
+
+    <criterion id="AC4" title="Intelligent Sort Options">
+      <given>user clicks the sort dropdown</given>
+      <when>sort options are displayed</when>
+      <then>dropdown includes: Relevance, Price, Mileage, Year, Efficiency</then>
+      <and>Otto explains sorting choice</and>
+      <and>sorting applies within current filter constraints</and>
+      <and>grid re-sorts with cascade animation</and>
+      <and>sort preference persists in sessionStorage (30min expiry)</and>
+    </criterion>
+
+    <criterion id="AC5" title="Filter Chips Display">
+      <given>user has applied one or more filters</given>
+      <when>filter bar displays active filters</when>
+      <then>each filter shown as removable pill chip</then>
+      <and>chip format: "Price: $20k-$40k", "Make: Toyota", "Type: SUV"</and>
+      <and>chips have glass-morphism styling with cyan glow border</and>
+      <and>clicking × on chip removes that specific filter</and>
+      <and>grid updates immediately when filter removed</and>
+      <and>remaining chips reorder smoothly</and>
+    </criterion>
+
+    <criterion id="AC6" title="Clear All Filters">
+      <given>user has one or more active filters</given>
+      <when>user clicks "Clear All Filters" button</when>
+      <then>all filters are removed immediately</then>
+      <and>filter modal resets to default state</and>
+      <and>grid shows all vehicles (respecting any conversation preferences)</and>
+      <and>filter chips disappear</and>
+      <and>sort resets to "Relevance"</and>
+      <and>sessionStorage cleared of filter state</and>
+    </criterion>
+
+    <criterion id="AC7" title="Filter Persistence">
+      <given>user has applied filters and sort preferences</given>
+      <when>user navigates to different pages or refreshes</when>
+      <then>filter selections persist in sessionStorage</then>
+      <and>sort preference persists in sessionStorage</then>
+      <and>on page reload, filter bar restores previous state</then>
+      <and>filter modal shows previously selected options</and>
+      <and>filter chips display active filters</and>
+      <and>selections clear after 30 minutes of inactivity</and>
+    </criterion>
+
+    <criterion id="AC8" title="Integration with Conversation Preferences">
+      <given>user is in conversation with Otto AI</given>
+      <when>Otto extracts a preference</when>
+      <then>filters auto-apply to match preference</then>
+      <and>filter modal updates to show applied filters</then>
+      <and>filter chips display preference filters</and>
+      <and>Otto message explains applied filters</and>
+      <and>user can manually adjust filters if needed</and>
+      <and>manual adjustments don't override conversation preferences (merged)</and>
+    </criterion>
+
+    <criterion id="AC9" title="Empty State for No Results">
+      <given>user applies filters that match zero vehicles</given>
+      <when>grid updates with no results</when>
+      <then>friendly empty state displayed</then>
+      <and>empty state shows illustration + CTA</and>
+      <and>Otto suggestion provided</and>
+      <and>"Clear All Filters" button prominent</and>
+      <and>grid skeleton NOT shown</and>
+    </criterion>
+
+    <criterion id="AC10" title="Accessibility Compliance">
+      <given>user using keyboard navigation or screen reader</given>
+      <when>interacting with filter controls</when>
+      <then>all filter controls keyboard-accessible</then>
+      <and>filter modal trap focus within modal when open</and>
+      <and>Escape key closes modal</and>
+      <and>all buttons have ARIA labels</and>
+      <and>filter chips have ARIA labels</and>
+      <and>sort dropdown has ARIA role="combobox"</and>
+      <and>dual-handle sliders have ARIA value labels</and>
+      <and>color contrast ratio ≥4.5:1</and>
+      <and>screen reader announces filter changes</and>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Objectives and Scope - O2: Build Vehicle Grid Component System</section>
+        <snippet>Implements responsive vehicle grid with dynamic cascade updates, filtering, and sorting capabilities. The grid must react in real-time to Otto AI conversation context.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Acceptance Criteria - AC9: Filtering and Sorting</title>
+        <section>Acceptance Criteria</section>
+        <snippet>GIVEN: Grid displaying 50+ vehicles. WHEN: User applies filter (e.g., "Electric SUVs under $50k"). THEN: Grid updates to show matching vehicles only. AND: Cascade animation triggers for filtered results. AND: Filter pills show active state (filled background, glow). AND: User can clear filters with one click.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Real-time Communication</section>
+        <snippet>WebSocket for real-time updates - Basic real-time updates for favorites and collections. After SSE migration, WebSocket handles chat messages only, SSE handles vehicle updates.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>frontend/src/context/ComparisonContext.tsx</path>
+        <kind>context</kind>
+        <symbol>ComparisonContext</symbol>
+        <lines>1-288</lines>
+        <reason>Pattern to follow for FilterContext: sessionStorage persistence (30min expiry), Context provider pattern, useFilters hook. See lines 89-100 for storage pattern: STORAGE_KEY, STORAGE_EXPIRY_MS, loadFromStorage().</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/context/VehicleContext.tsx</path>
+        <kind>context</kind>
+        <symbol>VehicleContext</symbol>
+        <lines>1-329</lines>
+        <reason>Must be modified to integrate filter logic. Add getFilteredVehicles() method that applies filters before sorting. Modify vehicle update handlers to preserve active filters when SSE updates arrive.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/hooks/useVehicleUpdates.ts</path>
+        <kind>hook</kind>
+        <symbol>useVehicleUpdates</symbol>
+        <lines>1-232</lines>
+        <reason>SSE hook for real-time vehicle updates. Must preserve active filters when new vehicle data arrives. Apply filters to incoming vehicle list before updating VehicleContext.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/components/vehicle-detail/VehicleDetailModal.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleDetailModal</symbol>
+        <lines>1-500</lines>
+        <reason>Modal pattern to reuse for FilterModal: backdrop blur overlay, close on Escape/backdrop click, glass-morphism styling, responsive layout.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/components/comparison/ComparisonFab.tsx</path>
+        <kind>component</kind>
+        <symbol>ComparisonFab</symbol>
+        <lines>1-187</lines>
+        <reason>Floating action button pattern for sort dropdown. Similar positioning (bottom-right for sort, or inline in filter bar).</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleGrid.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleGrid</symbol>
+        <lines>1-300</lines>
+        <reason>Must use filtered vehicles from FilterContext. Apply cascade animation when filters change. Display empty state when zero results.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleCard.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleCard</symbol>
+        <lines>1-400</lines>
+        <reason>No changes needed for filtering. Displays individual vehicle data from filtered vehicle list.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/app/types/api.ts</path>
+        <kind>types</kind>
+        <symbol>Vehicle, SearchFilters</symbol>
+        <lines>1-100</lines>
+        <reason>Vehicle type definition. SearchFilters interface may already exist or needs to be created for FilterState.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <frontend>
+        <package name="react" version="^19.2.0" />
+        <package name="typescript" version="~5.9.3" />
+        <package name="vite" version="^7.2.4" />
+        <package name="vitest" version="^4.0.16" />
+        <package name="@testing-library/react" version="^16.3.1" />
+        <package name="framer-motion" version="^12.23.26" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" />
+        <package name="lucide-react" version="^0.562.0" />
+        <package name="@supabase/supabase-js" version="^2.89.0" />
+      </frontend>
+      <note>No new dependencies required for filtering. Use existing Radix UI Dialog for modal, or implement custom slider component.</note>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture" severity="high">
+      <description>Follow ComparisonContext pattern established in Story 3-6</description>
+      <rationale>Create FilterContext with sessionStorage persistence (30min expiry), useFilters hook exported from same file, Context provider pattern for state management. Don't recreate patterns - reuse what works.</rationale>
+    </constraint>
+
+    <constraint type="architecture" severity="medium">
+      <description>Integrate with existing SSE vehicle updates</description>
+      <rationale>Filters must persist when SSE updates arrive. Modify useVehicleUpdates to preserve active filters. Apply filters to new vehicle list in VehicleContext before triggering cascade animation.</rationale>
+    </constraint>
+
+    <constraint type="testing" severity="high">
+      <description>Achieve 80% test coverage for filter components</description>
+      <rationale>Unit tests for FilterContext, FilterModal, FilterChips, SortDropdown. Integration tests for filter → grid update flow. Visual regression tests across breakpoints. Follow testing patterns from Story 3-6 (33/33 tests passing).</rationale>
+    </constraint>
+
+    <constraint type="accessibility" severity="high">
+      <description>Full WCAG 2.1 AA compliance</description>
+      <rationale>Keyboard navigation (Tab, Enter, Space, Arrow keys), ARIA labels on all controls, ARIA role="combobox" for dropdown, focus trap in modal, color contrast ≥4.5:1, screen reader announcements. Use axe-core for automated testing.</rationale>
+    </constraint>
+
+    <constraint type="performance" severity="medium">
+      <description>Debounce filter application to prevent excessive re-renders</description>
+      <rationale>300ms debounce delay. Memoize filtered vehicle list with useMemo. Consider virtual scrolling if >50 vehicles (react-window already in dependencies).</rationale>
+    </constraint>
+
+    <constraint type="design" severity="medium">
+      <description>Glass-morphism styling consistency</description>
+      <rationale>background: rgba(255,255,255,0.85), backdrop-filter: blur(20px), border: 1px solid rgba(255,255,255,0.18). Active filters: cyan glow border (rgba(6,182,212,0.5)). Follow Story 3-2 design tokens.</rationale>
+    </constraint>
+
+    <constraint type="implementation" severity="low">
+      <description>No new dependencies required</description>
+      <rationale>Use existing @radix-ui/react-dialog for modal. Implement custom slider or use rc-slider if needed. All required dependencies already installed.</rationale>
+    </constraint>
+
+    <constraint type="bundle" severity="low">
+      <description>Lazy load FilterModal component</description>
+      <rationale>Code-split filter components from initial bundle using React.lazy(). Import dynamically when user clicks filter button.</rationale>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FilterContext (NEW - to be created)</name>
+      <kind>React Context</kind>
+      <signature>
+interface FilterContextValue {
+  filters: FilterState;
+  sortBy: SortOption;
+  applyFilters: (filters: FilterState) => void;
+  removeFilter: (key: keyof FilterState) => void;
+  clearAllFilters: () => void;
+  setSort: (sort: SortOption) => void;
+  activeFilterCount: number;
+}
+
+interface FilterState {
+  priceRange?: [number, number];
+  makes?: string[];
+  vehicleTypes?: string[];
+  yearRange?: [number, number];
+  maxMileage?: number;
+  features?: string[];
+}
+      </signature>
+      <path>frontend/src/context/FilterContext.tsx (NEW)</path>
+      <description>Shared filter state management following ComparisonContext pattern. sessionStorage persistence with 30min expiry. Provides filter/sort operations and active count.</description>
+    </interface>
+
+    <interface>
+      <name>VehicleContext.getFilteredVehicles() (MODIFY)</name>
+      <kind>React Context Method</kind>
+      <signature>
+getFilteredVehicles(vehicles: Vehicle[], filters: FilterState, sortBy: SortOption): Vehicle[]
+      </signature>
+      <path>frontend/src/context/VehicleContext.tsx (MODIFY lines 89-103)</path>
+      <description>Add method to apply filters and sort to vehicle list. Returns filtered, sorted vehicles. Memoized for performance. Called by VehicleGrid and when SSE updates arrive.</description>
+    </interface>
+
+    <interface>
+      <name>useFilters (NEW - exported from FilterContext)</name>
+      <kind>React Hook</kind>
+      <signature>
+function useFilters(): {
+  filters: FilterState;
+  sortBy: SortOption;
+  applyFilters: (filters: FilterState) => void;
+  removeFilter: (key: keyof FilterState) => void;
+  clearAllFilters: () => void;
+  setSort: (sort: SortOption) => void;
+  activeFilterCount: number;
+}
+      </signature>
+      <path>frontend/src/context/FilterContext.tsx (NEW)</path>
+      <description>Convenience hook for consuming FilterContext. Wraps useContext hook with null check. Export for use in FilterBar, FilterModal, and other components.</description>
+    </interface>
+
+    <interface>
+      <name>useVehicleUpdates (MODIFY - preserve filters)</name>
+      <kind>React Hook</kind>
+      <signature>
+function useVehicleUpdates(options: UseVehicleUpdatesOptions): {
+  connected: boolean;
+  lastUpdate: Date | null;
+  error: Error | null;
+}
+      </signature>
+      <path>frontend/src/hooks/useVehicleUpdates.ts (MODIFY)</path>
+      <description>Modify to preserve active filters when SSE vehicle updates arrive. Read current filters from FilterContext, apply to new vehicle list before updating VehicleContext. Prevents filters from being lost on real-time updates.</description>
+    </interface>
+
+    <interface>
+      <name>POST /api/search/semantic (EXISTING - verify filter support)</name>
+      <kind>REST Endpoint</kind>
+      <signature>
+POST /api/search/semantic
+Request: { query: string, filters?: SearchFilters, sort_by?: string }
+Response: { vehicles: Vehicle[], totalCount: number, processingTime: number }
+      </signature>
+      <path>src/api/semantic_search_api.py (VERIFY)</path>
+      <description>Backend semantic search endpoint. Verify it supports filter parameters (make, model, price_range, year_range, mileage_max, features) and sort_by parameter (relevance, price, mileage, year, efficiency).</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Frontend testing uses Vitest v4.0.16 with React Testing Library @16.3.1. Test environment includes jsdom 27.4.0 and MSW 2.7.2 for API mocking. Unit tests target 80% coverage for business logic. Integration tests verify filter → grid update flow. Visual regression tests compare component snapshots to design tokens.</standards>
+
+    <locations>frontend/src/context/__tests__/FilterContext.test.tsx (NEW)
+frontend/src/components/filters/__tests__/FilterBar.test.tsx (NEW)
+frontend/src/components/filters/__tests__/FilterModal.test.tsx (NEW)
+frontend/src/components/filters/__tests__/FilterChips.test.tsx (NEW)
+frontend/src/components/filters/__tests__/SortDropdown.test.tsx (NEW)
+frontend/src/components/filters/__tests__/FilterIntegration.test.tsx (NEW)
+frontend/src/context/__tests__/VehicleContext.test.tsx (VERIFY existing tests still pass after modifications)</locations>
+
+    <ideas>
+      <test-criterion ac="AC1">
+        <idea>Test FilterBar renders with all controls: filter chips button, sort dropdown, clear filters button. Verify glass-morphism styling. Test responsive layout across breakpoints.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC2">
+        <idea>Test FilterModal opens on button click. Verify all filter categories render: Price Range (dual-slider), Make (multi-select), Vehicle Type (checkboxes), Year Range (dual-slider), Mileage (slider), Features (multi-select). Test selected count badges display correctly.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC3">
+        <idea>Test apply filters triggers grid update with cascade animation. Mock VehicleContext.getFilteredVehicles(). Verify filter modal closes. Verify filter bar shows active count. Verify filter chips appear with applied filters.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC4">
+        <idea>Test sort dropdown options: Relevance, Price, Mileage, Year, Efficiency. Test sort direction toggle (asc/desc). Verify Otto explanation text displays. Verify sorting applies within filter constraints. Test sort preference persists to sessionStorage.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC5">
+        <idea>Test filter chips display applied filters as removable pills. Test clicking × on chip removes specific filter. Verify grid updates immediately. Test remaining chips reorder smoothly.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC6">
+        <idea>Test clear all filters button removes all filters. Verify filter modal resets to default. Verify grid shows all vehicles. Verify sort resets to "Relevance". Verify sessionStorage cleared.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC7">
+        <idea>Test sessionStorage persistence: apply filters, reload page, verify filters restore. Test sort preference persists. Test 30min expiry (mock time advance). Verify filter modal shows previous selections.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC8">
+        <idea>Test Otto conversation preference auto-applies filters. Mock ConversationContext preference change. Verify filters update. Verify filter chips display preference filters. Verify Otto message explains applied filters.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC9">
+        <idea>Test empty state when filters match zero vehicles. Apply filters that return no results. Verify friendly message displays. Verify "Clear All Filters" CTA prominent. Verify Otto suggestion shown. Verify grid skeleton NOT shown.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC10">
+        <idea>Test keyboard navigation: Tab to all controls, Enter/Space to activate. Verify Escape key closes modal. Test ARIA labels on all buttons. Test sort dropdown ARIA role="combobox" with expanded state. Test dual-handle slider ARIA value labels. Verify color contrast ≥4.5:1. Test screen reader announces filter changes.</idea>
+      </test-criterion>
+
+      <integration-idea>
+        <name>Full Filter Flow Test</name>
+        <description>Test complete flow: User opens filter modal → selects price range + vehicle type → applies filters → grid updates with cascade → filter chips display → user sorts by price → grid re-sorts → user clears all filters → grid resets to all vehicles. Verify SSE update preserves filters during flow.</description>
+      </integration-idea>
+    </ideas>
+  </tests>
+</story-context>

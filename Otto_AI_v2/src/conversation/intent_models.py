@@ -31,6 +31,18 @@ class IntentType(Enum):
     RESERVE = "reserve"
     SCHEDULE = "schedule"
 
+    # Phase 1: Advisory intent types (from conversation simulation analysis)
+    UPGRADE_INTEREST = "upgrade_interest"          # "thinking about upgrading my current car"
+    LIFESTYLE_DISCLOSURE = "lifestyle_disclosure"  # sharing driving patterns, commute info
+    INFRASTRUCTURE_DISCLOSURE = "infrastructure"   # "I have a garage", charging capability
+    PRIORITY_EXPRESSION = "priority_expression"    # "X is more important than Y"
+    ALTERNATIVE_INQUIRY = "alternative_inquiry"    # "am I missing anything?"
+    DECISION_COMMITMENT = "decision_commitment"    # "sounds like the winner", "I'm ready"
+    NEXT_STEPS_INQUIRY = "next_steps_inquiry"      # "what happens next?"
+    TRADEOFF_QUESTION = "tradeoff_question"        # "what's the real difference between..."
+    CONFIRMATION_SEEKING = "confirmation_seeking"  # "is there anything I should know?"
+    CONCERN_EXPRESSION = "concern_expression"      # "I don't want to regret this"
+
 
 class EntityType(Enum):
     """Entity types for vehicle domain"""
@@ -50,6 +62,19 @@ class EntityType(Enum):
     FAMILY_SIZE = "family_size"
     USAGE = "usage"
     PRIORITY = "priority"
+
+    # Phase 1: Lifestyle context entities (from NLU gap analysis)
+    CURRENT_VEHICLE = "current_vehicle"              # "my 2018 Honda Accord"
+    COMMUTE_PATTERN = "commute_pattern"              # "45 miles round trip on highway"
+    WORK_PATTERN = "work_pattern"                    # "work from home 2 days a week"
+    ANNUAL_MILEAGE = "annual_mileage"                # "12,000-15,000 miles annually"
+    ROAD_TRIP_PATTERN = "road_trip_pattern"          # "road trips 3-4 times a year"
+    CHARGING_INFRASTRUCTURE = "charging_infrastructure"  # "have a garage, can install charger"
+    RANGE_REQUIREMENT = "range_requirement"          # "need 300+ miles per charge"
+    BUDGET_FLEXIBILITY = "budget_flexibility"        # "prefer under $100k but could stretch"
+    PRIORITY_RANKING = "priority_ranking"            # "performance > luxury"
+    PERFORMANCE_PREFERENCE = "performance_preference"  # "sporty feel, quick acceleration"
+    DECISION_READINESS = "decision_readiness"        # confidence level in decision
 
 
 @dataclass

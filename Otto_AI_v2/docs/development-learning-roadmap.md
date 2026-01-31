@@ -1,7 +1,7 @@
 # Otto.AI Development Learning Roadmap
 
 **Date:** 2025-12-14
-**Approach:** Learning-Oriented Incremental Development
+**Approach:** Learning -Oriented Incremental Development
 **Status:** Ready to Begin - Story 2-5
 
 ---

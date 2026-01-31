@@ -98,35 +98,55 @@ class ZepClient:
         except Exception as e:
             raise Exception(f"Zep Cloud connection test failed: {e}")
 
-    async def create_session(self, user_id: str, session_id: Optional[str] = None) -> str:
-        """Create or get a Zep session for a user"""
+    async def create_session(self, user_id: str, session_id: Optional[str] = None, is_guest: bool = False) -> str:
+        """Create or get a Zep session for a user
+
+        Args:
+            user_id: User identifier (or guest:session_id for guests)
+            session_id: Optional explicit session ID
+            is_guest: Whether this is a guest session (anonymous)
+
+        Returns:
+            The session ID that was created or retrieved
+        """
         if not self.initialized:
             raise Exception("Zep client not initialized")
 
         try:
             # Use provided session_id or generate one
             if not session_id:
-                session_id = f"session_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                if is_guest:
+                    # For guests, use the user_id (which is the session_id) directly
+                    session_id = user_id
+                else:
+                    session_id = f"session_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
             # Check if session exists
             try:
                 existing_session = await self.client.session.get(session_id)
                 if existing_session:
+                    logger.debug(f"Using existing Zep session: {session_id}")
                     return session_id
             except:
                 pass  # Session doesn't exist, create it
 
-            # Create new session
+            # Create new session with metadata
+            metadata = {
+                'created_at': datetime.now().isoformat(),
+                'platform': 'otto-ai'
+            }
+
+            if is_guest:
+                metadata['is_guest'] = True
+                metadata['guest_session'] = True
+
             await self.client.session.add(
                 session_id=session_id,
                 user_id=user_id,
-                metadata={
-                    'created_at': datetime.now().isoformat(),
-                    'platform': 'otto-ai'
-                }
+                metadata=metadata
             )
 
-            logger.info(f"Created Zep session: {session_id} for user: {user_id}")
+            logger.info(f"Created Zep session: {session_id} for user: {user_id} (guest: {is_guest})")
             return session_id
 
         except Exception as e:
@@ -405,6 +425,214 @@ class ZepClient:
         except Exception as e:
             logger.error(f"Failed to update user metadata: {e}")
             return False
+
+    async def create_guest_session(self, session_id: str) -> str:
+        """Create or retrieve a Zep session for an anonymous guest user
+
+        Args:
+            session_id: The UUID-based session ID from cookie
+
+        Returns:
+            The session ID
+
+        Guest sessions are prefixed with 'guest:' to distinguish them from
+        authenticated user sessions. This enables session-to-account merge
+        when the guest signs up.
+        """
+        if not self.initialized:
+            raise Exception("Zep client not initialized")
+
+        try:
+            # Use guest: prefix for anonymous sessions
+            guest_user_id = f"guest:{session_id}"
+
+            # Check if session already exists
+            try:
+                existing_session = await self.client.session.get(session_id)
+                if existing_session:
+                    logger.debug(f"Using existing guest session: {session_id}")
+                    # Update last seen timestamp
+                    await self.client.session.update(
+                        session_id=session_id,
+                        metadata={
+                            'last_seen': datetime.now().isoformat(),
+                            'is_guest': True
+                        }
+                    )
+                    return session_id
+            except:
+                pass  # Session doesn't exist, create it
+
+            # Create new guest session
+            await self.client.session.add(
+                session_id=session_id,
+                user_id=guest_user_id,
+                metadata={
+                    'is_guest': True,
+                    'guest_session': True,
+                    'created_at': datetime.now().isoformat(),
+                    'platform': 'otto-ai',
+                    'last_seen': datetime.now().isoformat()
+                }
+            )
+
+            logger.info(f"Created guest Zep session: {session_id}")
+            return session_id
+
+        except Exception as e:
+            logger.error(f"Failed to create guest session: {e}")
+            raise
+
+    async def merge_session_to_user(self, session_id: str, user_id: str) -> Dict[str, Any]:
+        """Transfer guest session memory to authenticated user account
+
+        Args:
+            session_id: The guest session ID to merge
+            user_id: The authenticated user ID to merge into
+
+        Returns:
+            Merge result with messages_transferred count
+
+        This method:
+        1. Retrieves all messages from the guest session
+        2. Creates a new session for the authenticated user
+        3. Transfers all messages to the user session
+        4. Marks the guest session for cleanup
+        """
+        if not self.initialized:
+            raise Exception("Zep client not initialized")
+
+        try:
+            logger.info(f"Merging guest session {session_id} to user {user_id}")
+
+            # 1. Retrieve guest session messages
+            guest_messages = await self.client.message.get(session_id, limit=1000)
+
+            if not guest_messages:
+                logger.warning(f"No messages found in guest session {session_id}")
+                return {
+                    'success': True,
+                    'messages_transferred': 0,
+                    'preferences_preserved': []
+                }
+
+            # 2. Create user session (will use existing if present)
+            user_session_id = await self.create_session(user_id)
+
+            # 3. Transfer messages to user session
+            # Convert Zep messages to dict format for transfer
+            messages_to_transfer = []
+            for msg in guest_messages:
+                messages_to_transfer.append({
+                    'role': msg.role,
+                    'content': msg.content,
+                    'metadata': {
+                        **(msg.metadata or {}),
+                        'merged_from_guest_session': session_id,
+                        'transferred_at': datetime.now().isoformat()
+                    }
+                })
+
+            # Add all messages to user session
+            await self.client.session.add(
+                session_id=user_session_id,
+                messages=messages_to_transfer
+            )
+
+            # 4. Extract preferences from transferred messages
+            preferences_preserved = []
+            for msg in guest_messages:
+                if msg.role == 'user':
+                    # Simple preference extraction
+                    content_lower = msg.content.lower()
+                    if 'suv' in content_lower:
+                        preferences_preserved.append('SUV preference')
+                    if 'truck' in content_lower:
+                        preferences_preserved.append('Truck preference')
+                    if 'under $' in content_lower or 'below $' in content_lower:
+                        import re
+                        budgets = re.findall(r'\$[0-9,]+', content_lower)
+                        if budgets:
+                            preferences_preserved.append(f'Budget: {budgets[0]}')
+
+            # 5. Mark guest session for cleanup (don't delete yet, for audit trail)
+            await self.client.session.update(
+                session_id=session_id,
+                metadata={
+                    'is_guest': True,
+                    'status': 'merged',
+                    'merged_to_user': user_id,
+                    'merged_at': datetime.now().isoformat()
+                }
+            )
+
+            logger.info(
+                f"Successfully merged guest session {session_id} to user {user_id}. "
+                f"Transferred {len(messages_to_transfer)} messages."
+            )
+
+            return {
+                'success': True,
+                'messages_transferred': len(messages_to_transfer),
+                'preferences_preserved': list(set(preferences_preserved)),  # Deduplicate
+                'guest_session_id': session_id,
+                'user_session_id': user_session_id
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to merge guest session {session_id} to user {user_id}: {e}")
+            raise
+
+    async def get_last_visit_context(self, session_id: str) -> Dict[str, Any]:
+        """Get context from guest's last visit for "Welcome back!" greeting
+
+        Args:
+            session_id: The guest session ID
+
+        Returns:
+            Dictionary with last_visit_date, previous_preferences, message_count
+        """
+        if not self.initialized:
+            return {}
+
+        try:
+            # Get session details
+            try:
+                session = await self.client.session.get(session_id)
+            except:
+                return {}
+
+            # Get messages from session
+            messages = await self.client.message.get(session_id, limit=50)
+
+            # Extract preferences from messages
+            previous_preferences = []
+            for msg in messages:
+                if msg.role == 'user':
+                    content_lower = msg.content.lower()
+                    if 'suv' in content_lower:
+                        previous_preferences.append('SUVs')
+                    if 'truck' in content_lower:
+                        previous_preferences.append('trucks')
+                    if 'electric' in content_lower or 'ev' in content_lower:
+                        previous_preferences.append('electric vehicles')
+                    if 'under $' in content_lower:
+                        import re
+                        budgets = re.findall(r'\$[0-9,]+', content_lower)
+                        if budgets:
+                            previous_preferences.append(f'vehicles under {budgets[0]}')
+
+            return {
+                'last_visit_date': session.updated_at.isoformat() if session and session.updated_at else None,
+                'created_date': session.created_at.isoformat() if session and session.created_at else None,
+                'previous_preferences': list(set(previous_preferences)),  # Deduplicate
+                'message_count': len(messages),
+                'is_returning_visitor': len(messages) > 0
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to get last visit context for session {session_id}: {e}")
+            return {}
 
     async def get_session_stats(self, user_id: str) -> Dict[str, Any]:
         """Get statistics about user's sessions"""

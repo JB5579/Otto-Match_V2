@@ -7,7 +7,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import asyncio
 
 from src.memory.zep_client import ZepClient, ConversationContext, Message
@@ -34,9 +34,23 @@ from src.intelligence.family_need_questioning import FamilyNeedQuestioning
 # Import market data enhancer
 from src.conversation.market_data_enhancer import get_market_data_enhancer
 
+# Import external research service (Phase 2 integration)
+from src.services.external_research_service import (
+    get_research_service,
+    ExternalResearchService,
+    OwnershipCostReport,
+    OwnerExperienceReport,
+    LeaseVsBuyReport,
+    InsuranceDeltaReport
+)
+
+# Import RAG Search Pipeline (Epic 1 integration)
+from src.search.search_orchestrator import SearchOrchestrator, SearchRequest, SearchResponse, SearchResult
+from src.semantic.embedding_service import OttoAIEmbeddingService
+
 # Import voice-related components
 from src.services.voice_input_service import VoiceInputService, VoiceResult
-from src.models.voice_models import VoiceCommand, parse_vehicle_command, VoiceState
+from src.models.voice_models import VoiceCommand, VoiceCommandType, parse_vehicle_command, VoiceState
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -128,6 +142,15 @@ class ConversationAgent:
         # Market data enhancer
         self.market_enhancer = get_market_data_enhancer()
 
+        # External research service (Phase 2 integration)
+        self.research_service = get_research_service()
+        self.research_enabled = True  # Enable external research by default
+
+        # RAG Search Pipeline (Epic 1 integration)
+        self.search_orchestrator: Optional[SearchOrchestrator] = None
+        self.embedding_service: Optional[OttoAIEmbeddingService] = None
+        self.rag_search_enabled = False
+
         # Otto AI personality settings
         self.personality = {
             'name': 'Otto AI',
@@ -203,6 +226,29 @@ class ConversationAgent:
             family_initialized = await self.family_questioning.initialize()
             if not family_initialized:
                 logger.warning("Family questioning initialization failed, continuing without specialized family questions")
+
+            # Initialize RAG Search Pipeline (Epic 1 integration)
+            try:
+                import os
+                supabase_url = os.getenv('SUPABASE_URL')
+                supabase_key = os.getenv('SUPABASE_ANON_KEY') or os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+
+                if supabase_url and supabase_key:
+                    self.embedding_service = OttoAIEmbeddingService()
+                    await self.embedding_service.initialize(supabase_url, supabase_key)
+
+                    self.search_orchestrator = SearchOrchestrator()
+                    if await self.search_orchestrator.initialize(
+                        supabase_url, supabase_key, self.embedding_service
+                    ):
+                        self.rag_search_enabled = True
+                        logger.info("RAG Search Pipeline initialized (hybrid search + query expansion + re-ranking)")
+                    else:
+                        logger.warning("RAG Search Pipeline initialization failed, using fallback search")
+                else:
+                    logger.warning("Supabase credentials not found, RAG Search Pipeline disabled")
+            except Exception as e:
+                logger.warning(f"RAG Search Pipeline initialization failed: {e}, continuing without advanced search")
 
             self.initialized = True
             logger.info("Conversation agent initialized successfully with all components including questioning strategy")
@@ -341,6 +387,21 @@ class ConversationAgent:
                 logger.error(f"Market intelligence enhancement failed: {e}")
                 market_intelligence = None
 
+            # Check for external research opportunities (Phase 2)
+            external_research = None
+            try:
+                research_type = await self._detect_research_query(message, entities)
+                if research_type:
+                    logger.info(f"Detected research query: {research_type}")
+                    external_research = await self._perform_external_research(
+                        research_type, message, entities, user_id, dialogue_state
+                    )
+                    if external_research:
+                        logger.info(f"External research completed: {research_type}")
+            except Exception as e:
+                logger.error(f"External research detection/execution failed: {e}")
+                external_research = None
+
             # Check if we should ask questions based on conversation context
             await self._handle_questioning_strategy(
                 user_id, message, session_id, dialogue_state, preferences, conflicts
@@ -403,6 +464,17 @@ class ConversationAgent:
                     elif 'insights' in market_intelligence and market_intelligence['insights']:
                         insights_text = "\n".join([f"• {insight}" for insight in market_intelligence['insights'][:3]])
                         generated_response.message += f"\n\n📊 Market Insights:\n{insights_text}"
+
+            # Add external research to response if available (Phase 2)
+            if external_research:
+                response_metadata['external_research'] = {
+                    'type': external_research['type'],
+                    'report': external_research['report'].dict() if hasattr(external_research['report'], 'dict') else external_research['report']
+                }
+
+                # Append research summary to response message
+                if 'summary' in external_research:
+                    generated_response.message += f"\n\n{external_research['summary']}"
 
             response = ConversationResponse(
                 message=generated_response.message,
@@ -573,9 +645,9 @@ class ConversationAgent:
         context: ConversationContext,
         dialogue_state: DialogueState
     ) -> ConversationResponse:
-        """Handle vehicle search intent"""
+        """Handle vehicle search intent using RAG pipeline"""
 
-        # Extract search criteria
+        # Extract search criteria from entities
         search_criteria = {
             'vehicle_types': entities.get('vehicle_types', []),
             'brands': entities.get('brands', []),
@@ -583,35 +655,226 @@ class ConversationAgent:
             'features': entities.get('features', [])
         }
 
-        # Generate search query
+        # Build filters from extracted entities
+        filters = self._build_search_filters(entities, context)
+
+        # Generate enhanced search query
         search_query = await self.groq_client.generate_vehicle_search_query(message, entities)
 
-        # For now, return a response indicating search
-        # In production, this would integrate with the semantic search API
-        response_message = (
-            f"I'll help you search for {search_query}. "
-            f"Based on your interest in {', '.join(search_criteria['vehicle_types']) if search_criteria['vehicle_types'] else 'vehicles'}, "
-            "I'm checking our inventory for the best matches."
+        vehicle_results = []
+        search_metadata = {
+            'search_query': search_query,
+            'criteria': search_criteria,
+            'rag_enabled': self.rag_search_enabled
+        }
+
+        # Execute RAG search pipeline if enabled
+        if self.rag_search_enabled and self.search_orchestrator:
+            try:
+                # Create search request for RAG pipeline
+                search_request = SearchRequest(
+                    query=message,  # Use original message for query expansion
+                    filters=filters,
+                    limit=10,  # Reasonable limit for conversation
+                    offset=0,
+                    enable_expansion=True,
+                    enable_reranking=True,
+                    enable_contextual=True
+                )
+
+                # Execute RAG search
+                search_response: SearchResponse = await self.search_orchestrator.search(search_request)
+
+                # Convert results to conversation format
+                vehicle_results = self._format_search_results_for_conversation(search_response.results)
+
+                # Add search metadata
+                search_metadata.update({
+                    'total_results': search_response.total_results,
+                    'latency_ms': search_response.total_latency_ms,
+                    'expanded_query': search_response.metadata.get('expanded_query'),
+                    'extracted_filters': search_response.metadata.get('extracted_filters', {}),
+                    'expansion_latency_ms': search_response.expansion_latency_ms,
+                    'rerank_latency_ms': search_response.rerank_latency_ms
+                })
+
+                logger.info(
+                    f"RAG search completed: {len(vehicle_results)} results in {search_response.total_latency_ms:.0f}ms"
+                )
+
+            except Exception as e:
+                logger.error(f"RAG search failed, falling back: {e}")
+                search_metadata['rag_error'] = str(e)
+
+        # Generate response message based on results
+        response_message = self._generate_search_response_message(
+            search_query, vehicle_results, search_criteria
         )
 
+        # Update dialogue state
         dialogue_state.stage = 'recommendation'
         dialogue_state.collected_info.update(search_criteria)
+        dialogue_state.collected_info['last_search_results'] = len(vehicle_results)
+
+        # Generate contextual suggestions based on results
+        suggestions = self._generate_search_suggestions(vehicle_results, search_criteria)
 
         return ConversationResponse(
             message=response_message,
             response_type='vehicle_results',
-            metadata={
-                'search_query': search_query,
-                'criteria': search_criteria
-            },
-            suggestions=[
-                "Show me more details",
-                "Are there any similar options?",
-                "Can I compare these?"
-            ],
+            metadata=search_metadata,
+            suggestions=suggestions,
             needs_follow_up=True,
-            vehicle_results=[]  # Would contain actual search results
+            vehicle_results=vehicle_results
         )
+
+    def _build_search_filters(
+        self,
+        entities: Dict[str, Any],
+        context: ConversationContext
+    ) -> Dict[str, Any]:
+        """Build search filters from entities and context"""
+        filters = {}
+
+        # Extract make/model from entities
+        if entities.get('brands'):
+            filters['make'] = entities['brands'][0]
+        if entities.get('models'):
+            filters['model'] = entities['models'][0]
+
+        # Extract budget/price range
+        budget = entities.get('budget')
+        if budget:
+            if isinstance(budget, dict):
+                if budget.get('max'):
+                    filters['price_max'] = budget['max']
+                if budget.get('min'):
+                    filters['price_min'] = budget['min']
+            elif isinstance(budget, (int, float)):
+                filters['price_max'] = budget
+
+        # Extract year range
+        if entities.get('year_min'):
+            filters['year_min'] = entities['year_min']
+        if entities.get('year_max'):
+            filters['year_max'] = entities['year_max']
+
+        # Extract vehicle type
+        if entities.get('vehicle_types'):
+            filters['vehicle_type'] = entities['vehicle_types'][0]
+
+        # Extract mileage
+        if entities.get('mileage_max'):
+            filters['mileage_max'] = entities['mileage_max']
+
+        # Add user preferences from context if available
+        if context.user_preferences:
+            if not filters.get('vehicle_type') and context.user_preferences.get('vehicle_types'):
+                filters['vehicle_type'] = context.user_preferences['vehicle_types'][0]
+
+        return filters
+
+    def _format_search_results_for_conversation(
+        self,
+        results: List[SearchResult]
+    ) -> List[Dict[str, Any]]:
+        """Format RAG search results for conversation response"""
+        formatted = []
+        for r in results:
+            formatted.append({
+                'id': r.id,
+                'vin': r.vin,
+                'year': r.year,
+                'make': r.make,
+                'model': r.model,
+                'trim': r.trim,
+                'vehicle_type': r.vehicle_type,
+                'price': r.price,
+                'price_source': r.price_source,
+                'mileage': r.mileage,
+                'description': r.description,
+                'relevance_score': r.similarity_score,
+                'match_details': {
+                    'vector_score': r.vector_score,
+                    'keyword_score': r.keyword_score,
+                    'hybrid_score': r.hybrid_score,
+                    'rerank_score': r.rerank_score
+                }
+            })
+        return formatted
+
+    def _generate_search_response_message(
+        self,
+        search_query: str,
+        results: List[Dict[str, Any]],
+        criteria: Dict[str, Any]
+    ) -> str:
+        """Generate a natural language response for search results"""
+        if not results:
+            vehicle_desc = ', '.join(criteria.get('vehicle_types', [])) or 'vehicles'
+            return (
+                f"I searched for {search_query}, but couldn't find any exact matches. "
+                f"Would you like me to broaden the search or adjust the criteria?"
+            )
+
+        count = len(results)
+        top_result = results[0]
+
+        # Build vehicle description
+        vehicle_desc = f"{top_result['year']} {top_result['make']} {top_result['model']}"
+        if top_result.get('trim'):
+            vehicle_desc += f" {top_result['trim']}"
+
+        # Price info
+        price_info = ""
+        if top_result.get('price'):
+            price_info = f" priced at ${top_result['price']:,.0f}"
+
+        if count == 1:
+            return (
+                f"I found a great match for you: a {vehicle_desc}{price_info}. "
+                f"This vehicle has a {top_result.get('relevance_score', 0)*100:.0f}% match to your criteria."
+            )
+        else:
+            return (
+                f"I found {count} vehicles matching your search. "
+                f"The top match is a {vehicle_desc}{price_info} with a "
+                f"{top_result.get('relevance_score', 0)*100:.0f}% relevance score. "
+                f"Would you like more details on any of these?"
+            )
+
+    def _generate_search_suggestions(
+        self,
+        results: List[Dict[str, Any]],
+        criteria: Dict[str, Any]
+    ) -> List[str]:
+        """Generate contextual suggestions based on search results"""
+        if not results:
+            return [
+                "Try a different vehicle type",
+                "Increase your budget range",
+                "Search for similar models"
+            ]
+
+        suggestions = []
+
+        # If we have results, suggest exploration
+        if len(results) > 1:
+            suggestions.append("Compare the top vehicles")
+
+        # Suggest details on top result
+        top = results[0]
+        suggestions.append(f"Tell me more about the {top['year']} {top['make']} {top['model']}")
+
+        # Suggest price analysis if price available
+        if top.get('price'):
+            suggestions.append("Is this a good price?")
+
+        # Suggest alternatives
+        if len(results) >= 3:
+            suggestions.append("Show me different options")
+
+        return suggestions[:4]  # Limit to 4 suggestions
 
     async def _handle_compare_intent(
         self,
@@ -702,6 +965,381 @@ class ConversationAgent:
             ],
             needs_follow_up=True
         )
+
+    async def _detect_research_query(
+        self,
+        message: str,
+        entities: List[Entity]
+    ) -> Optional[str]:
+        """
+        Detect if user is asking for external research
+        Returns research type: 'ownership_costs', 'owner_experience', 'lease_vs_buy', 'insurance_delta'
+        """
+        message_lower = message.lower()
+
+        # Ownership cost indicators
+        ownership_keywords = [
+            'total cost', 'ownership cost', 'cost to own', 'annual cost',
+            'maintenance cost', 'insurance cost', 'depreciation',
+            'how much will it cost', 'expensive to own', 'operating cost'
+        ]
+        if any(keyword in message_lower for keyword in ownership_keywords):
+            return 'ownership_costs'
+
+        # Owner experience indicators
+        experience_keywords = [
+            'owner review', 'owner experience', 'what do owners say',
+            'reliable', 'reliability', 'common problems', 'common issues',
+            'satisfaction', 'owner rating', 'forum', 'real world'
+        ]
+        if any(keyword in message_lower for keyword in experience_keywords):
+            return 'owner_experience'
+
+        # Lease vs buy indicators
+        lease_keywords = [
+            'lease or buy', 'lease vs buy', 'should i lease', 'leasing',
+            'finance or lease', 'better to lease', 'lease option'
+        ]
+        if any(keyword in message_lower for keyword in lease_keywords):
+            return 'lease_vs_buy'
+
+        # Insurance delta indicators (when comparing current to new)
+        insurance_keywords = [
+            'insurance cost', 'insurance premium', 'insurance change',
+            'insurance increase', 'insurance difference', 'how much more insurance'
+        ]
+        # Check if they mentioned current vehicle
+        has_current_vehicle = any(
+            word in message_lower for word in ['current', 'my car', 'trading', 'upgrade from']
+        )
+        if any(keyword in message_lower for keyword in insurance_keywords) and has_current_vehicle:
+            return 'insurance_delta'
+
+        return None
+
+    async def _perform_external_research(
+        self,
+        research_type: str,
+        message: str,
+        entities: List[Entity],
+        user_id: str,
+        dialogue_state: DialogueState
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Perform external research based on detected query type
+        Returns research results formatted for conversation
+        """
+        if not self.research_enabled or not self.research_service:
+            return None
+
+        try:
+            # Extract vehicle information from entities and dialogue state
+            vehicle_info = self._extract_vehicle_info_for_research(entities, dialogue_state)
+
+            if not vehicle_info.get('make') or not vehicle_info.get('model'):
+                logger.warning("Insufficient vehicle information for research")
+                return None
+
+            # Get lifestyle profile for personalized research
+            lifestyle_profile = None
+            if hasattr(self.nlu_service, 'get_user_lifestyle_profile'):
+                lifestyle_profile = self.nlu_service.get_user_lifestyle_profile(user_id)
+
+            # Perform research based on type
+            if research_type == 'ownership_costs':
+                result = await self._research_ownership_costs(vehicle_info, lifestyle_profile)
+            elif research_type == 'owner_experience':
+                result = await self._research_owner_experience(vehicle_info)
+            elif research_type == 'lease_vs_buy':
+                result = await self._research_lease_vs_buy(vehicle_info, lifestyle_profile)
+            elif research_type == 'insurance_delta':
+                result = await self._research_insurance_delta(vehicle_info, lifestyle_profile, dialogue_state)
+            else:
+                return None
+
+            return result
+
+        except Exception as e:
+            logger.error(f"External research failed: {e}")
+            return None
+
+    def _extract_vehicle_info_for_research(
+        self,
+        entities: List[Entity],
+        dialogue_state: DialogueState
+    ) -> Dict[str, Any]:
+        """Extract vehicle info from entities and dialogue state"""
+        vehicle_info = {}
+
+        # Extract from entities
+        for entity in entities:
+            if hasattr(entity, 'entity_type'):
+                entity_type = entity.entity_type.value if hasattr(entity.entity_type, 'value') else str(entity.entity_type)
+                if entity_type == 'make':
+                    vehicle_info['make'] = entity.value
+                elif entity_type == 'model':
+                    vehicle_info['model'] = entity.value
+                elif entity_type == 'year':
+                    vehicle_info['year'] = entity.value
+                elif entity_type == 'trim':
+                    vehicle_info['trim'] = entity.value
+
+        # Fall back to dialogue state if needed
+        if not vehicle_info.get('make') and dialogue_state.collected_info:
+            # Look for last mentioned make/model in collected info
+            if 'entity_make' in dialogue_state.collected_info:
+                recent_make = dialogue_state.collected_info['entity_make']
+                if isinstance(recent_make, list) and recent_make:
+                    vehicle_info['make'] = recent_make[-1]['value']
+
+            if 'entity_model' in dialogue_state.collected_info:
+                recent_model = dialogue_state.collected_info['entity_model']
+                if isinstance(recent_model, list) and recent_model:
+                    vehicle_info['model'] = recent_model[-1]['value']
+
+            if 'entity_year' in dialogue_state.collected_info:
+                recent_year = dialogue_state.collected_info['entity_year']
+                if isinstance(recent_year, list) and recent_year:
+                    vehicle_info['year'] = recent_year[-1]['value']
+
+        return vehicle_info
+
+    async def _research_ownership_costs(
+        self,
+        vehicle_info: Dict[str, Any],
+        lifestyle_profile = None
+    ) -> Dict[str, Any]:
+        """Research total cost of ownership"""
+        # Get annual mileage from lifestyle profile
+        annual_mileage = 12000  # Default
+        if lifestyle_profile and hasattr(lifestyle_profile, 'annual_mileage'):
+            if lifestyle_profile.annual_mileage:
+                # Average of low and high if range
+                low, high = lifestyle_profile.annual_mileage
+                annual_mileage = (low + high) / 2 if low and high else (low or high or 12000)
+
+        report = await self.research_service.get_ownership_costs(
+            year=vehicle_info.get('year'),
+            make=vehicle_info['make'],
+            model=vehicle_info['model'],
+            trim=vehicle_info.get('trim'),
+            annual_mileage=int(annual_mileage)
+        )
+
+        return {
+            'type': 'ownership_costs',
+            'report': report,
+            'summary': self._format_ownership_cost_summary(report, vehicle_info)
+        }
+
+    def _format_ownership_cost_summary(
+        self,
+        report: OwnershipCostReport,
+        vehicle_info: Dict[str, Any]
+    ) -> str:
+        """Format ownership cost report into conversational summary"""
+        vehicle_name = f"{vehicle_info.get('year', '')} {vehicle_info['make']} {vehicle_info['model']}".strip()
+
+        summary = f"Here's what it costs to own a {vehicle_name}:\n\n"
+        summary += f"💰 **First Year Total**: ${report.total_year1:,.0f}\n"
+        summary += f"📅 **Monthly Cost**: ${report.cost_per_month:,.0f}\n"
+        summary += f"🔧 **5-Year Total**: ${report.total_5year:,.0f}\n\n"
+
+        summary += "**Breakdown:**\n"
+        summary += f"• Insurance: ${report.insurance_annual:,.0f}/year\n"
+        summary += f"• Maintenance: ${report.maintenance_annual:,.0f}/year\n"
+        summary += f"• Fuel: ${report.fuel_annual:,.0f}/year\n"
+
+        if report.depreciation_5year > 0:
+            summary += f"\n📉 Expect about ${report.depreciation_5year:,.0f} in depreciation over 5 years"
+
+        if report.reasoning:
+            summary += f"\n\n💡 {report.reasoning}"
+
+        return summary
+
+    async def _research_owner_experience(
+        self,
+        vehicle_info: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Research real owner experiences"""
+        report = await self.research_service.get_owner_experiences(
+            year=vehicle_info.get('year'),
+            make=vehicle_info['make'],
+            model=vehicle_info['model'],
+            trim=vehicle_info.get('trim')
+        )
+
+        return {
+            'type': 'owner_experience',
+            'report': report,
+            'summary': self._format_owner_experience_summary(report, vehicle_info)
+        }
+
+    def _format_owner_experience_summary(
+        self,
+        report: OwnerExperienceReport,
+        vehicle_info: Dict[str, Any]
+    ) -> str:
+        """Format owner experience report into conversational summary"""
+        vehicle_name = f"{vehicle_info.get('year', '')} {vehicle_info['make']} {vehicle_info['model']}".strip()
+
+        summary = f"Here's what real owners say about the {vehicle_name}:\n\n"
+
+        # Overall ratings
+        summary += f"⭐ **Overall Satisfaction**: {report.overall_satisfaction:.1f}/5\n"
+        summary += f"🔧 **Reliability**: {report.reliability_rating:.1f}/5\n"
+        summary += f"💎 **Value**: {report.value_rating:.1f}/5\n"
+
+        # Sentiment
+        if report.positive_sentiment > 0 or report.negative_sentiment > 0:
+            summary += f"\n📊 **Sentiment**: {report.positive_sentiment*100:.0f}% positive, {report.negative_sentiment*100:.0f}% negative"
+
+        # Common praises
+        if report.common_praises:
+            summary += f"\n\n👍 **What Owners Love:**\n"
+            for praise in report.common_praises[:3]:
+                summary += f"• {praise}\n"
+
+        # Common problems
+        if report.common_problems:
+            summary += f"\n⚠️ **Common Issues:**\n"
+            for problem in report.common_problems[:3]:
+                summary += f"• {problem}\n"
+
+        # Recommendation
+        if report.would_recommend > 0:
+            summary += f"\n✅ {report.would_recommend*100:.0f}% of owners would recommend this vehicle"
+
+        # Key insights
+        if report.key_insights:
+            summary += f"\n\n💡 **Key Insights:**\n"
+            for insight in report.key_insights[:2]:
+                summary += f"• {insight}\n"
+
+        return summary
+
+    async def _research_lease_vs_buy(
+        self,
+        vehicle_info: Dict[str, Any],
+        lifestyle_profile = None
+    ) -> Dict[str, Any]:
+        """Research lease vs buy comparison"""
+        # Get annual mileage from lifestyle profile
+        annual_mileage = 12000
+        if lifestyle_profile and hasattr(lifestyle_profile, 'annual_mileage'):
+            if lifestyle_profile.annual_mileage:
+                low, high = lifestyle_profile.annual_mileage
+                annual_mileage = (low + high) / 2 if low and high else (low or high or 12000)
+
+        report = await self.research_service.get_lease_vs_buy_analysis(
+            year=vehicle_info.get('year'),
+            make=vehicle_info['make'],
+            model=vehicle_info['model'],
+            trim=vehicle_info.get('trim'),
+            annual_mileage=int(annual_mileage)
+        )
+
+        return {
+            'type': 'lease_vs_buy',
+            'report': report,
+            'summary': self._format_lease_vs_buy_summary(report, vehicle_info)
+        }
+
+    def _format_lease_vs_buy_summary(
+        self,
+        report: LeaseVsBuyReport,
+        vehicle_info: Dict[str, Any]
+    ) -> str:
+        """Format lease vs buy report into conversational summary"""
+        vehicle_name = f"{vehicle_info.get('year', '')} {vehicle_info['make']} {vehicle_info['model']}".strip()
+
+        summary = f"Lease vs Buy comparison for {vehicle_name}:\n\n"
+
+        summary += f"**Leasing:**\n"
+        summary += f"• Monthly: ${report.lease_monthly_avg:,.0f}\n"
+        summary += f"• Down: ${report.lease_down_payment:,.0f}\n"
+        summary += f"• 5-Year Total: ${report.lease_total_5year:,.0f}\n\n"
+
+        summary += f"**Buying:**\n"
+        summary += f"• Monthly: ${report.purchase_monthly_avg:,.0f}\n"
+        summary += f"• Down: ${report.purchase_down_payment:,.0f}\n"
+        summary += f"• 5-Year Total: ${report.purchase_total_5year:,.0f}\n"
+
+        if report.breakeven_years:
+            summary += f"\n\nBreak-even point: {report.breakeven_years:.1f} years"
+
+        if report.recommendation:
+            summary += f"\n\nRecommendation: {report.recommendation}"
+
+        if report.reasoning:
+            summary += f"\n\n{report.reasoning}"
+
+        return summary
+
+    async def _research_insurance_delta(
+        self,
+        vehicle_info: Dict[str, Any],
+        lifestyle_profile,
+        dialogue_state: DialogueState
+    ) -> Dict[str, Any]:
+        """Research insurance premium change"""
+        # Extract current vehicle from lifestyle profile or dialogue state
+        current_vehicle = None
+        if lifestyle_profile and hasattr(lifestyle_profile, 'current_vehicle'):
+            current_vehicle = lifestyle_profile.current_vehicle
+
+        if not current_vehicle:
+            return None
+
+        current_vehicle_dict = {
+            'year': current_vehicle.year,
+            'make': current_vehicle.make,
+            'model': current_vehicle.model
+        }
+
+        report = await self.research_service.get_insurance_delta(
+            current_vehicle=current_vehicle_dict,
+            new_vehicle=vehicle_info
+        )
+
+        return {
+            'type': 'insurance_delta',
+            'report': report,
+            'summary': self._format_insurance_delta_summary(report, current_vehicle_dict, vehicle_info)
+        }
+
+    def _format_insurance_delta_summary(
+        self,
+        report: InsuranceDeltaReport,
+        current_vehicle: Dict[str, Any],
+        new_vehicle: Dict[str, Any]
+    ) -> str:
+        """Format insurance delta report into conversational summary"""
+        current_name = f"{current_vehicle.get('year', '')} {current_vehicle['make']} {current_vehicle.get('model', '')}".strip()
+        new_name = f"{new_vehicle.get('year', '')} {new_vehicle['make']} {new_vehicle['model']}".strip()
+
+        summary = f"Insurance cost change from {current_name} to {new_name}:\n\n"
+
+        summary += f"**Current Vehicle**: ${report.current_vehicle_premium:,.0f}/year\n"
+        summary += f"**New Vehicle**: ${report.new_vehicle_premium:,.0f}/year\n"
+
+        # Calculate change
+        change_direction = "increase" if report.annual_delta > 0 else "decrease"
+        change_pct = abs(report.percent_change * 100)
+
+        summary += f"\n**{change_direction.title()}**: ${abs(report.annual_delta):,.0f}/year ({change_pct:.1f}%)"
+        summary += f"\n**Monthly Impact**: ${abs(report.monthly_delta):,.0f}/month"
+
+        if report.factors:
+            summary += f"\n\n**Why the change:**\n"
+            for factor in report.factors[:3]:
+                summary += f"• {factor}\n"
+
+        if report.reasoning:
+            summary += f"\n\n{report.reasoning}"
+
+        return summary
 
     async def _update_dialogue_state(
         self,
@@ -1176,6 +1814,16 @@ class ConversationAgent:
                 'conflict_detector': self.conflict_detector.initialized if self.conflict_detector else False,
                 'question_memory': self.question_memory.initialized if self.question_memory else False,
                 'family_questioning': self.family_questioning.initialized if self.family_questioning else False
+            },
+            'rag_search': {
+                'enabled': self.rag_search_enabled,
+                'orchestrator_initialized': self.search_orchestrator is not None,
+                'stats': self.search_orchestrator.get_stats() if self.search_orchestrator else {}
+            },
+            'external_research': {
+                'enabled': self.research_enabled,
+                'service_initialized': self.research_service is not None,
+                'stats': self.research_service.get_stats() if self.research_service else {}
             },
             'personality': self.personality
         }

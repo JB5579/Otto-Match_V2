@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="3-8" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>8</storyId>
+    <title>Performance Optimization and Edge Caching</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-8-implement-performance-optimization-and-edge-caching.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>buyer</asA>
+    <iWant>the vehicle grid to load and respond instantly with smooth animations even when displaying 50+ vehicles</iWant>
+    <soThat>I can browse vehicles efficiently without frustrating loading delays or janky animations</soThat>
+    <tasks>
+      <task id="3-8.1">Establish performance baseline</task>
+      <task id="3-8.2">Implement React.lazy for heavy components</task>
+      <task id="3-8.3">Configure Vite code splitting</task>
+      <task id="3-8.4">Implement Intersection Observer for lazy loading</task>
+      <task id="3-8.5">Generate responsive image formats</task>
+      <task id="3-8.6">Update VehicleCard to use lazy images</task>
+      <task id="3-8.7">Add React.memo to VehicleCard</task>
+      <task id="3-8.8">Optimize FilterContext with useMemo</task>
+      <task id="3-8.9">Memoize cascade animation variants</task>
+      <task id="3-8.10">Implement debounced filter application</task>
+      <task id="3-8.11">Implement throttled scroll handlers</task>
+      <task id="3-8.12">Implement virtual scrolling for VehicleGrid</task>
+      <task id="3-8.13">Optimize Framer Motion animations</task>
+      <task id="3-8.14">Implement Service Worker for asset caching</task>
+      <task id="3-8.15">Register Service Worker in app</task>
+      <task id="3-8.16">Set up bundle size monitoring</task>
+      <task id="3-8.17">Configure performance budgets in Lighthouse CI</task>
+      <task id="3-8.18">Implement edge caching headers</task>
+      <task id="3-8.19">Document CDN deployment strategy</task>
+      <task id="3-8.20">Write performance tests</task>
+      <task id="3-8.21">Write Lighthouse CI tests</task>
+      <task id="3-8.22">Write visual regression tests for lazy loading</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">
+      <title>Code Splitting and Lazy Loading</title>
+      <description>
+        GIVEN the React app is built with Vite
+        WHEN the production bundle is analyzed
+        THEN the initial JS bundle is under 200KB gzipped
+        AND VehicleDetailModal is code-split into a separate chunk (&lt;100KB gzipped)
+        AND ComparisonView is code-split into a separate chunk (&lt;100KB gzipped)
+        AND heavy components load only when needed (React.lazy + Suspense)
+      </description>
+    </criterion>
+    <criterion id="AC2">
+      <title>Image Optimization and Lazy Loading</title>
+      <description>
+        GIVEN vehicles have 5-10 images each (hero + carousel)
+        WHEN the vehicle grid renders
+        THEN only above-fold images load initially (Intersection Observer)
+        AND below-fold images load as user scrolls (lazy loading)
+        AND images are served in WebP format with responsive srcset
+        AND low-quality placeholders (LQIP) display during load (blur-up effect)
+        AND image CDN caching reduces load time by &gt;50%
+      </description>
+    </criterion>
+    <criterion id="AC3">
+      <title>React.memo and Component Memoization</title>
+      <description>
+        GIVEN VehicleGrid re-renders frequently during filtering/sorting
+        WHEN vehicles array updates
+        THEN VehicleCard components only re-render when props actually change
+        AND FilterContext consumers prevent unnecessary re-renders via React.memo
+        AND expensive computations (filteredVehicles) use useMemo caching
+        AND cascade animation variants are memoized to prevent recreation
+      </description>
+    </criterion>
+    <criterion id="AC4">
+      <title>Debouncing and Throttling</title>
+      <description>
+        GIVEN user applies multiple filters in quick succession
+        WHEN filter state changes
+        THEN filter application is debounced by 300ms
+        AND only one API call is made for rapid filter changes
+        AND scroll events for lazy loading are throttled (100ms)
+        AND window resize events are throttled (200ms)
+      </description>
+    </criterion>
+    <criterion id="AC5">
+      <title>Virtual Scrolling for Large Grids</title>
+      <description>
+        GIVEN grid displays 50+ vehicles
+        WHEN user scrolls through results
+        THEN only visible vehicles + buffer (±5 items) are rendered
+        AND scroll performance remains 60fps
+        AND memory usage stays constant (O(viewport) not O(n))
+        AND position is preserved during filter/sort operations
+      </description>
+    </criterion>
+    <criterion id="AC6">
+      <title>Animation Performance Optimization</title>
+      <description>
+        GIVEN Framer Motion handles cascade animations
+        WHEN 50+ vehicles update simultaneously
+        THEN cascade animation maintains 60fps (16ms frame budget)
+        AND GPU acceleration is enabled via transform/opacity (not layout properties)
+        AND layout thrashing is prevented (no width/height animation triggers)
+        AND prefers-reduced-motion is respected (animations disabled)
+      </description>
+    </criterion>
+    <criterion id="AC7">
+      <title>Service Worker and Asset Caching</title>
+      <description>
+        GIVEN user visits the application for the first time
+        WHEN Service Worker is registered
+        THEN static assets (JS, CSS, images) are cached for long duration
+        AND API responses are cached with cache-first strategy (short TTL)
+        THEN subsequent page loads are &lt;500ms (from cache)
+        AND offline mode shows cached data (fallback UI)
+      </description>
+    </criterion>
+    <criterion id="AC8">
+      <title>Edge Caching and CDN Strategy</title>
+      <description>
+        GIVEN application is deployed to production
+        WHEN user requests vehicle data
+        THEN static assets are served from CDN edge locations
+        AND vehicle API responses include cache headers (Cache-Control: public, max-age=300)
+        AND unique vehicle images are cached at edge (immutable content hash)
+        AND cache invalidation works properly for vehicle updates (SSE)
+      </description>
+    </criterion>
+    <criterion id="AC9">
+      <title>Core Web Vitals Compliance</title>
+      <description>
+        GIVEN production build is deployed
+        WHEN Lighthouse CI runs performance audit
+        THEN all Core Web Vitals pass:
+        - First Contentful Paint (FCP) &lt;1.5s
+        - Largest Contentful Paint (LCP) &lt;2.5s
+        - Time to Interactive (TTI) &lt;3s
+        - Cumulative Layout Shift (CLS) &lt;0.1
+        - First Input Delay (FID) &lt;100ms
+        AND Lighthouse performance score ≥90
+      </description>
+    </criterion>
+    <criterion id="AC10">
+      <title>Bundle Analysis and Size Monitoring</title>
+      <description>
+        GIVEN CI/CD pipeline runs on every PR
+        WHEN bundle size limits are checked
+        THEN build fails if bundle size limits exceeded:
+        - Initial JS: &lt;200KB gzipped
+        - Per-route chunk: &lt;100KB gzipped
+        - Total CSS: &lt;50KB gzipped
+        AND bundle analysis (vite-bundle-visualizer) shows component breakdown
+        AND Framer Motion contribution is &lt;80KB gzipped
+      </description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Performance Requirements (O6, NFRs)</section>
+        <snippet>Target TTI &lt;3s, Core Web Vitals: FCP &lt;1.5s, LCP &lt;2.5s, CLS &lt;0.1, FID &lt;100ms. Bundle budgets: initial JS &lt;200KB, per-route &lt;100KB, CSS &lt;50KB. Optimization: code splitting, lazy loading, virtual scrolling, memoization.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Documentation</title>
+        <section>Frontend Stack (React 19.2.0 + TypeScript 5.9.3)</section>
+        <snippet>91 TypeScript/React files (~2,283 lines). Framer Motion 12.23.26 for animations. Vite 7.2.4 build system. Radix UI 1.1.15 for modals.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Glass-morphism Design System</section>
+        <snippet>Design tokens for glass-morphism: rgba(255, 255, 255, 0.85) background, 20px backdrop-filter blur. Animation performance considerations for 60fps cascade.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- Frontend Components - Existing Implementation -->
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleGrid.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleGrid</symbol>
+        <lines>1-272</lines>
+        <reason>Main vehicle grid component - needs virtual scrolling (3-8.12), scroll throttling (3-8.11). Already has React.memo wrapper (line 271). Uses infinite scroll with window.addEventListener (line 94) - NO throttling.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleCard.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleCard</symbol>
+        <lines>1-333</lines>
+        <reason>Vehicle card component - already has React.memo with custom comparison (lines 315-332). Images use loading="lazy" (line 124). Needs Intersection Observer for advanced lazy loading (3-8.4).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/context/FilterContext.tsx</path>
+        <kind>context</kind>
+        <symbol>FilterContext</symbol>
+        <lines>1-437</lines>
+        <reason>Filter state management - uses useMemo for computed values (lines 182-184). applyFilters callback (line 191) has NO debouncing - needs 300ms debounce (3-8.10).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useVehicleCascade.ts</path>
+        <kind>hook</kind>
+        <symbol>useVehicleCascade</symbol>
+        <lines>1-227</lines>
+        <reason>Cascade animation hook - ALREADY OPTIMIZED with useMemo for delta/delays (lines 150-160). Animation variants memoized (line 166). Good reference pattern for memoization.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-detail/VehicleDetailModal.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleDetailModal</symbol>
+        <reason>Heavy modal component - needs React.lazy code splitting (3-8.2), Suspense boundary with loading skeleton.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/comparison/ComparisonView.tsx</path>
+        <kind>component</kind>
+        <symbol>ComparisonView</symbol>
+        <reason>Comparison view component - needs React.lazy code splitting (3-8.2), Suspense boundary with loading skeleton.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>vite.config</symbol>
+        <lines>1-14</lines>
+        <reason>Vite build configuration - minimal config, needs manual chunks strategy (3-8.3), bundle analyzer plugin (3-8.16).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/package.json</path>
+        <kind>manifest</kind>
+        <symbol>package.json</symbol>
+        <lines>1-58</lines>
+        <reason>Frontend dependencies - already has react-window@^1.8.10 (for virtual scrolling 3-8.12), web-vitals@^4.2.4 (for Core Web Vitals tracking 3-8.9).</reason>
+      </artifact>
+
+      <!-- Backend APIs - Need Edge Caching -->
+      <artifact>
+        <path>src/api/main_app.py</path>
+        <kind>api</kind>
+        <symbol>create_application</symbol>
+        <lines>30-100</lines>
+        <reason>FastAPI main app - needs Cache-Control headers for edge caching (3-8.18), ETag support for cache validation.</reason>
+      </artifact>
+      <artifact>
+        <path>src/api/vehicles_api.py</path>
+        <kind>api</kind>
+        <symbol>vehicles_router</symbol>
+        <lines>1-200</lines>
+        <reason>Vehicle search API - needs cache headers: Cache-Control: public, max-age=300, stale-while-revalidate (3-8.18).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <!-- Frontend Dependencies (package.json) -->
+      <ecosystem name="node">
+        <package name="react" version="^19.2.0" />
+        <package name="react-dom" version="^19.2.0" />
+        <package name="typescript" version="~5.9.3" />
+        <package name="vite" version="^7.2.4" />
+        <package name="framer-motion" version="^12.23.26" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" />
+        <package name="@supabase/supabase-js" version="^2.89.0" />
+        <package name="lucide-react" version="^0.562.0" />
+        <package name="react-router-dom" version="^7.11.0" />
+        <!-- Already available - use for virtual scrolling -->
+        <package name="react-window" version="^1.8.10" />
+        <package name="web-vitals" version="^4.2.4" />
+        <!-- Dev dependencies for testing -->
+        <package name="vitest" version="^4.0.16" />
+        <package name="@testing-library/react" version="^16.3.1" />
+        <package name="playwright" version="^1.40.0" />
+      </ecosystem>
+
+      <!-- New Dependencies Required for Story 3-8 -->
+      <ecosystem name="node">
+        <!-- Debouncing utility -->
+        <package name="lodash-es" version="latest" />
+        <!-- Bundle analysis -->
+        <package name="rollup-plugin-visualizer" version="latest" />
+        <!-- Service Worker generation -->
+        <package name="vite-plugin-pwa" version="latest" />
+        <!-- Image optimization (if CDN-based not used) -->
+        <package name="vite-plugin-imagemin" version="latest" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Development Constraints from Architecture & Story -->
+    <constraint type="pattern">React 19.2.0 + TypeScript 5.9.3 frontend with strict type checking</constraint>
+    <constraint type="pattern">Vite 7.2.4 build system - use build.rollupOptions.output.manualChunks for code splitting</constraint>
+    <constraint type="pattern">Framer Motion 12.23.26 for animations - must use layout="position" for GPU acceleration, animate only transform/opacity</constraint>
+    <constraint type="pattern">Glass-morphism design system - preserve backdrop-filter: blur(20px), rgba backgrounds</constraint>
+    <constraint type="pattern">WCAG 2.1 AA accessibility compliance - ARIA labels, keyboard navigation, prefers-reduced-motion support</constraint>
+    <constraint type="pattern">sessionStorage with 30min expiry for filter state - preserve existing persistence pattern</constraint>
+    <constraint type="pattern">SSE (Server-Sent Events) for vehicle updates - Story 3-3b migration, must not break during optimization</constraint>
+
+    <!-- Performance Requirements -->
+    <constraint type="budget">Initial JS bundle: &lt;200KB gzipped</constraint>
+    <constraint type="budget">Per-route chunk: &lt;100KB gzipped</constraint>
+    <constraint type="budget">Total CSS: &lt;50KB gzipped</constraint>
+    <constraint type="budget">Framer Motion: &lt;80KB gzipped</constraint>
+    <constraint type="performance">Core Web Vitals: FCP &lt;1.5s, LCP &lt;2.5s, TTI &lt;3s, CLS &lt;0.1, FID &lt;100ms</constraint>
+    <constraint type="performance">Lighthouse score ≥90</constraint>
+    <constraint type="performance">Grid cascade: 60fps with &lt;16ms frame budget</constraint>
+    <constraint type="performance">SSE processing: &lt;100ms latency</constraint>
+
+    <!-- Testing Standards -->
+    <constraint type="testing">Unit tests with Vitest - test debounce/throttle timing, React.memo prevention, useMemo cache invalidation</constraint>
+    <constraint type="testing">Integration tests with MSW - test code splitting chunks load correctly, Service Worker caches assets</constraint>
+    <constraint type="testing">Visual regression tests - test lazy loading skeleton states, LQIP blur-up transitions</constraint>
+    <constraint type="testing">Performance tests - Lighthouse CI enforces Core Web Vitals thresholds in CI/CD</constraint>
+
+    <!-- Code Organization -->
+    <constraint type="structure">New hooks in frontend/src/hooks/ (useLazyImage.ts for Intersection Observer)</constraint>
+    <constraint type="structure">New components in frontend/src/components/loading/ (DetailSkeleton.tsx, ImageSkeleton.tsx)</constraint>
+    <constraint type="structure">Performance tests in frontend/src/performance/__tests__/ (bundleSize.test.ts, lazyLoading.test.ts, virtualScroll.test.ts)</constraint>
+    <constraint type="structure">Service Worker in frontend/public/sw.js</constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Existing API Contracts to Preserve -->
+    <interface>
+      <name>VehicleGrid Props</name>
+      <kind>component-interface</kind>
+      <signature>interface VehicleGridProps { vehicles: Vehicle[], loading?: boolean, error?: string | null, onFavorite?, onCompare?, onFeedback?, onVehicleClick?, emptyMessage?, pageSize?: number }</signature>
+      <path>frontend/src/components/vehicle-grid/VehicleGrid.tsx</path>
+    </interface>
+    <interface>
+      <name>VehicleCard Props</name>
+      <kind>component-interface</kind>
+      <signature>interface VehicleCardProps { vehicle: Vehicle, variant?: VehicleCardVariant, onFavorite?, onCompare?, onFeedback?, onClick?, isExpanded?: boolean, onToggleExpand?, animationProps? }</signature>
+      <path>frontend/src/components/vehicle-grid/VehicleCard.tsx</path>
+    </interface>
+    <interface>
+      <name>FilterContext Value</name>
+      <kind>context-interface</kind>
+      <signature>interface FilterContextValue { filters: FilterStateWithMeta, sortBy: SortOption, activeFilterCount: number, filterChips: FilterChip[], hasActiveFilters: boolean, applyFilters(), removeFilter(), clearAllFilters(), setSort(), getFilteredVehicles(vehicles: Vehicle[]): FilterResult, mergeConversationPreferences() }</signature>
+      <path>frontend/src/context/FilterContext.tsx</path>
+    </interface>
+
+    <!-- Backend APIs Requiring Edge Cache Headers -->
+    <interface>
+      <name>Vehicle Search API</name>
+      <kind>REST-endpoint</kind>
+      <signature>GET /api/v1/vehicles/search</signature>
+      <path>src/api/vehicles_api.py</path>
+    </interface>
+    <interface>
+      <name>SSE Vehicle Updates</name>
+      <kind>SSE-endpoint</kind>
+      <signature>GET /api/vehicles/updates</signature>
+      <path>src/api/vehicle_updates_sse.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <!-- Performance Testing (Lighthouse CI) -->
+      Unit tests with Vitest for debounce/throttle timing, React.memo re-render prevention, useMemo cache invalidation, lazy loading trigger conditions, virtual scrolling performance.
+      Integration tests with MSW for code splitting chunks loading, Service Worker asset caching, cache invalidation for vehicle updates, offline fallback mode.
+      Visual regression tests for lazy loading skeleton states, LQIP blur-up transitions, error states (failed image loads).
+      Lighthouse CI runs on every PR, enforces performance thresholds (FCP &lt;1.5s, LCP &lt;2.5s, TTI &lt;3s, CLS &lt;0.1, FID &lt;100ms, Lighthouse score ≥90), bundle size limits (200KB JS, 100KB chunks, 50KB CSS).
+    </standards>
+    <locations>
+      <location>frontend/src/performance/__tests__/</location>
+      <location>frontend/src/components/**/__tests__/</location>
+      <location>tests/e2e/</location>
+      <location>frontend/src/hooks/__tests__/</location>
+    </locations>
+    <ideas>
+      <test idea="AC1 (Code Splitting)">Test bundle size limits with vite-bundle-visualizer, verify chunks are separate in build output, test lazy loading triggers via Network tab monitoring</test>
+      <test idea="AC2 (Image Lazy Loading)">Test Intersection Observer triggers within viewport threshold (±200px), test fade-in animation (150ms ease-in), test error states with placeholder fallback, test WebP format with responsive srcset</test>
+      <test idea="AC3 (React.memo)">Test VehicleCard only re-renders when vehicle.id, vehicle.matchScore, or isExpanded changes, test FilterContext useMemo prevents expensive recomputation, test animation variants memoization prevents recreation</test>
+      <test idea="AC4 (Debouncing/Throttling)">Test filter application debounced by 300ms via timer mocking, test rapid filter changes trigger only one API call, test scroll events throttled 100ms, test window resize throttled 200ms</test>
+      <test idea="AC5 (Virtual Scrolling)">Test react-window renders only visible + buffer (±5 items), test scroll performance 60fps with 100 items, test memory usage constant O(viewport), test position preserved during filter/sort</test>
+      <test idea="AC6 (Animation Performance)">Test cascade animation 60fps with 50+ vehicles via Chrome DevTools Performance tab, test GPU acceleration via green bars in Performance tab, test prefers-reduced-motion disables animations</test>
+      <test idea="AC9 (Core Web Vitals)">Test Lighthouse CI enforces FCP &lt;1.5s, LCP &lt;2.5s, TTI &lt;3s, CLS &lt;0.1, FID &lt;100ms, test Lighthouse score ≥90</test>
+      <test idea="AC10 (Bundle Analysis)">Test build fails if bundle size exceeded (200KB JS, 100KB chunks, 50KB CSS), test vite-bundle-visualizer shows component breakdown, test Framer Motion &lt;80KB gzipped</test>
+    </ideas>
+  </tests>
+</story-context>

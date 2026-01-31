@@ -11,6 +11,13 @@ from datetime import datetime
 
 from ..services.pdf_ingestion_service import VehicleListingArtifact, EnrichedImage
 from ..semantic.embedding_service import OttoAIEmbeddingService
+from ..repositories.listing_repository import (
+    ListingRepository, ListingCreate, get_listing_repository
+)
+from ..repositories.image_repository import (
+    ImageRepository, ImageCreate, get_image_repository
+)
+from ..services.supabase_client import get_supabase_client_singleton
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -30,6 +37,9 @@ class VehicleEmbeddingService:
 
     def __init__(self, embedding_service: OttoAIEmbeddingService):
         self.embedding_service = embedding_service
+        self.listing_repository = get_listing_repository()
+        self.image_repository = get_image_repository()
+        self.supabase_client = get_supabase_client_singleton()
 
     async def process_vehicle_for_search(
         self,
@@ -75,24 +85,26 @@ class VehicleEmbeddingService:
                 except Exception as e:
                     logger.warning(f"Failed to create embedding for {image.vehicle_angle}: {e}")
 
-            # Store embeddings in database
-            embedding_metadata = {
-                'vin': artifact.vehicle.vin,
-                'listing_id': f"listing_{artifact.vehicle.vin}_{int(datetime.utcnow().timestamp())}",
-                'text_embedding_id': text_embedding_result.get('embedding_id'),
-                'image_embedding_count': len(image_embeddings),
-                'processed_at': datetime.utcnow().isoformat()
-            }
-
-            # Store vehicle embeddings (this would integrate with your existing embedding storage)
-            await self._store_vehicle_embeddings(
-                artifact.vehicle.vin,
+            # Store vehicle listing and images in database
+            listing_id = await self._store_vehicle_embeddings(
+                artifact,
                 vehicle_text,
                 text_embedding_result.embedding,
                 image_embeddings
             )
 
-            logger.info(f"✅ Created {len(image_embeddings) + 1} embeddings for {artifact.vehicle.vin}")
+            # Store condition issues
+            await self._store_condition_issues(artifact, listing_id)
+
+            embedding_metadata = {
+                'vin': artifact.vehicle.vin,
+                'listing_id': listing_id,
+                'text_embedding_id': text_embedding_result.get('embedding_id'),
+                'image_embedding_count': len(image_embeddings),
+                'processed_at': datetime.utcnow().isoformat()
+            }
+
+            logger.info(f"✅ Persisted listing {listing_id} with {len(image_embeddings) + 1} embeddings for {artifact.vehicle.vin}")
 
             return embedding_metadata
 
@@ -147,54 +159,150 @@ class VehicleEmbeddingService:
 
     async def _store_vehicle_embeddings(
         self,
-        vin: str,
-        text: str,
+        artifact: VehicleListingArtifact,
+        description_text: str,
         text_embedding: List[float],
         image_embeddings: List[Dict[str, Any]]
-    ) -> None:
+    ) -> str:
         """
-        Store vehicle embeddings in the database.
+        Store vehicle listing and images with embeddings in Supabase.
 
-        This method would integrate with your existing embedding storage system.
-        For now, it logs the storage action.
+        Args:
+            artifact: Complete vehicle listing artifact from PDF processing
+            description_text: Searchable text description
+            text_embedding: Text embedding vector (3072 dimensions)
+            image_embeddings: List of image embeddings with metadata
+
+        Returns:
+            listing_id: UUID of the created listing
         """
         try:
-            # TODO: Integrate with your existing database schema
-            # This might involve:
-            # 1. Inserting into vehicle_listings table with text embedding
-            # 2. Inserting into vehicle_images table with image embeddings
-            # 3. Updating pgvector indexes for similarity search
+            v = artifact.vehicle
+            c = artifact.condition
 
-            logger.info(f"📦 Storing embeddings for VIN {vin}:")
+            logger.info(f"📦 Persisting vehicle listing for VIN {v.vin}:")
             logger.info(f"   - Text embedding: {len(text_embedding)} dimensions")
             logger.info(f"   - Image embeddings: {len(image_embeddings)} images")
 
-            # Example of what the database integration might look like:
-            """
-            # Insert vehicle listing with text embedding
-            await self.db_conn.execute("""
-                INSERT INTO vehicle_listings
-                (vin, make, model, year, description_text, text_embedding, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-            """, (vin, v.make, v.model, v.year, text, text_embedding, datetime.utcnow()))
+            # 1. Create vehicle listing
+            listing_data = ListingCreate(
+                vin=v.vin,
+                year=v.year,
+                make=v.make,
+                model=v.model,
+                trim=v.trim,
+                odometer=v.odometer,
+                drivetrain=v.drivetrain,
+                transmission=v.transmission,
+                engine=v.engine,
+                exterior_color=v.exterior_color,
+                interior_color=v.interior_color,
+                condition_score=c.score,
+                condition_grade=c.grade,
+                description_text=description_text,
+                text_embedding=text_embedding,
+                status='active',
+                listing_source='pdf_upload',
+                processing_metadata=artifact.processing_metadata,
+                seller_id=None  # Will be linked when seller auth is implemented
+            )
 
-            # Insert image embeddings
-            for img_emb in image_embeddings:
-                await self.db_conn.execute("""
-                    INSERT INTO vehicle_image_embeddings
-                    (vin, vehicle_angle, category, description, image_embedding, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, (vin, img_emb['vehicle_angle'], img_emb['category'],
-                     img_emb['description'], img_emb['embedding'], datetime.utcnow()))
-            """
+            created_listing = await self.listing_repository.create(listing_data)
+            listing_id = created_listing['id']
 
-            # For now, we'll simulate successful storage
-            await asyncio.sleep(0.01)  # Simulate database operation
+            logger.info(f"   ✅ Created listing {listing_id}")
+
+            # 2. Create vehicle images with embeddings
+            # Map artifact images to their embeddings
+            embedding_map = {
+                (e['vehicle_angle'], e['category']): e.get('embedding')
+                for e in image_embeddings
+            }
+
+            image_creates = []
+            for idx, img in enumerate(artifact.images):
+                # Get embedding if available for this image
+                img_embedding = embedding_map.get((img.vehicle_angle, img.category))
+
+                image_data = ImageCreate(
+                    listing_id=listing_id,
+                    vin=v.vin,
+                    category=img.category,
+                    vehicle_angle=img.vehicle_angle,
+                    description=img.description,
+                    suggested_alt=img.suggested_alt,
+                    quality_score=img.quality_score,
+                    visible_damage=img.visible_damage or [],
+                    file_format=img.format,
+                    width=img.width,
+                    height=img.height,
+                    original_url=img.storage_url,
+                    web_url=img.storage_url,
+                    thumbnail_url=img.thumbnail_url,
+                    image_embedding=img_embedding,
+                    page_number=img.page_number,
+                    display_order=idx
+                )
+                image_creates.append(image_data)
+
+            if image_creates:
+                created_images = await self.image_repository.create_batch(image_creates)
+                logger.info(f"   ✅ Created {len(created_images)} images")
+
+            return listing_id
 
         except Exception as e:
-            logger.error(f"Failed to store embeddings for {vin}: {e}")
+            logger.error(f"❌ Failed to store vehicle listing for {artifact.vehicle.vin}: {e}")
             raise
+
+    async def _store_condition_issues(
+        self,
+        artifact: VehicleListingArtifact,
+        listing_id: str
+    ) -> int:
+        """
+        Store vehicle condition issues in the database.
+
+        Args:
+            artifact: Complete vehicle listing artifact
+            listing_id: UUID of the parent listing
+
+        Returns:
+            Number of issues stored
+        """
+        try:
+            issues_stored = 0
+            c = artifact.condition
+
+            # Process issues by category
+            for category, issues in c.issues.items():
+                for issue in issues:
+                    issue_data = {
+                        'listing_id': listing_id,
+                        'vin': artifact.vehicle.vin,
+                        'issue_category': category,
+                        'issue_type': issue.get('type', 'unknown'),
+                        'severity': issue.get('severity', 'minor'),
+                        'description': issue.get('description', ''),
+                        'location': issue.get('location'),
+                        'estimated_repair_cost': issue.get('repair_cost')
+                    }
+
+                    result = self.supabase_client.table('vehicle_condition_issues') \
+                        .insert(issue_data).execute()
+
+                    if result.data:
+                        issues_stored += 1
+
+            if issues_stored > 0:
+                logger.info(f"   ✅ Stored {issues_stored} condition issues")
+
+            return issues_stored
+
+        except Exception as e:
+            logger.error(f"❌ Failed to store condition issues for {artifact.vehicle.vin}: {e}")
+            # Don't raise - condition issues are secondary to main listing
+            return 0
 
     async def search_similar_vehicles(
         self,
@@ -203,31 +311,41 @@ class VehicleEmbeddingService:
         filters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """
-        Search for vehicles similar to the given query text.
+        Search for vehicles similar to the given query text using pgvector.
 
-        This method integrates with your existing semantic search capabilities.
+        Args:
+            query_text: Natural language query describing desired vehicle
+            limit: Maximum number of results to return
+            filters: Optional filters (make, model, year_min, year_max, etc.)
+
+        Returns:
+            List of similar vehicles with similarity scores
         """
         try:
             # Generate embedding for search query
             query_embedding_result = await self.embedding_service.generate_text_embedding(query_text)
 
-            # TODO: Perform vector similarity search in database
-            # This would use pgvector to find similar vehicles
+            # Use repository's pgvector similarity search
+            similar_listings = await self.listing_repository.find_similar(
+                embedding=query_embedding_result.embedding,
+                limit=limit
+            )
 
-            # Placeholder result
-            similar_vehicles = [
-                {
-                    'vin': 'placeholder_vin',
-                    'make': 'Honda',
-                    'model': 'Civic',
-                    'year': 2022,
-                    'similarity_score': 0.85,
-                    'description': 'Similar vehicle found via semantic search'
-                }
-            ]
+            # Apply additional filters if provided
+            if filters and similar_listings:
+                filtered = similar_listings
+                if filters.get('make'):
+                    filtered = [v for v in filtered if filters['make'].lower() in v.get('make', '').lower()]
+                if filters.get('model'):
+                    filtered = [v for v in filtered if filters['model'].lower() in v.get('model', '').lower()]
+                if filters.get('year_min'):
+                    filtered = [v for v in filtered if v.get('year', 0) >= filters['year_min']]
+                if filters.get('year_max'):
+                    filtered = [v for v in filtered if v.get('year', 9999) <= filters['year_max']]
+                similar_listings = filtered[:limit]
 
-            logger.info(f"🔍 Found {len(similar_vehicles)} similar vehicles for query: {query_text[:50]}...")
-            return similar_vehicles
+            logger.info(f"🔍 Found {len(similar_listings)} similar vehicles for query: {query_text[:50]}...")
+            return similar_listings
 
         except Exception as e:
             logger.error(f"Failed to search similar vehicles: {e}")
@@ -259,14 +377,29 @@ class VehicleEmbeddingService:
 
     async def _delete_vehicle_embeddings(self, vin: str) -> None:
         """
-        Delete existing embeddings for a vehicle.
+        Delete existing embeddings and listing for a vehicle.
+        Uses cascading deletes defined in the database schema.
         """
         try:
-            # TODO: Implement database cleanup
-            # await self.db_conn.execute("DELETE FROM vehicle_listings WHERE vin = %s", (vin,))
-            # await self.db_conn.execute("DELETE FROM vehicle_image_embeddings WHERE vin = %s", (vin,))
+            # Get listing by VIN
+            existing_listing = await self.listing_repository.get_by_vin(vin)
 
-            logger.info(f"🗑️ Deleted existing embeddings for VIN {vin}")
+            if existing_listing:
+                listing_id = existing_listing['id']
+
+                # Delete images (will cascade from listing delete, but explicit for clarity)
+                await self.image_repository.delete_by_listing(listing_id)
+
+                # Delete condition issues
+                self.supabase_client.table('vehicle_condition_issues') \
+                    .delete().eq('vin', vin).execute()
+
+                # Delete listing (soft delete changes status to inactive)
+                await self.listing_repository.delete(listing_id)
+
+                logger.info(f"🗑️ Deleted existing listing and embeddings for VIN {vin}")
+            else:
+                logger.info(f"ℹ️ No existing listing found for VIN {vin}")
 
         except Exception as e:
             logger.error(f"Failed to delete embeddings for {vin}: {e}")

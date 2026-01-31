@@ -19,7 +19,7 @@ from dataclasses import dataclass
 import fitz  # PyMuPDF
 import httpx
 from PIL import Image
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -78,19 +78,50 @@ class VehicleInfo(BaseModel):
     make: str
     model: str
     trim: Optional[str] = None
-    odometer: int
-    drivetrain: str
-    transmission: str
-    engine: str
-    exterior_color: str
-    interior_color: str
+    odometer: int = 0  # Default to 0 if not found
+    drivetrain: Optional[str] = "Unknown"
+    transmission: Optional[str] = "Unknown"
+    engine: Optional[str] = "Unknown"
+    exterior_color: Optional[str] = "Unknown"
+    interior_color: Optional[str] = "Unknown"
 
 
 class ConditionData(BaseModel):
     """Vehicle condition assessment"""
     score: float  # decimal like 4.3
     grade: str  # Clean, Average, Rough
-    issues: Dict[str, List[Dict[str, Any]]] = {}  # exterior, interior, mechanical, tiresWheels
+    issues: Dict[str, List[Any]] = {}  # exterior, interior, mechanical, tiresWheels
+
+    @field_validator('issues', mode='before')
+    @classmethod
+    def normalize_issues(cls, v):
+        """Convert string issues to dictionaries if needed"""
+        if not isinstance(v, dict):
+            return {}
+
+        normalized = {}
+        for category, items in v.items():
+            if not isinstance(items, list):
+                items = [items] if items else []
+
+            normalized_items = []
+            for item in items:
+                if isinstance(item, str):
+                    # Convert "LOCATION: Issue description" to dict
+                    if ':' in item:
+                        parts = item.split(':', 1)
+                        normalized_items.append({
+                            'location': parts[0].strip(),
+                            'issue': parts[1].strip()
+                        })
+                    else:
+                        normalized_items.append({'description': item})
+                elif isinstance(item, dict):
+                    normalized_items.append(item)
+
+            normalized[category] = normalized_items
+
+        return normalized
 
 
 class SellerInfo(BaseModel):
@@ -204,7 +235,13 @@ class PDFIngestionService:
         This is where the "intelligence" lives - Gemini sees the PDF visually
         and extracts rich semantic information.
         """
+        # Check file size - OpenRouter/Gemini has limits (~20MB recommended)
+        file_size_mb = len(pdf_bytes) / (1024 * 1024)
+        if file_size_mb > 20:
+            logger.warning(f"Large PDF detected ({file_size_mb:.1f}MB). May exceed API limits.")
+
         pdf_base64 = base64.b64encode(pdf_bytes).decode()
+        logger.info(f"PDF size: {file_size_mb:.1f}MB, base64 size: {len(pdf_base64) / (1024 * 1024):.1f}MB")
 
         try:
             response = await self.openrouter_client.post(
@@ -309,10 +346,26 @@ class PDFIngestionService:
                                 vehicle_data[new_field] = vehicle_data[old_field]
 
                         # Add default values for missing required fields
-                        if 'transmission' not in vehicle_data:
-                            vehicle_data['transmission'] = 'Automatic'
-                        if 'engine' not in vehicle_data:
-                            vehicle_data['engine'] = 'V6'
+                        defaults = {
+                            'transmission': 'Automatic',
+                            'engine': 'Unknown',
+                            'drivetrain': 'Unknown',
+                            'exterior_color': 'Unknown',
+                            'interior_color': 'Unknown',
+                            'odometer': 0
+                        }
+
+                        for field, default_val in defaults.items():
+                            if field not in vehicle_data or vehicle_data[field] is None:
+                                vehicle_data[field] = default_val
+
+                        # Ensure odometer is an integer
+                        if isinstance(vehicle_data.get('odometer'), str):
+                            # Remove commas and convert to int
+                            try:
+                                vehicle_data['odometer'] = int(vehicle_data['odometer'].replace(',', '').replace(' ', ''))
+                            except (ValueError, AttributeError):
+                                vehicle_data['odometer'] = 0
 
                         content['vehicle'] = vehicle_data
                         break
@@ -369,10 +422,24 @@ class PDFIngestionService:
                         'type': 'dealer'
                     }
 
-                # Map image_data to images if available
-                if 'image_data' in content:
-                    content['images'] = content['image_data']
-                elif 'images' not in content:
+                # Map various image key names to 'images' (Gemini may use different keys)
+                image_key_variants = [
+                    'image_data',
+                    'for_each_image_visible_in_the_pdf',
+                    'image_metadata',
+                    'extracted_images',
+                    'pdf_images'
+                ]
+
+                images_found = False
+                for key in image_key_variants:
+                    if key in content and content[key]:
+                        content['images'] = content[key]
+                        logger.info(f"Mapped image data from key: {key}")
+                        images_found = True
+                        break
+
+                if not images_found and 'images' not in content:
                     content['images'] = []
 
                 logger.info(f"Normalized response keys: {list(content.keys())}")
@@ -383,7 +450,19 @@ class PDFIngestionService:
             return content
 
         except httpx.HTTPStatusError as e:
-            logger.error(f"OpenRouter API error: {e.response.status_code} - {e.response.text}")
+            error_detail = e.response.text[:500] if e.response.text else "No error details"
+            logger.error(f"OpenRouter API error: {e.response.status_code}")
+            logger.error(f"Error details: {error_detail}")
+
+            if e.response.status_code == 400:
+                # Provide helpful message for common 400 errors
+                if file_size_mb > 15:
+                    raise ValueError(
+                        f"PDF file too large ({file_size_mb:.1f}MB). "
+                        f"OpenRouter/Gemini has size limits. Try a smaller file or compress the PDF. "
+                        f"API response: {error_detail}"
+                    )
+                raise ValueError(f"Bad request to OpenRouter API: {error_detail}")
             raise
         except Exception as e:
             logger.error(f"Gemini analysis failed: {str(e)}")
@@ -459,11 +538,36 @@ class PDFIngestionService:
 
         enriched = []
 
-        for meta in gemini_metadata:
-            page_images = images_by_page.get(meta["page_number"], [])
+        # Log the structure of incoming metadata for debugging
+        if gemini_metadata:
+            logger.info(f"Processing {len(gemini_metadata)} image metadata entries")
+            logger.debug(f"First metadata entry keys: {list(gemini_metadata[0].keys()) if gemini_metadata else 'none'}")
+
+        for idx, meta in enumerate(gemini_metadata):
+            # Validate required fields exist
+            if not isinstance(meta, dict):
+                logger.warning(f"Skipping non-dict metadata entry at index {idx}: {type(meta)}")
+                continue
+
+            # Handle missing page_number - try alternatives or default to 1
+            page_num = meta.get("page_number") or meta.get("pageNumber") or meta.get("page") or 1
+
+            # Ensure required fields have defaults
+            if "description" not in meta:
+                meta["description"] = f"Vehicle image {idx + 1}"
+            if "vehicle_angle" not in meta:
+                meta["vehicle_angle"] = "other"
+            if "category" not in meta:
+                meta["category"] = "carousel"
+            if "quality_score" not in meta:
+                meta["quality_score"] = 5
+            if "suggested_alt" not in meta:
+                meta["suggested_alt"] = meta.get("description", f"Vehicle image {idx + 1}")
+
+            page_images = images_by_page.get(page_num, [])
 
             if not page_images:
-                logger.debug(f"No raw image found for page {meta['page_number']} metadata")
+                logger.debug(f"No raw image found for page {page_num} metadata")
                 continue  # No raw image found for this metadata
 
             # Strategy: Use Gemini's description to find best match
@@ -518,11 +622,29 @@ class PDFIngestionService:
                 page_number=raw_image.page_number
             ))
 
+        # Fallback: If no images matched but we have PyMuPDF images, create basic entries
+        if not enriched and pymupdf_images:
+            logger.warning(f"No Gemini metadata matched. Creating basic entries for {len(pymupdf_images)} PyMuPDF images")
+            for idx, raw_image in enumerate(pymupdf_images):
+                enriched.append(EnrichedImage(
+                    description=f"Vehicle image {idx + 1} extracted from PDF",
+                    category="carousel" if idx > 0 else "hero",
+                    quality_score=5,
+                    vehicle_angle="other",
+                    suggested_alt=f"Vehicle image {idx + 1}",
+                    visible_damage=[],
+                    image_bytes=raw_image.image_bytes,
+                    width=raw_image.width,
+                    height=raw_image.height,
+                    format=raw_image.format,
+                    page_number=raw_image.page_number
+                ))
+
         # Sort by category priority: hero first, then carousel, etc.
         category_order = {"hero": 0, "carousel": 1, "detail": 2, "documentation": 3}
         enriched.sort(key=lambda x: category_order.get(x.category, 99))
 
-        logger.info(f"Merged {len(enriched)} enriched images from {len(gemini_metadata)} metadata entries")
+        logger.info(f"Merged {len(enriched)} enriched images from {len(gemini_metadata)} metadata + {len(pymupdf_images)} raw images")
         return enriched
 
     def _create_thumbnail(self, image_bytes: bytes, max_size: int = 300) -> bytes:
@@ -666,6 +788,50 @@ Be thorough and precise. This data will be used to create vehicle listings and i
             },
             "required": ["vehicle", "condition", "images", "seller"]
         }
+
+    async def process_and_persist_pdf(
+        self,
+        pdf_bytes: bytes,
+        filename: str,
+        text_embedding: Optional[List[float]] = None,
+        seller_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Process PDF and persist directly to database.
+
+        This is the main entry point for the PDF → Database pipeline.
+        Combines PDF extraction with database persistence.
+
+        Args:
+            pdf_bytes: PDF file bytes
+            filename: Original filename
+            text_embedding: Optional text embedding for semantic search
+            seller_id: Optional seller/user ID who owns this listing
+
+        Returns:
+            Dict with listing_id, vin, image_count, issue_count, status
+        """
+        try:
+            # Step 1: Extract vehicle listing artifact from PDF
+            artifact = await self.process_condition_report(pdf_bytes, filename)
+            logger.info(f"Extracted artifact for VIN: {artifact.vehicle.vin}")
+
+            # Step 2: Persist to database
+            from .listing_persistence_service import get_listing_persistence_service
+            persistence_service = get_listing_persistence_service()
+
+            result = await persistence_service.persist_listing(
+                artifact=artifact,
+                text_embedding=text_embedding,
+                seller_id=seller_id
+            )
+
+            logger.info(f"✅ Successfully processed and persisted listing {result['listing_id']}")
+            return result
+
+        except Exception as e:
+            logger.error(f"❌ Failed to process and persist PDF {filename}: {e}")
+            raise
 
     async def close(self):
         """Clean up resources"""

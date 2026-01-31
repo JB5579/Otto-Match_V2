@@ -119,8 +119,8 @@ class VehicleProcessingService:
         else:
             # Create new service configuration
             self.openrouter_api_key = os.getenv('OPENROUTER_API_KEY')
-            self.openrouter_model = os.getenv('OPENROUTER_EMBEDDING_MODEL', 'openai/text-embedding-3-large')
-            self.embedding_dim = 3072  # OpenAI text-embedding-3-large dimension
+            self.openrouter_model = os.getenv('OPENROUTER_EMBEDDING_MODEL', 'openai/text-embedding-3-small')
+            self.embedding_dim = 1536  # OpenAI text-embedding-3-small outputs 1536 dimensions natively
 
             # RAG-Anything configuration optimized for vehicle processing
             self.rag_config = RAGAnythingConfig(

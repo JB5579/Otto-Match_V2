@@ -20,6 +20,7 @@ from .market_data_service import (
     MarketDataPoint,
     get_market_data_service
 )
+from .price_forecast_service import PriceForecastService, get_price_service
 from .supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class EnhancedPDFIngestionService:
         # Initialize base services
         self.pdf_service = PDFIngestionService()
         self.market_service = MarketDataService()
+        self.price_forecast_service = get_price_service()
         self.supabase = get_supabase_client()
 
     async def process_condition_report_with_market_data(
@@ -67,12 +69,17 @@ class EnhancedPDFIngestionService:
             )
 
             # Step 3: Store market data in database
+            vehicle_id = await self._store_vehicle_data(artifact)
+
             if market_data:
-                vehicle_id = await self._store_vehicle_data(artifact)
                 await self._store_market_data(vehicle_id, market_data, artifact.vehicle)
 
                 # Step 4: Enrich artifact with market data
                 artifact = self._enrich_artifact_with_market_data(artifact, market_data)
+
+            # Step 5: If no price data, fetch AI price forecast
+            if not hasattr(artifact.vehicle, 'price') or not artifact.vehicle.price:
+                await self._enrich_with_price_forecast(vehicle_id, artifact)
 
             logger.info(f"Successfully processed {filename} with market data enrichment")
             return artifact
@@ -118,6 +125,69 @@ class EnhancedPDFIngestionService:
         except Exception as e:
             logger.error(f"Failed to fetch market data: {str(e)}")
             return None
+
+    async def _enrich_with_price_forecast(
+        self,
+        vehicle_id: str,
+        artifact: VehicleListingArtifact
+    ) -> None:
+        """
+        Fetch AI-generated price forecast using Groq Compound
+        when no dealer/auction price is available
+        """
+        try:
+            vehicle = artifact.vehicle
+
+            # Get price forecast from Groq Compound
+            forecast = await self.price_forecast_service.get_price_forecast(
+                year=vehicle.year,
+                make=vehicle.make,
+                model=vehicle.model,
+                trim=getattr(vehicle, 'trim', None),
+                mileage=getattr(vehicle, 'mileage', None) or getattr(vehicle, 'odometer', None),
+                condition=getattr(vehicle, 'condition_grade', None),
+                location=None  # Could be enhanced with location data
+            )
+
+            # Only update if we got a confident estimate
+            if forecast.confidence >= 0.4 and forecast.estimated_price > 0:
+                # Update database with price forecast
+                update_data = {
+                    "estimated_price": float(forecast.estimated_price),
+                    "price_source": "ai_estimate",
+                    "price_confidence": float(forecast.confidence),
+                    "price_updated_at": datetime.now(timezone.utc).isoformat()
+                }
+
+                self.supabase.table('vehicle_listings').update(update_data).eq('id', vehicle_id).execute()
+
+                # Enrich artifact metadata
+                artifact.processing_metadata.update({
+                    "price_forecast": {
+                        "estimated_price": forecast.estimated_price,
+                        "price_low": forecast.price_low,
+                        "price_high": forecast.price_high,
+                        "confidence": forecast.confidence,
+                        "comparable_count": forecast.comparable_count,
+                        "sources": forecast.sources_used,
+                        "reasoning": forecast.reasoning
+                    },
+                    "price_forecast_enabled": True
+                })
+
+                logger.info(
+                    f"Price forecast for {vehicle.year} {vehicle.make} {vehicle.model}: "
+                    f"${forecast.estimated_price:,.0f} (confidence: {forecast.confidence:.0%})"
+                )
+            else:
+                logger.info(
+                    f"Skipping price forecast for {vehicle.year} {vehicle.make} {vehicle.model}: "
+                    f"low confidence ({forecast.confidence:.0%})"
+                )
+
+        except Exception as e:
+            logger.warning(f"Price forecast failed: {str(e)}")
+            # Price forecast failure is not critical
 
     async def _store_vehicle_data(self, artifact: VehicleListingArtifact) -> str:
         """Store vehicle data in Supabase and return vehicle_id"""

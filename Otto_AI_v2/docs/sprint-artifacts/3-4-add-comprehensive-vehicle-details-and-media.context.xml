@@ -1,0 +1,212 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>4</storyId>
+    <title>Add Comprehensive Vehicle Details and Media</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2026-01-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-4-add-comprehensive-vehicle-details-and-media.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to view comprehensive vehicle details in an elegant modal overlay</iWant>
+    <soThat>I can examine all aspects of a vehicle including images, specs, and Otto's recommendation without losing context of the full grid</soThat>
+    <tasks>
+      <task id="3-4.1">Create VehicleDetailModal component with Radix UI Dialog</task>
+      <task id="3-4.2">Create VehicleImageCarousel component</task>
+      <task id="3-4.3">Create VehicleSpecs component</task>
+      <task id="3-4.4">Create KeyFeatures component</task>
+      <task id="3-4.5">Create OttoRecommendation component</task>
+      <task id="3-4.6">Create SocialProofBadges component</task>
+      <task id="3-4.7">Create PricingPanel component</task>
+      <task id="3-4.8">Create ActionButtons component</task>
+      <task id="3-4.9">Update VehicleCard to trigger modal</task>
+      <task id="3-4.10">Integrate modal with VehicleContext</task>
+      <task id="3-4.11">Implement responsive layout</task>
+      <task id="3-4.12">Write unit tests for VehicleDetailModal</task>
+      <task id="3-4.13">Write unit tests for ImageCarousel</task>
+      <task id="3-4.14">Write integration tests for detail modal</task>
+      <task id="3-4.15">Write visual regression tests</task>
+      <task id="3-4.16">Write accessibility tests</task>
+      <task id="3-4.17">Optimize image loading</task>
+      <task id="3-4.18">Add loading and error states</task>
+      <task id="3-4.19">Implement animation polish</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="AC1">Vehicle Detail Modal with Blur Overlay - Modal opens with 12px backdrop blur, 900px max-width, glass-morphism styling, smooth scale/fade animation (0.3s)</ac>
+    <ac id="AC2">Two-Column Layout with Image Carousel - Left: images/carousel with thumbnails, Right: details, lazy loading, responsive stacking</ac>
+    <ac id="AC3">Vehicle Specifications Display - Make, Model, Year, Trim, Mileage, Price, Engine, Transmission, Drivetrain, Fuel Type, MPG, Colors, VIN, Stock Number with icons</ac>
+    <ac id="AC4">Key Features Display - Categorized feature tags/pills with glass-morphism styling, searchable/filterable</ac>
+    <ac id="AC5">Otto's Personalized Recommendation - Personalized message, match score with color coding (90%+ green, 80-89% lime, 70-79% yellow, <70% orange), key attributes highlighted, Otto avatar</ac>
+    <ac id="AC6">Social Proof Badges - Current viewer count, active offer indicator, reservation expiry countdown, real-time WebSocket updates</ac>
+    <ac id="AC7">Pricing Panel - Current price prominent, original price strikethrough if discounted, savings amount, monthly payment estimator, currency formatting</ac>
+    <ac id="AC8">Action Buttons - Primary "Request to Hold" (red, lock icon), secondary "Compare to Similar Models", disabled if unauthenticated, loading states</ac>
+    <ac id="AC9">Responsive Design - Mobile (375px): full width stacked, Tablet (768px): adjusted two-column, Desktop (1024px+): 900px max, 44x44px touch targets</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>O3: Implement Vehicle Detail Experience</section>
+        <snippet>Create comprehensive vehicle detail modal with image carousel, specifications, pricing, Otto's personalized recommendation, and reservation CTA. Preserves grid visibility through blur overlay effect.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Frontend Module Structure</section>
+        <snippet>Components/vehicle-detail/ directory with VehicleDetailModal.tsx, ImageCarousel.tsx, VehicleSpecs.tsx, OttoRecommendation.tsx as the modal structure.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models and Contracts - Frontend Vehicle Type</section>
+        <snippet>Vehicle interface includes: id, vin, make, model, year, trim, mileage, price, originalPrice, savings, description, features, images, matchScore, availabilityStatus, currentViewers, reservationExpiry, ottoRecommendation</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Animation Configuration</section>
+        <snippet>Spring animations with stiffness: 300, damping: 25. Modal variants with closed (scale: 0.95, opacity: 0) and open (scale: 1, opacity: 1) states.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/stories/3-3-implement-dynamic-cascade-updates-from-conversation.md</path>
+        <title>Story 3-3 Learnings</title>
+        <section>New Infrastructure Created</section>
+        <snippet>VehicleContext with delta calculation, Framer Motion animations, ConversationContext integration, glass-morphism styling: rgba(255,255,255,0.85) background, 20px backdrop-filter blur</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/context/VehicleContext.tsx</path>
+        <kind>context</kind>
+        <symbol>VehicleContextValue</symbol>
+        <lines>6-19</lines>
+        <reason>Interface to extend with modal state (selectedVehicle, isModalOpen, openModal, closeModal) for Story 3-4 integration</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleCard.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleCard</symbol>
+        <lines>11-27, 63-65</lines>
+        <reason>Has onClick prop for triggering modal - needs update to call modal open function. Glass-morphism styling pattern to reuse: rgba(255,255,255,0.85), 20px backdrop-filter blur</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleSpecs.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleSpecs</symbol>
+        <lines>1-70</lines>
+        <reason>Existing specs component with icon-based display - can be reused or extended for modal specs section. FormatMileage function available.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/PriceDisplay.tsx</path>
+        <kind>component</kind>
+        <symbol>PriceDisplay</symbol>
+        <lines>1-100</lines>
+        <reason>Existing price component with strikethrough and savings - can be reused for modal pricing panel. Currency formatting via Intl.NumberFormat.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/FeatureTags.tsx</path>
+        <kind>component</kind>
+        <symbol>FeatureTags</symbol>
+        <lines>1-69</lines>
+        <reason>Existing feature tags component with glass-morphism styling - can be extended with categorization for modal. Glass styling: rgba(14, 165, 233, 0.1) background</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/types/api.ts</path>
+        <kind>type</kind>
+        <symbol>Vehicle</symbol>
+        <lines>2-30</lines>
+        <reason>Vehicle interface definition - contains all fields needed for modal (images, features, ottoRecommendation, availabilityStatus, currentViewers, price, etc.)</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/types/api.ts</path>
+        <kind>type</kind>
+        <symbol>VehicleImage</symbol>
+        <lines>32-37</lines>
+        <reason>VehicleImage interface with url, description, category (hero/carousel/detail), altText - needed for carousel implementation</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^19.2.0" />
+        <package name="react-dom" version="^19.2.0" />
+        <package name="framer-motion" version="^12.23.26" />
+        <package name="@supabase/supabase-js" version="^2.89.0" />
+        <package name="react-window" version="^1.8.10" />
+        <package name="web-vitals" version="^4.2.4" />
+      </ecosystem>
+      <missing>
+        <package name="@radix-ui/react-dialog" reason="Required for modal component - NOT YET INSTALLED" action="npm install @radix-ui/react-dialog" />
+      </missing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use Radix UI Dialog primitive for accessible modal component</constraint>
+    <constraint>Glass-morphism modal styling: rgba(255, 255, 255, 0.92) background, 24px backdrop-filter blur, 16px border-radius</constraint>
+    <constraint>Backdrop blur overlay: 12px backdrop-filter blur, rgba(0, 0, 0, 0.4) background</constraint>
+    <constraint>Framer Motion animations: spring easing (stiffness: 300, damping: 25), 0.3s duration</constraint>
+    <constraint>Modal size: max-width 900px, max-height 90vh</constraint>
+    <constraint>Responsive breakpoints: mobile 375px (stacked), tablet 768px (adjusted), desktop 1024px+ (full layout)</constraint>
+    <constraint>Touch targets minimum 44x44px on mobile</constraint>
+    <constraint>Lazy load images with progressive enhancement</constraint>
+    <constraint>Integrate with VehicleContext for state management</constraint>
+    <constraint>Preserve grid context through backdrop blur effect</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>VehicleContext additions</name>
+      <kind>React Context</kind>
+      <signature>selectedVehicle: Vehicle | null; isModalOpen: boolean; openModal: (vehicle: Vehicle) => void; closeModal: () => void</signature>
+      <path>frontend/src/context/VehicleContext.tsx</path>
+    </interface>
+    <interface>
+      <name>Vehicle</name>
+      <kind>TypeScript Interface</kind>
+      <signature>interface Vehicle { id, vin, make, model, year, trim, mileage, price, originalPrice, savings, images, features, matchScore, ottoRecommendation, availabilityStatus, currentViewers }</signature>
+      <path>frontend/src/app/types/api.ts</path>
+    </interface>
+    <interface>
+      <name>VehicleImage</name>
+      <kind>TypeScript Interface</kind>
+      <signature>interface VehicleImage { url: string, description: string, category: 'hero' | 'carousel' | 'detail', altText: string }</signature>
+      <path>frontend/src/app/types/api.ts</path>
+    </interface>
+    <interface>
+      <name>Radix UI Dialog</name>
+      <kind>React Component Primitive</kind>
+      <signature>Dialog.Root, Dialog.Portal, Dialog.Overlay, Dialog.Content, Dialog.Title, Dialog.Description</signature>
+      <path>npm:@radix-ui/react-dialog</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing uses Vitest + React Testing Library for unit tests, MSW for mocking, Playwright for E2E. Test files located in __tests__ directories adjacent to components. Aim for 80% code coverage. Use AC-driven test naming for traceability.</standards>
+    <locations>
+      <location>frontend/src/components/**/__tests__/*.test.tsx</location>
+      <location>frontend/src/components/**/__tests__/integration/*.test.tsx</location>
+    </locations>
+    <ideas>
+      <test for="AC1">Test modal opens with backdrop blur and glass-morphism styling on vehicle card click</test>
+      <test for="AC1">Test modal closes on Escape key press and click outside</test>
+      <test for="AC1">Test modal has correct max-width (900px) and max-height (90vh)</test>
+      <test for="AC2">Test image carousel displays all images with thumbnail navigation</test>
+      <test for="AC2">Test lazy loading triggers for images below fold</test>
+      <test for="AC3">Test all vehicle specifications display with proper formatting</test>
+      <test for="AC4">Test feature tags display and categorization works correctly</test>
+      <test for="AC5">Test Otto recommendation displays with correct match score color coding</test>
+      <test for="AC6">Test social proof badges display and update via WebSocket</test>
+      <test for="AC7">Test pricing displays correctly with strikethrough for original price</test>
+      <test for="AC8">Test action buttons are disabled for unauthenticated users</test>
+      <test for="AC8">Test action buttons show loading state during async operations</test>
+      <test for="AC9">Test responsive layout at mobile (375px), tablet (768px), desktop (1024px+)</test>
+    </ideas>
+  </tests>
+</story-context>

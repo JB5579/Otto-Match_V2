@@ -36,9 +36,18 @@ CREATE TABLE IF NOT EXISTS vehicle_listings (
     condition_score DECIMAL(3,1) NOT NULL CHECK (condition_score >= 1 AND condition_score <= 5),
     condition_grade VARCHAR(20) NOT NULL CHECK (condition_grade IN ('Clean', 'Average', 'Rough')),
 
+    -- Pricing (added 2025-12-31)
+    asking_price DECIMAL(12,2), -- Dealer asking price (nullable)
+    estimated_price DECIMAL(12,2), -- AI-estimated market price
+    auction_forecast DECIMAL(12,2), -- Predicted auction price
+    price_source VARCHAR(30), -- 'dealer', 'auction', 'ai_estimate', 'market_data'
+    price_confidence DECIMAL(3,2), -- 0.0-1.0 confidence for estimates
+    effective_price DECIMAL(12,2) GENERATED ALWAYS AS (COALESCE(asking_price, auction_forecast, estimated_price)) STORED, -- Best available price
+    price_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(), -- Last price update
+
     -- Search and discovery
     description_text TEXT,
-    text_embedding vector(3072), -- OpenAI text-embedding-3-large dimension
+    text_embedding vector(1536), -- OpenAI text-embedding-3-large with dimensions=1536
 
     -- Status and metadata
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'sold', 'reserved', 'inactive')),
@@ -63,6 +72,11 @@ CREATE INDEX idx_vehicle_listings_year ON vehicle_listings(year);
 CREATE INDEX idx_vehicle_listings_price_range ON vehicle_listings(odometer);
 CREATE INDEX idx_vehicle_listings_status ON vehicle_listings(status);
 CREATE INDEX idx_vehicle_listings_created_at ON vehicle_listings(created_at DESC);
+
+-- Price-related indexes (added 2025-12-31)
+CREATE INDEX idx_vehicle_asking_price ON vehicle_listings(asking_price);
+CREATE INDEX idx_vehicle_effective_price ON vehicle_listings(effective_price);
+CREATE INDEX idx_vehicle_price_source ON vehicle_listings(price_source);
 
 -- pgvector index for semantic search
 CREATE INDEX idx_vehicle_listings_text_embedding ON vehicle_listings USING ivfflat (text_embedding vector_cosine_ops) WITH (lists = 100);
@@ -99,7 +113,7 @@ CREATE TABLE IF NOT EXISTS vehicle_images (
     detail_url TEXT,
 
     -- Embedding for visual search
-    image_embedding vector(3072), -- Same dimension as text embeddings for CLIP
+    image_embedding vector(1536), -- Same dimension as text embeddings
 
     -- Processing metadata
     page_number INTEGER,
@@ -344,5 +358,14 @@ COMMENT ON TABLE processing_tasks IS 'Async processing task tracking for PDF upl
 
 COMMENT ON COLUMN vehicle_listings.text_embedding IS 'Text embedding for semantic search using OpenAI text-embedding-3-large';
 COMMENT ON COLUMN vehicle_images.image_embedding IS 'Visual embedding for image similarity search using CLIP';
+
+-- Price column documentation (added 2026-01-19)
+COMMENT ON COLUMN vehicle_listings.asking_price IS 'Dealer asking price, if available (nullable)';
+COMMENT ON COLUMN vehicle_listings.estimated_price IS 'AI-estimated market price from Groq Compound';
+COMMENT ON COLUMN vehicle_listings.auction_forecast IS 'Predicted auction price for wholesale vehicles';
+COMMENT ON COLUMN vehicle_listings.price_source IS 'Origin of price: dealer, auction, ai_estimate, market_data';
+COMMENT ON COLUMN vehicle_listings.price_confidence IS 'Confidence score 0.0-1.0 for AI estimates';
+COMMENT ON COLUMN vehicle_listings.effective_price IS 'Best available price (asking > auction > estimated)';
+COMMENT ON COLUMN vehicle_listings.price_updated_at IS 'Timestamp of last price update';
 
 COMMENT ON VIEW vehicle_listing_summaries IS 'Optimized view for search results and listing grids';

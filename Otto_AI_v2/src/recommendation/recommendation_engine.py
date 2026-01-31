@@ -21,11 +21,18 @@ from enum import Enum
 import openai
 from openai import AsyncOpenAI
 
-from src.models.vehicle_models import (
-    RecommendationRequest, RecommendationResponse, Recommendation,
-    RecommendationExplanation, RecommendationType,
-    UserInteraction, FeedbackRequest
+# Import recommendation models from the correct location
+from .favorites_recommendation_engine import (
+    RecommendationRequest, Recommendation
 )
+
+# For now, stub the missing types that were imported from vehicle_models
+# These are not currently used in the recommendation engine
+RecommendationResponse = None
+RecommendationExplanation = None
+RecommendationType = None
+UserInteraction = None
+FeedbackRequest = None
 
 logger = logging.getLogger(__name__)
 

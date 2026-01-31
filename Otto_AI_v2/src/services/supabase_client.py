@@ -23,13 +23,22 @@ def get_supabase_client() -> Client:
         ValueError: If required environment variables are not set
     """
     supabase_url = os.getenv('SUPABASE_URL')
-    supabase_key = os.getenv('SUPABASE_KEY')
+
+    # Check multiple possible env variable names for the key
+    supabase_key = (
+        os.getenv('SUPABASE_SERVICE_ROLE_KEY') or
+        os.getenv('SUPABASE_ANON_KEY') or
+        os.getenv('SUPABASE_KEY')
+    )
 
     if not supabase_url:
         raise ValueError('SUPABASE_URL environment variable is required')
 
     if not supabase_key:
-        raise ValueError('SUPABASE_KEY environment variable is required')
+        raise ValueError(
+            'Supabase key not found. Set one of: '
+            'SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, or SUPABASE_KEY'
+        )
 
     return create_client(supabase_url, supabase_key)
 

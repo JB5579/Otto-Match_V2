@@ -13,6 +13,14 @@ import asyncio
 
 from src.conversation.groq_client import GroqClient
 from src.memory.zep_client import ZepClient, ConversationContext, Message
+from src.conversation.advisory_extractors import (
+    AdvisoryExtractor,
+    LifestyleProfile,
+    CurrentVehicleEntity,
+    CommutePattern,
+    PriorityRanking,
+    DecisionSignal
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -61,6 +69,21 @@ class NLUResult:
     emotional_state: Optional[str] = None  # 'excited', 'frustrated', 'confused', etc.
     response_time_sensitive: bool = False
     context_relevance_score: float = 0.0
+    # Phase 1: Advisory entities
+    advisory_intents: List[Tuple[str, float]] = None  # [(intent_type, confidence), ...]
+    lifestyle_context: Dict[str, Any] = None  # current_vehicle, commute, work_pattern, etc.
+    priority_rankings: List[Dict[str, Any]] = None  # priority comparison statements
+    decision_signals: Dict[str, Any] = None  # commitment/hesitation signals with readiness score
+
+    def __post_init__(self):
+        if self.advisory_intents is None:
+            self.advisory_intents = []
+        if self.lifestyle_context is None:
+            self.lifestyle_context = {}
+        if self.priority_rankings is None:
+            self.priority_rankings = []
+        if self.decision_signals is None:
+            self.decision_signals = {}
 
 
 class NLUService:
@@ -90,6 +113,13 @@ class NLUService:
             'importance': 0.2,  # User-stated importance
             'frequency': 0.1  # How often mentioned
         }
+
+        # Phase 1: Advisory extractor for lifestyle context and decision signals
+        self.advisory_extractor = AdvisoryExtractor()
+
+        # Track lifestyle profile across conversation
+        self.user_lifestyle_profiles: Dict[str, LifestyleProfile] = {}
+        self.extraction_history: Dict[str, List[Dict[str, Any]]] = {}
 
     async def initialize(self) -> bool:
         """Initialize the NLU service"""
@@ -130,10 +160,11 @@ class NLUService:
             entities_task = self._extract_entities(message, context)
             preferences_task = self._extract_preferences(message, context)
             sentiment_task = self._analyze_sentiment(message, context)
+            advisory_task = self._extract_advisory_entities(user_id, message)
 
             # Wait for all analyses
-            intent, entities, preferences, sentiment = await asyncio.gather(
-                intent_task, entities_task, preferences_task, sentiment_task
+            intent, entities, preferences, sentiment, advisory = await asyncio.gather(
+                intent_task, entities_task, preferences_task, sentiment_task, advisory_task
             )
 
             # Calculate context relevance
@@ -145,7 +176,39 @@ class NLUService:
             # Determine if response time is critical
             time_sensitive = self._is_time_sensitive(intent, entities)
 
-            # Create result
+            # Extract advisory results
+            advisory_intents = advisory.get('advisory_intents', [])
+            lifestyle_context = advisory.get('lifestyle', {})
+            priority_rankings = advisory.get('priorities', {}).get('priority_rankings', [])
+            decision_signals = advisory.get('decision_signals', {})
+
+            # Convert advisory intents to serializable format
+            advisory_intents_list = [
+                (intent_type.value, conf) for intent_type, conf in advisory_intents
+            ] if advisory_intents else []
+
+            # Convert priority rankings to serializable format
+            priority_rankings_list = []
+            for ranking in priority_rankings:
+                if hasattr(ranking, '__dict__'):
+                    priority_rankings_list.append({
+                        'higher_priority': ranking.higher_priority,
+                        'lower_priority': ranking.lower_priority,
+                        'expression_type': ranking.expression_type,
+                        'confidence': ranking.confidence
+                    })
+                else:
+                    priority_rankings_list.append(ranking)
+
+            # Convert lifestyle context to serializable format
+            lifestyle_dict = {}
+            for key, value in lifestyle_context.items():
+                if hasattr(value, '__dict__'):
+                    lifestyle_dict[key] = asdict(value) if hasattr(value, '__dataclass_fields__') else value.__dict__
+                else:
+                    lifestyle_dict[key] = value
+
+            # Create result with advisory entities
             result = NLUResult(
                 intent=intent,
                 entities=entities,
@@ -153,7 +216,11 @@ class NLUService:
                 sentiment=sentiment,
                 emotional_state=emotional_state,
                 response_time_sensitive=time_sensitive,
-                context_relevance_score=relevance_score
+                context_relevance_score=relevance_score,
+                advisory_intents=advisory_intents_list,
+                lifestyle_context=lifestyle_dict,
+                priority_rankings=priority_rankings_list,
+                decision_signals=decision_signals
             )
 
             # Update conversation thread
@@ -361,6 +428,53 @@ Respond with JSON array:
             preferences.extend(updated_prefs)
 
         return preferences
+
+    async def _extract_advisory_entities(
+        self,
+        user_id: str,
+        message: str
+    ) -> Dict[str, Any]:
+        """
+        Extract advisory entities using the Phase 1 extractors.
+
+        This includes:
+        - Lifestyle context (current vehicle, commute, work pattern, etc.)
+        - Priority rankings ("X is more important than Y")
+        - Decision signals (commitment, hesitation, next steps)
+        - Advisory intents (upgrade interest, lifestyle disclosure, etc.)
+        """
+        try:
+            # Extract all advisory entities
+            advisory_data = await self.advisory_extractor.extract_all(message)
+
+            # Store extraction in history for profile building
+            if user_id not in self.extraction_history:
+                self.extraction_history[user_id] = []
+
+            if advisory_data:
+                self.extraction_history[user_id].append(advisory_data)
+                # Keep only last 20 extractions
+                self.extraction_history[user_id] = self.extraction_history[user_id][-20:]
+
+                # Update user's lifestyle profile
+                self.user_lifestyle_profiles[user_id] = \
+                    self.advisory_extractor.build_lifestyle_profile(
+                        self.extraction_history[user_id]
+                    )
+
+            return advisory_data
+
+        except Exception as e:
+            logger.error(f"Error extracting advisory entities: {e}")
+            return {}
+
+    def get_user_lifestyle_profile(self, user_id: str) -> Optional[LifestyleProfile]:
+        """Get the aggregated lifestyle profile for a user"""
+        return self.user_lifestyle_profiles.get(user_id)
+
+    def get_advisory_stats(self) -> Dict[str, Any]:
+        """Get statistics from advisory extractors"""
+        return self.advisory_extractor.get_stats()
 
     def _initialize_vehicle_taxonomy(self) -> Dict[str, Any]:
         """

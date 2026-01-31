@@ -71,10 +71,10 @@ CREATE TABLE vehicles (
     -- Images (stored as URLs or references)
     images TEXT[],
 
-    -- Vector embeddings (3072 dimensions for OpenRouter text-embedding-3-large)
-    title_embedding vector(3072),
-    description_embedding vector(3072),
-    features_embedding vector(3072),
+    -- Vector embeddings (1536 dimensions for HNSW compatibility)
+    title_embedding vector(1536),
+    description_embedding vector(1536),
+    features_embedding vector(1536),
 
     -- Metadata
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -126,7 +126,7 @@ CREATE TABLE search_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id VARCHAR(255), -- Will be updated when user auth is implemented
     search_query TEXT NOT NULL,
-    search_embedding vector(3072), -- Embedding of the search query
+    search_embedding vector(1536), -- Embedding of the search query
     filters JSONB, -- Search filters used
     result_count INTEGER,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

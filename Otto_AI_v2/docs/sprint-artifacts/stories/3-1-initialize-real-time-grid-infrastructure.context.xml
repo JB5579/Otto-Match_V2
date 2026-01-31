@@ -1,0 +1,461 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.1</storyId>
+    <title>Initialize Frontend Infrastructure with Supabase Auth</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-1-initialize-real-time-grid-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>set up the foundational React 18+ application structure with TypeScript, Vite, and Supabase Authentication</iWant>
+    <soThat>we can build a secure frontend platform that integrates with the existing FastAPI backend and provides authenticated user sessions for vehicle discovery</soThat>
+    <tasks>
+      <task id="3-1.1">Initialize React 18+ project with Vite and TypeScript - Run `npm create vite@latest frontend -- --template react-ts`, configure TypeScript strict mode, verify build works</task>
+      <task id="3-1.2">Install and configure Supabase client library - Install @supabase/supabase-js@^2.39.0, create .env file, create supabaseClient.ts with Supabase client initialization</task>
+      <task id="3-1.3">Configure development tooling - Install ESLint, Prettier, add pre-commit hooks, verify no linting errors</task>
+      <task id="3-1.4">Create AuthContext and AuthProvider - Create AuthContext.tsx with user, session, loading state, implement useAuth() hook, add signIn/signUp/signOut functions, configure auth state change listener</task>
+      <task id="3-1.5">Create authentication UI components - Create LoginForm.tsx, SignUpForm.tsx, SocialLoginButtons.tsx with glass-morphism styling</task>
+      <task id="3-1.6">Create ProtectedRoute component - Create ProtectedRoute.tsx for authenticated routes, implement redirect logic</task>
+      <task id="3-1.7">Create API client with JWT authentication - Create api.ts with VehicleAPIClient class, implement getAuthHeaders() helper, add fetch wrappers for API endpoints</task>
+      <task id="3-1.8">Create TypeScript types for API responses - Create vehicle.ts, auth.ts, api.ts with interface definitions matching backend Pydantic models</task>
+      <task id="3-1.9">Set up application routing - Install react-router-dom@^6.20.0, create App.tsx with Router, define routes for /login, /signup, /discovery</task>
+      <task id="3-1.10">Create basic page layouts - Create LoginPage.tsx, SignUpPage.tsx, DiscoveryPage.tsx with glass-morphism styling</task>
+      <task id="3-1.11">Set up testing infrastructure - Install Vitest, React Testing Library, Playwright, configure vitest.config.ts, create test utilities</task>
+      <task id="3-1.12">Test authentication flow end-to-end - Write E2E tests for sign-up, login, social login, session persistence, logout</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Frontend Infrastructure Established with Supabase Auth - Application builds without errors, TypeScript compilation succeeds, HMR works, ESLint/Prettier configured, Supabase client configured with environment variables, AuthProvider wraps app root, useAuth() hook provides auth methods, Login/Signup forms render with glass-morphism, Social login buttons trigger OAuth, JWT token included in API headers</criterion>
+    <criterion id="AC1b">Authentication and Session Management - Login/signup page displayed on first visit, Supabase authenticates user and redirects to discovery page, session persists across refreshes, API calls include Authorization header, signOut clears session and redirects to login</criterion>
+    <criterion id="AC2">Build Tooling and Development Environment - Vite dev server starts on port 5173, HMR works for component changes, TypeScript strict mode passes, Production build completes successfully</criterion>
+    <criterion id="AC3">API Client Integration - Requests include Authorization header with Supabase JWT, backend validates token, 401 responses trigger re-authentication</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification: Dynamic Vehicle Grid Interface</title>
+        <section>Services and Modules - Frontend Module Structure</section>
+        <snippet>Frontend module structure with app/, components/, context/, types/, utils/ directories. Supabase Auth integration with @supabase/supabase-js client library.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification: Dynamic Vehicle Grid Interface</title>
+        <section>APIs and Interfaces - Supabase Client Setup</section>
+        <snippet>Supabase client initialization with createClient(supabaseUrl, supabaseAnonKey). getAuthToken() helper for JWT token. onAuthStateChange() for session management.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification: Dynamic Vehicle Grid Interface</title>
+        <section>APIs and Interfaces - AuthContext Implementation</section>
+        <snippet>AuthContext with user, session, loading state. signIn(), signUp(), signInWithSocial(), signOut() methods. useAuth() hook for component access.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification: Dynamic Vehicle Grid Interface</title>
+        <section>Dependencies and Integrations - Frontend Framework Dependencies</section>
+        <snippet>Core: React 18.3+, TypeScript 5.3+, Vite 5.0+. Styling: Tailwind CSS 3.4+, Radix UI primitives. Animation: Framer Motion 11.0+. Auth: @supabase/supabase-js 2.39.0+. Testing: Vitest 1.1+, React Testing Library 14.1+, Playwright 1.40.0+.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Otto.AI Architecture</title>
+        <section>Frontend Component Architecture - Glass-Morphism Utility System</section>
+        <snippet>Glass-morphism design tokens with light/dark/modal variants. Light: rgba(255,255,255,0.85) background, 20px backdrop-filter blur. Dark: gradient background, cyan glow border. Modal: 92% opacity, 24px blur.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Otto.AI Architecture</title>
+        <section>Project Structure</section>
+        <snippet>Current backend structure: src/api/ for FastAPI endpoints, src/semantic/ for RAG-Anything integration, src/services/ for core services, src/models/ for Pydantic models. Frontend to be created in new frontend/ directory.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Product Requirements - Epic Breakdown</title>
+        <section>Epic 3: Dynamic Vehicle Grid Interface</section>
+        <snippet>Story 3.1: Initialize Real-Time Grid Infrastructure. Set up SSE endpoints for real-time vehicle grid updates, cascade_engine.py with event processing, Cloudflare Edge workers, basic grid rendering with vehicle data from semantic search system.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Glass-Morphism Design System</section>
+        <snippet>Glass-morphism design tokens with backdrop-filter blur, transparency layers, shadow treatments. Consistent across vehicle cards, modals, chat widget.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/api/main_app.py</path>
+        <kind>FastAPI Application</kind>
+        <symbol>create_application()</symbol>
+        <lines>25-44</lines>
+        <reason>Main FastAPI app with CORS middleware configured for frontend. allow_origins includes localhost:3000 and https://otto-ai.com. Frontend will need CORS configuration.</reason>
+      </artifact>
+      <artifact>
+        <path>src/api/semantic_search_api.py</path>
+        <kind>FastAPI Router</kind>
+        <symbol>POST /api/search/semantic</symbol>
+        <lines>N/A</lines>
+        <reason>Primary semantic search endpoint for vehicle discovery. Frontend VehicleAPIClient will consume this endpoint with JWT authentication.</reason>
+      </artifact>
+      <artifact>
+        <path>src/api/listings_api.py</path>
+        <kind>FastAPI Router</kind>
+        <symbol>listings_router</symbol>
+        <lines>N/A</lines>
+        <reason>Vehicle listings CRUD operations. Frontend will call GET /api/listings, POST /api/favorites/{id}.</reason>
+      </artifact>
+      <artifact>
+        <path>src/api/vehicle_comparison_api.py</path>
+        <kind>FastAPI Router</kind>
+        <symbol>POST /api/compare</symbol>
+        <lines>N/A</lines>
+        <reason>Vehicle comparison endpoint. Frontend will POST vehicle_ids for side-by-side comparison (Story 3-6).</reason>
+      </artifact>
+      <artifact>
+        <path>src/api/websocket_endpoints.py</path>
+        <kind>WebSocket Endpoint</kind>
+        <symbol>WS /ws/vehicles</symbol>
+        <lines>N/A</lines>
+        <reason>Real-time vehicle updates via WebSocket. Frontend useWebSocket hook will connect for cascade updates (Story 3-3).</reason>
+      </artifact>
+      <artifact>
+        <path>src/models/vehicle_models.py</path>
+        <kind>Pydantic Models</kind>
+        <symbol>VehicleData, VehicleImage</symbol>
+        <lines>N/A</lines>
+        <reason>Backend Pydantic models that define vehicle data structure. Frontend TypeScript types should match these models exactly.</reason>
+      </artifact>
+      <artifact>
+        <path>requirements.txt</path>
+        <kind>Python Dependencies</kind>
+        <symbol>fastapi, supabase, pydantic, uvicorn</symbol>
+        <lines>1-45</lines>
+        <reason>Backend dependencies. Frontend is separate React/TypeScript project with own package.json. Backend runs on port 8000, frontend will run on port 5173 (Vite default).</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <frontend>
+        <framework>
+          <name>react</name>
+          <version>^18.3.0</version>
+          <purpose>UI library for frontend application</purpose>
+        </framework>
+        <framework>
+          <name>typescript</name>
+          <version>^5.3.0</version>
+          <purpose>Type-safe JavaScript with strict mode</purpose>
+        </framework>
+        <framework>
+          <name>vite</name>
+          <version>^5.0.0</version>
+          <purpose>Build tool and dev server with HMR</purpose>
+        </framework>
+        <framework>
+          <name>@vitejs/plugin-react</name>
+          <version>^4.2.0</version>
+          <purpose>React plugin for Vite</purpose>
+        </framework>
+      </frontend>
+      <styling>
+        <library>
+          <name>tailwindcss</name>
+          <version>^3.4.0</version>
+          <purpose>Utility-first CSS framework</purpose>
+        </library>
+        <library>
+          <name>@radix-ui/react-dialog</name>
+          <version>^1.0.0</version>
+          <purpose>Accessible dialog component primitives</purpose>
+        </library>
+      </styling>
+      <authentication>
+        <library>
+          <name>@supabase/supabase-js</name>
+          <version>^2.39.0</version>
+          <purpose>Supabase Auth client and database client</purpose>
+        </library>
+      </authentication>
+      <routing>
+        <library>
+          <name>react-router-dom</name>
+          <version>^6.20.0</version>
+          <purpose>Client-side routing for SPA</purpose>
+        </library>
+      </routing>
+      <testing>
+        <library>
+          <name>vitest</name>
+          <version>^1.1.0</version>
+          <purpose>Unit testing framework</purpose>
+        </library>
+        <library>
+          <name>@testing-library/react</name>
+          <version>^14.1.0</version>
+          <purpose>React component testing utilities</purpose>
+        </library>
+        <library>
+          <name>playwright</name>
+          <version>^1.40.0</version>
+          <purpose>E2E testing framework</purpose>
+        </library>
+      </testing>
+      <development>
+        <tool>
+          <name>eslint</name>
+          <version>^8.56.0</version>
+          <purpose>Linting</purpose>
+        </tool>
+        <tool>
+          <name>prettier</name>
+          <version>^3.1.0</version>
+          <purpose>Code formatting</purpose>
+        </tool>
+        <tool>
+          <name>@typescript-eslint/eslint-plugin</name>
+          <version>^6.19.0</version>
+          <purpose>TypeScript ESLint rules</purpose>
+        </tool>
+      </development>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      <description>Frontend project structure must follow atomic design pattern</description>
+      <enforcement>Code review during Story 3-1</enforcement>
+    </constraint>
+    <constraint type="authentication">
+      <description>All API requests must include Authorization: Bearer {token} header from Supabase</description>
+      <enforcement>API client implementation (VehicleAPIClient)</enforcement>
+    </constraint>
+    <constraint type="styling">
+      <description>All components must use glass-morphism design tokens from tech-spec-epic-3.md</description>
+      <enforcement>Visual regression tests (Story 3-10)</enforcement>
+    </constraint>
+    <constraint type="typing">
+      <description>TypeScript strict mode enabled - no implicit any, strict null checks</description>
+      <enforcement>tsconfig.json configuration, build will fail on type errors</enforcement>
+    </constraint>
+    <constraint type="cors">
+      <description>Frontend origin must be added to CORS allow_origins in FastAPI backend</description>
+      <enforcement>Update src/api/main_app.py line 40 with frontend URL</enforcement>
+    </constraint>
+    <constraint type="environment">
+      <description>All sensitive config must use environment variables with VITE_ prefix</description>
+      <enforcement>.env file validation, never commit .env to git</enforcement>
+    </constraint>
+    <constraint type="testing">
+      <description>80% test coverage required for AuthContext and authentication utilities</description>
+      <enforcement>Vitest coverage report</enforcement>
+    </constraint>
+    <constraint type="naming">
+      <description>Components use PascalCase, hooks use camelCase with 'use' prefix, files use kebab-case</description>
+      <enforcement>ESLint rules</enforcement>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Supabase Auth Client</name>
+      <kind>Library API</kind>
+      <signature>createClient(supabaseUrl: string, supabaseAnonKey: string): SupabaseClient</signature>
+      <path>node_modules/@supabase/supabase-js</path>
+      <methods>
+        <method>auth.signInWithPassword({ email, password })</method>
+        <method>auth.signUp({ email, password, options: { data } })</method>
+        <method>auth.signInWithOAuth({ provider })</method>
+        <method>auth.signOut()</method>
+        <method>auth.getSession()</method>
+        <method>auth.onAuthStateChange(callback)</method>
+      </methods>
+    </interface>
+    <interface>
+      <name>AuthContext</name>
+      <kind>React Context</kind>
+      <signature>interface AuthContextType { user: User | null, session: Session | null, loading: boolean, signIn: (credentials) => Promise, signUp: (data) => Promise, signInWithSocial: (provider) => Promise, signOut: () => Promise }</signature>
+      <path>src/context/AuthContext.tsx (to be created)</path>
+    </interface>
+    <interface>
+      <name>useAuth Hook</name>
+      <kind>React Hook</kind>
+      <signature>function useAuth(): AuthContextType</signature>
+      <path>src/context/AuthContext.tsx (to be created)</path>
+    </interface>
+    <interface>
+      <name>VehicleAPIClient</name>
+      <kind>Class</kind>
+      <signature>class VehicleAPIClient { async searchVehicles(query: string, filters?: SearchFilters): Promise&lt;SearchResponse&gt;, async getVehicle(vehicleId: string): Promise&lt;Vehicle&gt;, async toggleFavorite(vehicleId: string): Promise&lt;void&gt; }</signature>
+      <path>src/app/lib/api.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>FastAPI Semantic Search</name>
+      <kind>REST Endpoint</kind>
+      <signature>POST /api/search/semantic - Body: { query: string, filters?: SearchFilters } - Response: SearchResponse</signature>
+      <path>src/api/semantic_search_api.py</path>
+    </interface>
+    <interface>
+      <name>FastAPI Listings</name>
+      <kind>REST Endpoint</kind>
+      <signature>GET /api/listings - Response: Vehicle[] - POST /api/favorites/{id} - Response: { success: boolean }</signature>
+      <path>src/api/listings_api.py</path>
+    </interface>
+    <interface>
+      <name>FastAPI WebSocket</name>
+      <kind>WebSocket Endpoint</kind>
+      <signature>WS /ws/vehicles - Message: { type: 'vehicle_update', vehicles: Vehicle[], timestamp: string }</signature>
+      <path>src/api/websocket_endpoints.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit Testing: Vitest + React Testing Library for components and hooks. Test files colocated with source files using .test.ts suffix or in tests/unit directory. Use renderWithProviders() utility to wrap components with AuthProvider for testing. Mock Supabase client using vi.mock().
+
+      Integration Testing: MSW (Mock Service Worker) for API mocking. Test AuthContext with mocked Supabase client. Test API client with mocked fetch responses.
+
+      E2E Testing: Playwright for full authentication flows. Test login/signup/logout journeys with real browser automation. Verify session persistence across page reloads.
+
+      Coverage Target: 80% for AuthContext, useAuth hook, and authentication utilities. 60% for UI components (LoginForm, SignUpForm).
+
+      Test Structure: Given-When-Then pattern matching acceptance criteria. Describe tests using test.each() for multiple scenarios.
+    </standards>
+
+    <locations>
+      <location>tests/unit/auth/AuthContext.test.tsx</location>
+      <location>tests/unit/components/LoginForm.test.tsx</location>
+      <location>tests/unit/components/SignUpForm.test.tsx</location>
+      <location>tests/integration/api/VehicleAPIClient.test.ts</location>
+      <location>tests/e2e/auth/login-flow.spec.ts</location>
+      <location>tests/e2e/auth/signup-flow.spec.ts</location>
+      <location>tests/e2e/auth/session-persistence.spec.ts</location>
+    </locations>
+
+    <ideas>
+      <test_idea ac="AC1">
+        <description>Test Vite dev server starts on port 5173 with npm run dev</description>
+        <type>smoke</type>
+      </test_idea>
+      <test_idea ac="AC1">
+        <description>Test TypeScript compilation succeeds with strict mode enabled</description>
+        <type>build</type>
+      </test_idea>
+      <test_idea ac="AC1">
+        <description>Test Supabase client initializes with environment variables</description>
+        <type>unit</type>
+      </test_idea>
+      <test_idea ac="AC1">
+        <description>Test AuthProvider wraps application root without errors</description>
+        <type>integration</type>
+      </test_idea>
+      <test_idea ac="AC1">
+        <description>Test useAuth() hook returns all required methods (signIn, signUp, signOut)</description>
+        <type>unit</type>
+      </test_idea>
+      <test_idea ac="AC1">
+        <description>Test LoginForm component renders with glass-morphism styling</description>
+        <type>visual</type>
+      </test_idea>
+      <test_idea ac="AC1">
+        <description>Test SocialLoginButtons trigger OAuth flow on click</description>
+        <type>integration</type>
+      </test_idea>
+      <test_idea ac="AC1">
+        <description>Test JWT token included in API request headers after authentication</description>
+        <type>integration</type>
+      </test_idea>
+      <test_idea ac="AC1b">
+        <description>Test login page displays on first visit (unauthenticated state)</description>
+        <type>e2e</type>
+      </test_idea>
+      <test_idea ac="AC1b">
+        <description>Test successful login redirects to discovery page</description>
+        <type>e2e</type>
+      </test_idea>
+      <test_idea ac="AC1b">
+        <description>Test session persists across page refreshes</description>
+        <type>e2e</type>
+      </test_idea>
+      <test_idea ac="AC1b">
+        <description>Test API calls include Authorization header with JWT token</description>
+        <type>integration</type>
+      </test_idea>
+      <test_idea ac="AC1b">
+        <description>Test signOut clears session and redirects to login page</description>
+        <type>e2e</type>
+      </test_idea>
+      <test_idea ac="AC2">
+        <description>Test HMR works for component changes</description>
+        <type>dev</type>
+      </test_idea>
+      <test_idea ac="AC2">
+        <description>Test production build completes with npm run build</description>
+        <type>build</type>
+      </test_idea>
+      <test_idea ac="AC3">
+        <description>Test 401 responses trigger re-authentication flow (redirect to login)</description>
+        <type>integration</type>
+      </test_idea>
+      <test_idea ac="AC3">
+        <description>Test VehicleAPIClient handles 401 errors gracefully</description>
+        <type>unit</type>
+      </test_idea>
+    </ideas>
+  </tests>
+
+  <developmentResources>
+    <mcpServers>
+      <server>
+        <name>Supabase MCP</name>
+        <prefix>mcp__supabase__</prefix>
+        <purpose>Database migrations, project management, and Supabase operations</purpose>
+        <tools>
+          <tool>apply_migration - Apply database migrations for frontend user tables</tool>
+          <tool>execute_sql - Execute SQL queries for testing and validation</tool>
+          <tool>get_project - Get Supabase project details and configuration</tool>
+          <tool>list_projects - List all Supabase projects</tool>
+          <tool>list_tables - List database tables to verify schema</tool>
+          <tool>list_extensions - List PostgreSQL extensions installed</tool>
+          <tool>get_project_url - Get API endpoint URLs for frontend configuration</tool>
+          <tool>get_publishable_keys - Get anon/public keys for frontend env vars</tool>
+        </tools>
+        <usage>Use these tools during Story 3-1 to set up Supabase Auth, create database tables for user profiles, and retrieve environment variables for frontend configuration.</usage>
+      </server>
+      <server>
+        <name>Shadcn UI MCP</name>
+        <prefix>mcp__shadcn-ui__</prefix>
+        <purpose>Pre-built React/TypeScript UI components with Tailwind CSS</purpose>
+        <tools>
+          <tool>list_components - List all available shadcn/ui components (button, input, dialog, etc.)</tool>
+          <tool>get_component - Get source code for a specific component</tool>
+          <tool>get_component_metadata - Get component props and usage information</tool>
+          <tool>get_component_demo - Get demo code showing component usage</tool>
+          <tool>list_blocks - List pre-built UI blocks (forms, cards, layouts)</tool>
+        </tools>
+        <usage>Use these tools to accelerate Story 3-1 UI development. Auth components (Button, Input, Card, Dialog) can be sourced from shadcn/ui and customized with glass-morphism styling.</usage>
+      </server>
+    </mcpServers>
+    <skills>
+      <skill>
+        <name>Frontend-Design</name>
+        <invocation>frontend-design:frontend-design</invocation>
+        <purpose>Create distinctive, production-grade frontend interfaces with high design quality</purpose>
+        <description>Generates creative, polished React/TypeScript code that avoids generic AI aesthetics. Use this skill when building web components, pages, or applications.</description>
+        <usage>Use for Story 3-1 tasks 3-1.5 (authentication UI components) and 3-1.10 (basic page layouts) to generate high-quality glass-morphism styled components.</usage>
+      </skill>
+    </skills>
+    <developmentWorkflow>
+      <step>1. Use Supabase MCP to retrieve project URL and publishable keys for .env configuration</step>
+      <step>2. Use Shadcn UI MCP to list components and get source code for auth UI elements</step>
+      <step>3. Use Frontend-Design skill to generate custom components with glass-morphism styling</step>
+      <step>4. Use Supabase MCP to apply migrations for user profile tables if needed</step>
+      <step>5. Integrate components with AuthContext and test authentication flow</step>
+    </developmentWorkflow>
+  </developmentResources>
+</story-context>

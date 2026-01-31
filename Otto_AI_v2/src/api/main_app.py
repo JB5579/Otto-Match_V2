@@ -13,9 +13,14 @@ from fastapi.responses import JSONResponse
 
 # Import all API routers
 from .listings_api import listings_router
+from .vehicles_api import vehicles_router
 from .semantic_search_api import app as semantic_search_app
-from .vehicle_comparison_api import app as comparison_app
-from .filter_management_api import app as filter_app
+# Temporarily disabled - has import errors in recommendation module
+# from .vehicle_comparison_api import app as comparison_app
+# from .filter_management_api import app as filter_app
+from .auth_api import auth_router
+# Story 3-3b: SSE router for vehicle updates
+from .vehicle_updates_sse import vehicle_updates_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -37,7 +42,7 @@ def create_application() -> FastAPI:
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "https://otto-ai.com"],  # Frontend URLs
+        allow_origins=["http://localhost:5173", "http://localhost:3000", "https://otto-ai.com"],  # Frontend URLs
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
@@ -63,6 +68,10 @@ def create_application() -> FastAPI:
 
     # Include API routers
     app.include_router(listings_router, tags=["listings"])
+    app.include_router(vehicles_router, tags=["vehicles"])
+    app.include_router(auth_router, tags=["authentication"])
+    # Story 3-3b: SSE endpoint for vehicle updates (replaces WebSocket for vehicle updates)
+    app.include_router(vehicle_updates_router, tags=["vehicle-updates"])
 
     # Note: The other API apps are separate FastAPI instances
     # In production, you might want to refactor them into routers
@@ -80,9 +89,11 @@ def create_application() -> FastAPI:
             "timestamp": datetime.utcnow().isoformat(),
             "endpoints": {
                 "listings": "/api/listings",
+                "vehicles": "/api/v1/vehicles",  # Frontend vehicle search
                 "semantic_search": "/api/search",  # From semantic_search_app
-                "vehicle_comparison": "/api/compare",  # From comparison_app
-                "filter_management": "/api/filters",  # From filter_app
+                "vehicle_updates_sse": "/api/vehicles/updates",  # Story 3-3b: SSE for vehicle updates
+                # "vehicle_comparison": "/api/compare",  # Temporarily disabled
+                # "filter_management": "/api/filters",  # Temporarily disabled
                 "docs": "/docs",
                 "health": "/health"
             }
