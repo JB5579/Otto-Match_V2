@@ -1,0 +1,463 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3</storyId>
+    <title>Implement Dynamic Cascade Updates from Conversation</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-3-implement-dynamic-cascade-updates-from-conversation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>the vehicle grid to update in real-time as I discuss preferences with Otto AI</iWant>
+    <soThat>I can instantly see how my conversation choices affect available vehicles</soThat>
+    <tasks>
+      <task id="3-3.1">Create useWebSocket custom hook for conversation updates</task>
+      <task id="3-3.2">Define WebSocket message schemas</task>
+      <task id="3-3.3">Create ConversationContext for global conversation state</task>
+      <task id="3-3.4">Create VehicleContext with cascade update logic</task>
+      <task id="3-3.5">Implement useVehicleCascade custom hook</task>
+      <task id="3-3.6">Create CascadeAnimation orchestration component</task>
+      <task id="3-3.7">Implement vehicle card animation variants</task>
+      <task id="3-3.8">Update VehicleGrid to use cascade animations</task>
+      <task id="3-3.9">Implement loading states for grid updates</task>
+      <task id="3-3.10">Create error state component for failed updates</task>
+      <task id="3-3.11">Optimize vehicle re-renders with React.memo</task>
+      <task id="3-3.12">Implement virtual scrolling for large inventories</task>
+      <task id="3-3.13">Create OttoChatWidget component (if not exists)</task>
+      <task id="3-3.14">Implement preference extraction listener</task>
+      <task id="3-3.15">Write unit tests for useWebSocket hook</task>
+      <task id="3-3.16">Write unit tests for useVehicleCascade hook</task>
+      <task id="3-3.17">Write integration tests for cascade updates</task>
+      <task id="3-3.18">Write visual regression tests for animations</task>
+      <task id="3-3.19">Write accessibility tests for dynamic updates</task>
+      <task id="3-3.20">Implement performance metrics tracking</task>
+      <task id="3-3.21">Create performance debugging tools</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" priority="P0">
+      <title>Real-Time Grid Updates from Conversation Preferences</title>
+      <given>I'm in a conversation with Otto AI discussing vehicle preferences</given>
+      <when>I mention "I need something with good gas mileage under $25,000"</when>
+      <then>
+        - Vehicle grid immediately updates with vehicles matching these criteria
+        - Cascade animation shows new vehicles appearing from top to bottom
+        - Vehicles that don't match smoothly fade out or reposition
+        - Update completes within 500ms with smooth animations
+        - Otto AI provides context: "Found 15 vehicles matching your criteria"
+      </then>
+    </criterion>
+    <criterion id="AC2" priority="P0">
+      <title>Cascade Animation for Preference Refinement</title>
+      <given>I have active vehicle preferences and the grid is populated</given>
+      <when>I refine my preferences to include "all-wheel drive for winter weather"</when>
+      <then>
+        - Grid instantly filters to show only AWD vehicles within budget
+        - Existing vehicles smoothly rearrange with top-to-bottom cascade animation
+        - Vehicles no longer matching fade out with scale reduction (0.2s)
+        - New vehicles slide in from top with stagger delay (0.05s per card)
+        - Otto AI provides context: "Found 12 vehicles matching your updated criteria"
+      </then>
+    </criterion>
+    <criterion id="AC3" priority="P0">
+      <title>WebSocket Integration for Real-Time Updates</title>
+      <given>I have an active WebSocket connection to the conversation backend</given>
+      <when>Backend sends a vehicle update message after preference extraction</when>
+      <then>
+        - Frontend receives message within 100ms
+        - Grid state updates immediately with new vehicle list
+        - Animations trigger smoothly without jarring transitions
+        - Cumulative Layout Shift (CLS) remains &lt;0.1 during updates
+        - No duplicate vehicles appear in grid
+      </then>
+    </criterion>
+    <criterion id="AC4" priority="P1">
+      <title>Performance During Rapid Updates</title>
+      <given>I'm actively refining preferences with multiple rapid messages</given>
+      <when>I send 3-4 preference updates within 10 seconds</when>
+      <then>
+        - Each update completes within 500ms
+        - Animations maintain 60fps (16ms frame time)
+        - No animation frames dropped or skipped
+        - Grid remains responsive to user interactions (scroll, hover, click)
+        - Memory usage remains stable (no memory leaks from state updates)
+      </then>
+    </criterion>
+    <criterion id="AC5" priority="P1">
+      <title>Loading States During Updates</title>
+      <given>Vehicle grid is updating based on new preferences</given>
+      <when>New vehicle data is being fetched from the backend</when>
+      <then>
+        - Skeleton cards display in place of loading vehicles
+        - Existing vehicles remain visible until new data arrives (optimistic UI)
+        - Subtle loading indicator shows "Updating recommendations..."
+        - Error state displays user-friendly message if update fails
+        - Retry button available if update fails
+      </then>
+    </criterion>
+    <criterion id="AC6" priority="P1">
+      <title>Animation Orchestration and Visual Polish</title>
+      <given>Vehicle grid is updating with new vehicles</given>
+      <when>Cascade animation triggers</when>
+      <then>
+        - Vehicles animate in top-to-bottom order with stagger delay (0.05s)
+        - Exiting vehicles fade out with scale reduction (opacity: 1→0, scale: 1→0.95)
+        - Entering vehicles fade in with slide up (opacity: 0→1, y: 20→0)
+        - Match score badges animate number transitions (0.3s duration)
+        - All animations use spring easing for natural feel (stiffness: 300, damping: 25)
+      </then>
+    </criterion>
+    <criterion id="AC7" priority="P2">
+      <title>State Management for Grid Updates</title>
+      <given>I'm viewing vehicle grid with active conversation context</given>
+      <when>Preference changes trigger a grid update</when>
+      <then>
+        - System calculates delta between old and new vehicle lists
+        - Only changed vehicles are re-rendered (React.memo optimization)
+        - Scroll position is preserved if possible (or adjusted smoothly)
+        - Expanded card states persist across updates (mobile progressive disclosure)
+        - Favorite states preserved for vehicles remaining in grid
+      </then>
+    </criterion>
+    <criterion id="AC8" priority="P1">
+      <title>Error Handling and Graceful Degradation</title>
+      <given>WebSocket connection is lost or backend is unavailable</given>
+      <when>I attempt to update preferences via conversation</when>
+      <then>
+        - Grid displays last known good state
+        - Notification shows "Unable to update recommendations. Retrying..."
+        - Automatic reconnection attempts with exponential backoff (5s, 10s, 20s, 30s max)
+        - Fallback to manual refresh button if reconnection fails after 3 attempts
+        - Grid remains interactive for viewing existing vehicles
+      </then>
+    </criterion>
+    <criterion id="AC9" priority="P0">
+      <title>Integration with Otto AI Conversation</title>
+      <given>I'm chatting with Otto AI in the chat widget</given>
+      <when>Otto detects a preference change (e.g., "I want an SUV")</when>
+      <then>
+        - Preference sent to backend via WebSocket
+        - Backend processes preference and returns updated vehicles
+        - Grid automatically updates without me clicking anything
+        - Otto provides summary: "I've updated the grid to show SUVs matching your other criteria"
+        - I can continue conversation while grid updates in background
+      </then>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Workflow-2: Cascade Update Flow</section>
+        <snippet>Defines WebSocket message schema (VehicleUpdateMessage, PreferenceChangeMessage), cascade animation orchestration using Framer Motion, and delta calculation algorithm for entering/exiting/persisting vehicles.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Real-Time Discovery</section>
+        <snippet>Core innovation: "Dynamic Visual Discovery - As conversations progress, the vehicle grid updates in real-time to reflect Otto's growing understanding. Match scores change, new vehicles appear, and recommendations become more personalized."</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>WebSocket Notification Pattern</section>
+        <snippet>Backend WebSocket implementation at FastAPI endpoint ws://localhost:8000/ws/conversation, with JWT authentication and real-time preference extraction via advisory_extractors.py.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Glass-morphism Design System</section>
+        <snippet>Design system guidelines for glass-morphism styling: rgba(255,255,255,0.85) background, 20px backdrop-filter blur, smooth transitions, cascade animations with spring easing.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleGrid.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleGrid</symbol>
+        <lines>1-50</lines>
+        <reason>Existing responsive vehicle grid component from Story 3-2 that needs WebSocket integration and cascade animations. Already uses AnimatePresence from Framer Motion for basic animations.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleCard.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleCard</symbol>
+        <lines>full file</lines>
+        <reason>Existing vehicle card component with glass-morphism styling. Needs animation variants added for cascade updates (initial, animate, exit props).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/useVehicleGrid.ts</path>
+        <kind>hook</kind>
+        <symbol>useVehicleGrid</symbol>
+        <lines>25-190</lines>
+        <reason>Existing hook for vehicle state management, API calls, favorites, and comparison. Will be extended to integrate with VehicleContext and WebSocket updates.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleCardSkeleton.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleCardSkeleton</symbol>
+        <lines>full file</lines>
+        <reason>Existing skeleton loading component for use during vehicle updates (AC5 loading states).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/contexts/AuthContext.tsx</path>
+        <kind>context</kind>
+        <symbol>AuthContext</symbol>
+        <lines>full file</lines>
+        <reason>Existing auth context from Story 3-1. Provides JWT token via getAuthToken() for WebSocket handshake authentication.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/services/apiClient.ts</path>
+        <kind>service</kind>
+        <symbol>VehicleAPIClient</symbol>
+        <lines>full file</lines>
+        <reason>Existing API client for vehicle operations. May need extension for WebSocket connection initialization.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/types/api.ts</path>
+        <kind>types</kind>
+        <symbol>Vehicle, SearchFilters</symbol>
+        <lines>full file</lines>
+        <reason>Existing TypeScript interfaces for Vehicle and SearchFilters. Will be extended with WebSocket message types (VehicleUpdateMessage, PreferenceChangeMessage).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/MatchScoreBadge.tsx</path>
+        <kind>component</kind>
+        <symbol>MatchScoreBadge</symbol>
+        <lines>full file</lines>
+        <reason>Existing match score component with color coding. Needs animated number transitions for cascade updates (AC6).</reason>
+      </artifact>
+      <artifact>
+        <path>src/api/websocket_endpoints.py</path>
+        <kind>backend-api</kind>
+        <symbol>conversation_websocket</symbol>
+        <lines>unknown</lines>
+        <reason>Backend WebSocket endpoint that sends VehicleUpdateMessage after preference extraction via advisory_extractors.py.</reason>
+      </artifact>
+      <artifact>
+        <path>src/conversation/advisory_extractors.py</path>
+        <kind>backend-service</kind>
+        <symbol>AdvisoryExtractor</symbol>
+        <lines>1-1073</lines>
+        <reason>Backend service that extracts preferences from Otto conversation (Phase 1 implementation). Triggers vehicle updates via search_orchestrator.py.</reason>
+      </artifact>
+      <artifact>
+        <path>src/search/search_orchestrator.py</path>
+        <kind>backend-service</kind>
+        <symbol>SearchOrchestrator</symbol>
+        <lines>unknown</lines>
+        <reason>Backend semantic search service from Epic 1 that returns updated vehicle list based on extracted preferences.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <framework name="React" version="19.2.0" ecosystem="node">Core UI framework</framework>
+      <framework name="TypeScript" version="5.9.3" ecosystem="node">Type safety</framework>
+      <framework name="Vite" version="7.2.4" ecosystem="node">Build system</framework>
+      <package name="framer-motion" version="12.23.26" ecosystem="node">Animation library (already installed in Story 3-2)</package>
+      <package name="@supabase/supabase-js" version="2.89.0" ecosystem="node">Authentication for WebSocket JWT</package>
+      <package name="react-router-dom" version="7.11.0" ecosystem="node">Routing</package>
+      <package name="vitest" version="4.0.16" ecosystem="node" dev="true">Test framework</package>
+      <package name="@testing-library/react" version="16.3.1" ecosystem="node" dev="true">React testing utilities</package>
+      <package name="@testing-library/jest-dom" version="6.9.1" ecosystem="node" dev="true">DOM assertions</package>
+      <package name="@testing-library/user-event" version="14.6.1" ecosystem="node" dev="true">User interaction simulation</package>
+      <package name="react-window" version="TBD" ecosystem="node" required="true">Virtual scrolling for 50+ vehicles (AC4, Task 3-3.12)</package>
+      <package name="msw" version="TBD" ecosystem="node" dev="true" required="true">WebSocket mocking for tests (Task 3-3.15, 3-3.17)</package>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architectural">Context composition pattern: AuthProvider → ConversationContext → VehicleContext → VehicleGrid. Maintain this hierarchy to avoid prop drilling.</constraint>
+    <constraint type="performance">All grid updates must complete within 500ms (AC1, AC2). Animations must maintain 60fps (AC4). Use React.memo, useMemo, useCallback for optimization.</constraint>
+    <constraint type="architectural">WebSocket connection requires JWT token from AuthContext.getAuthToken() in handshake header (from Story 3-1 architecture).</constraint>
+    <constraint type="performance">Cumulative Layout Shift (CLS) must remain &lt;0.1 during all animations (AC3). Use layout animations and avoid sudden DOM insertions.</constraint>
+    <constraint type="testing">Minimum 80% code coverage for all new hooks and components. Use Vitest + React Testing Library.</constraint>
+    <constraint type="accessibility">ARIA live regions required for grid update announcements (AC9). Screen readers must announce "Grid updated with X vehicles" on changes.</constraint>
+    <constraint type="architectural">Delta calculation algorithm: Compare by vehicle.id to identify entering/exiting/persisting vehicles. Only re-render changed vehicles.</constraint>
+    <constraint type="performance">Virtual scrolling required for 50+ vehicles using react-window or react-virtuoso (Task 3-3.12).</constraint>
+    <constraint type="error-handling">Automatic WebSocket reconnection with exponential backoff: 5s, 10s, 20s, 30s max (AC8). After 3 failed attempts, show manual refresh button.</constraint>
+    <constraint type="styling">Maintain glass-morphism design from Story 3-2: rgba(255,255,255,0.85) background, 20px backdrop-filter blur, consistent with existing VehicleCard styling.</constraint>
+    <constraint type="animation">Framer Motion spring animations with stiffness: 300, damping: 25 for natural feel (AC6). Stagger delay 0.05s per card for cascade effect.</constraint>
+    <constraint type="state-management">Preserve expanded card states and favorites across grid updates (AC7). Use Set&lt;string&gt; for expanded card tracking.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>WebSocket Connection</name>
+      <kind>WebSocket</kind>
+      <signature>ws://localhost:8000/ws/conversation (JWT in handshake header)</signature>
+      <path>Backend: src/api/websocket_endpoints.py</path>
+      <details>
+        Connection flow:
+        1. Get JWT via AuthContext.getAuthToken()
+        2. Connect to ws://localhost:8000/ws/conversation with token in header
+        3. Listen for 'vehicle_update' and 'preference_change' messages
+        4. Handle onopen, onmessage, onclose, onerror events
+        5. Reconnect with exponential backoff on disconnect
+      </details>
+    </interface>
+    <interface>
+      <name>VehicleUpdateMessage</name>
+      <kind>WebSocket Message Type</kind>
+      <signature>
+        {
+          type: 'vehicle_update',
+          vehicles: Vehicle[],
+          matchScores: number[],
+          timestamp: string,
+          requestId: string,
+          conversationContext?: ConversationContext
+        }
+      </signature>
+      <path>New: frontend/src/types/conversation.ts</path>
+      <details>Sent from backend when preferences change. Triggers cascade update in VehicleContext.</details>
+    </interface>
+    <interface>
+      <name>PreferenceChangeMessage</name>
+      <kind>WebSocket Message Type</kind>
+      <signature>
+        {
+          type: 'preference_change',
+          preferences: UserPreferences,
+          extractionConfidence: number,
+          timestamp: string
+        }
+      </signature>
+      <path>New: frontend/src/types/conversation.ts</path>
+      <details>Sent from backend when Otto extracts new preferences from conversation. Updates ConversationContext state.</details>
+    </interface>
+    <interface>
+      <name>useWebSocket Hook</name>
+      <kind>React Custom Hook</kind>
+      <signature>
+        useWebSocket(url: string, token: string): {
+          isConnected: boolean,
+          lastMessage: WebSocketMessage | null,
+          sendMessage: (message: any) => void,
+          reconnect: () => void,
+          error: Error | null
+        }
+      </signature>
+      <path>New: frontend/src/hooks/useWebSocket.ts</path>
+      <details>Manages WebSocket connection lifecycle with automatic reconnection. Task 3-3.1.</details>
+    </interface>
+    <interface>
+      <name>useVehicleCascade Hook</name>
+      <kind>React Custom Hook</kind>
+      <signature>
+        useVehicleCascade(oldVehicles: Vehicle[], newVehicles: Vehicle[]): {
+          enteringVehicles: Vehicle[],
+          exitingVehicles: Vehicle[],
+          persistingVehicles: Vehicle[],
+          animationDelays: Map&lt;string, number&gt;
+        }
+      </signature>
+      <path>New: frontend/src/hooks/useVehicleCascade.ts</path>
+      <details>Calculates delta between vehicle arrays and generates animation timing. Task 3-3.5.</details>
+    </interface>
+    <interface>
+      <name>ConversationContext</name>
+      <kind>React Context</kind>
+      <signature>
+        {
+          messages: ConversationMessage[],
+          currentPreferences: UserPreferences,
+          sendMessage: (text: string) => void,
+          updatePreferences: (prefs: UserPreferences) => void,
+          loading: boolean
+        }
+      </signature>
+      <path>New: frontend/src/context/ConversationContext.tsx</path>
+      <details>Global conversation state integrated with WebSocket. Task 3-3.3.</details>
+    </interface>
+    <interface>
+      <name>VehicleContext</name>
+      <kind>React Context</kind>
+      <signature>
+        {
+          vehicles: Vehicle[],
+          loading: boolean,
+          error: string | null,
+          updateVehicles: (newVehicles: Vehicle[]) => void,
+          retryUpdate: () => void
+        }
+      </signature>
+      <path>New: frontend/src/context/VehicleContext.tsx</path>
+      <details>Global vehicle state with cascade update logic and delta calculation. Task 3-3.4.</details>
+    </interface>
+    <interface>
+      <name>VehicleCard Animation Props</name>
+      <kind>React Component Props</kind>
+      <signature>
+        initial={{ opacity: 0, y: 20, scale: 0.95 }},
+        animate={{ opacity: 1, y: 0, scale: 1 }},
+        exit={{ opacity: 0, scale: 0.95 }},
+        transition={{ delay, type: 'spring', stiffness: 300, damping: 25 }}
+      </signature>
+      <path>Modified: frontend/src/components/vehicle-grid/VehicleCard.tsx</path>
+      <details>Framer Motion animation variants for cascade effect. Task 3-3.7.</details>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing standards from Story 3-2 (46 passing tests):
+      - Framework: Vitest 4.0.16 with React Testing Library 16.3.1
+      - Unit tests for all hooks and components in __tests__/ directories
+      - Integration tests using MSW for API mocking
+      - Visual regression tests with Playwright (planned for Story 3-3.18)
+      - Accessibility tests using jest-axe
+      - Minimum 80% code coverage requirement
+      - Test location: frontend/src/components/**/__tests__/*.test.tsx
+    </standards>
+    <locations>
+      <location>frontend/src/hooks/__tests__/</location>
+      <location>frontend/src/context/__tests__/</location>
+      <location>frontend/src/components/vehicle-grid/__tests__/</location>
+      <location>frontend/src/components/otto-chat/__tests__/</location>
+    </locations>
+    <ideas>
+      <idea criterionId="AC1">
+        Test: Mock WebSocket message with preference change → verify grid updates within 500ms → assert correct vehicles rendered
+      </idea>
+      <idea criterionId="AC2">
+        Test: Render grid with 10 vehicles → send preference refinement message → verify cascade animation timing (stagger 0.05s per card)
+      </idea>
+      <idea criterionId="AC3">
+        Test: Mock WebSocket connection → send VehicleUpdateMessage → verify frontend receives within 100ms → assert no duplicate vehicles
+      </idea>
+      <idea criterionId="AC4">
+        Test: Send 4 rapid preference updates → measure frame rates with React DevTools Profiler → assert 60fps maintained → verify no memory leaks
+      </idea>
+      <idea criterionId="AC5">
+        Test: Trigger grid update → verify skeleton cards display → verify existing vehicles visible during load → test error state with retry button
+      </idea>
+      <idea criterionId="AC6">
+        Test: Verify animation variants (enter/exit) → test spring easing parameters (stiffness: 300, damping: 25) → measure animation duration
+      </idea>
+      <idea criterionId="AC7">
+        Test: Update grid with overlapping vehicles → verify only delta re-renders (React.memo) → assert scroll position preserved → verify favorites persist
+      </idea>
+      <idea criterionId="AC8">
+        Test: Simulate WebSocket disconnect → verify error notification → test reconnection backoff (5s, 10s, 20s, 30s) → verify manual refresh button after 3 failures
+      </idea>
+      <idea criterionId="AC9">
+        Test: Send Otto message "I want an SUV" → mock preference extraction → verify WebSocket sends preference → verify grid updates automatically → assert Otto response message
+      </idea>
+      <idea criterionId="useWebSocket">
+        Test: WebSocket connection lifecycle → message send/receive → reconnection logic → error handling with exponential backoff
+      </idea>
+      <idea criterionId="useVehicleCascade">
+        Test: Delta calculation with various arrays → entering/exiting/persisting detection → stagger delay calculation → animation variants generation
+      </idea>
+      <idea criterionId="accessibility">
+        Test: ARIA live region announces "Grid updated with 15 vehicles" → screen reader compatibility → keyboard navigation during animations
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

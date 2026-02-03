@@ -1,0 +1,207 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>1</storyId>
+    <title>Initialize Conversational AI Infrastructure</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-1-initialize-conversational-ai-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>set up the foundational conversational AI infrastructure with WebSockets and Zep Cloud integration</iWant>
+    <soThat>we can build an intelligent conversation system for vehicle discovery</soThat>
+    <tasks>- Set up WebSocket infrastructure with FastAPI (AC: #1)
+  - [ ] Create WebSocket endpoint `/ws/conversation/{user_id}` with connection management
+  - [ ] Implement WebSocket connection pooling and heartbeat management
+  - [ ] Add basic rate limiting and connection limits per user
+  - [ ] Create WebSocket connection lifecycle management (connect/disconnect events)
+
+- Configure Zep Cloud integration (AC: #1, #2)
+  - [ ] Install and configure Zep Cloud SDK with proper API credentials
+  - [ ] Set up Zep Cloud collections for conversation storage
+  - [ ] Implement temporal metadata logging for conversations
+  - [ ] Create conversation session management in Zep Cloud
+
+- Integrate Groq compound-beta API (AC: #1)
+  - [ ] Configure Groq API client with compound-beta model access
+  - [ ] Create basic message processing pipeline
+  - [ ] Implement context understanding for simple messages
+  - [ ] Add response generation with acknowledgment messages
+
+- Create conversation_agent.py service (AC: #1, #2)
+  - [ ] Implement basic conversation message processing
+  - [ ] Add context understanding capabilities
+  - [ ] Create error handling for API failures
+  - [ ] Build conversation flow state management
+
+- Implement real-time communication performance (AC: #2)
+  - [ ] Optimize WebSocket response time to < 2 seconds
+  - [ ] Add performance monitoring for message processing
+  - [ ] Implement graceful degradation for slow responses
+  - [ ] Create connection health monitoring
+
+- Add comprehensive error handling (AC: #2)
+  - [ ] Implement WebSocket disconnection handling
+  - [ ] Add API failure recovery mechanisms
+  - [ ] Create error logging and monitoring
+  - [ ] Build fallback responses for service unavailability
+
+- Create environment configuration (AC: #1)
+  - [ ] Set up environment variables for all conversation services
+  - [ ] Create configuration validation on startup
+  - [ ] Add configuration documentation
+  - [ ] Implement configuration hot-reload capabilities
+
+- Add basic testing suite
+  - [ ] Create unit tests for conversation_agent.py
+  - [ ] Add WebSocket endpoint integration tests
+  - [ ] Implement Zep Cloud integration tests
+  - [ ] Create performance tests for real-time communication</tasks>
+  </story>
+
+  <acceptanceCriteria>1. **WebSocket Infrastructure**: Given we have a working API environment, when I run the conversation infrastructure setup, then WebSocket endpoints are configured for real-time communication, Zep Cloud connection is established with proper authentication, Groq compound-beta API is configured for AI responses, and conversation_agent.py can process basic messages with context understanding
+
+2. **Real-time Communication Performance**: Given the infrastructure is set up, when I test the WebSocket connection with a sample message, then the system responds within &lt; 2 seconds with contextual acknowledgment, the conversation is logged in Zep Cloud with temporal metadata, and error handling gracefully manages disconnections and API failures</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Conversational Orchestration Pattern</section>
+        <snippet>The architecture defines OttoConversationalAgent class with memory management and dialogue state tracking for conversational AI</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Hierarchical Memory Pattern</section>
+        <snippet>ConversationMemoryManager pattern for working memory, episodic memory, and semantic memory using Zep Cloud and Supabase</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 2: Conversational Discovery Interface</title>
+        <section>Story 2.1 Requirements</section>
+        <snippet>WebSocket endpoints, Zep Cloud integration, Groq compound-beta API configuration, and conversation_agent.py for message processing</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/1-8-optimize-semantic-search-performance-and-scaling.md</path>
+        <title>Performance Optimization Learnings</title>
+        <section>Key Features Implemented</section>
+        <snippet>Multi-level caching, connection pooling, query monitoring, and performance testing patterns available for reuse</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/scaling/connection_pool.py</path>
+        <kind>service</kind>
+        <symbol>ConnectionPool</symbol>
+        <lines>1-50</lines>
+        <reason>Async connection pool with health monitoring and auto-scaling - reuse for WebSocket connection management</reason>
+      </artifact>
+      <artifact>
+        <path>src/monitoring/query_optimizer.py</path>
+        <kind>service</kind>
+        <symbol>QueryOptimizer</symbol>
+        <lines>1-100</lines>
+        <reason>Performance monitoring patterns - adapt for conversation response time tracking</reason>
+      </artifact>
+      <artifact>
+        <path>src/cache/multi_level_cache.py</path>
+        <kind>service</kind>
+        <symbol>MultiLevelCache</symbol>
+        <lines>1-80</lines>
+        <reason>3-tier caching system - use for conversation context caching to reduce Zep Cloud API calls</reason>
+      </artifact>
+      <artifact>
+        <path>src/realtime/collections_websocket_service.py</path>
+        <kind>service</kind>
+        <symbol>CollectionsWebSocketService</symbol>
+        <lines>1-150</lines>
+        <reason>Existing WebSocket implementation patterns - follow for conversation WebSocket endpoints</reason>
+      </artifact>
+      <artifact>
+        <path>main.py</path>
+        <kind>application</kind>
+        <symbol>lifespan</symbol>
+        <lines>35-60</lines>
+        <reason>Application startup pattern - extend to initialize conversation services</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="raganything[all]" version="latest">Core semantic search (already installed)</package>
+        <package name="supabase" version="latest">Database client (already installed)</package>
+        <package name="fastapi" version="latest">Web framework (already installed)</package>
+        <package name="openai" version="latest">AI API client (already installed)</package>
+        <package name="websockets" version="latest">Required for WebSocket support</package>
+        <package name="zep-python" version="latest">Zep Cloud SDK for temporal memory</package>
+        <package name="groq" version="latest">Groq API client for compound-beta model</package>
+        <package name="pytest" version="latest">Testing framework (already installed)</package>
+        <package name="pytest-asyncio" version="latest">Async testing (already installed)</package>
+      </ecosystem>
+      <ecosystem name="external-services">
+        <service name="Zep Cloud" type="memory">Temporal knowledge graph storage for conversations</service>
+        <service name="Groq API" type="ai">Compound-beta model access for AI responses</service>
+        <service name="OpenRouter" type="gateway">API gateway for Groq access (consistent with existing patterns)</service>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Must follow FastAPI WebSocket patterns established in collections_websocket_service.py
+    - Use async/await patterns throughout for performance
+    - Implement proper error handling with graceful degradation
+    - Follow multi-level caching patterns from Story 1.8 to minimize external API calls
+    - Maintain < 2 second response time requirement for all WebSocket messages
+    - Use existing connection pool patterns for WebSocket management
+    - Integrate with existing performance monitoring framework
+    - Follow established project structure: src/conversation/, src/memory/, src/config/
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>WebSocket Endpoint</name>
+      <kind>REST endpoint</kind>
+      <signature>WebSocket /ws/conversation/{user_id}</signature>
+      <path>src/api/websocket_endpoints.py</path>
+    </interface>
+    <interface>
+      <name>ConversationAgent</name>
+      <kind>class interface</kind>
+      <signature>class ConversationAgent: async def process_message(user_id: str, message: str) -> ConversationResponse</signature>
+      <path>src/conversation/conversation_agent.py</path>
+    </interface>
+    <interface>
+      <name>ZepClient</name>
+      <kind>class interface</kind>
+      <signature>class ZepClient: async def store_conversation(user_id: str, conversation: ConversationData) -> bool; async def get_conversation_context(user_id: str) -> ConversationContext</signature>
+      <path>src/memory/zep_client.py</path>
+    </interface>
+    <interface>
+      <name>ConversationConfig</name>
+      <kind>configuration</kind>
+      <signature>CONVERSATION_CONFIG = { "zep_api_key": str, "groq_api_key": str, "websocket_timeout": float, "max_connections": int }</signature>
+      <path>src/config/conversation_config.py</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Follow pytest patterns with async/await support. Use performance testing framework from Story 1.8 for < 2 second response validation. Include WebSocket lifecycle testing, integration testing with external APIs, and error scenario testing.</standards>
+    <locations>
+      - Unit tests: src/conversation/test_conversation_agent.py
+      - Integration tests: src/conversation/test_integration.py
+      - WebSocket tests: src/api/test_websocket_endpoints.py
+      - Performance tests: src/conversation/test_performance.py
+    </locations>
+    <ideas>
+      <test ac="1">Test WebSocket connection establishment with valid user_id</test>
+      <test ac="1">Verify Zep Cloud authentication and connection</test>
+      <test ac="1">Test Groq compound-beta API configuration and basic message processing</test>
+      <test ac="2">Performance test: WebSocket response under 2 seconds</test>
+      <test ac="2">Test conversation logging with temporal metadata in Zep Cloud</test>
+      <test ac="2">Test graceful handling of WebSocket disconnections</test>
+      <test ac="2">Test API failure recovery with fallback responses</test>
+    </ideas>
+  </tests>
+</story-context>

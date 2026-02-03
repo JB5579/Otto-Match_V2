@@ -1,0 +1,197 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.4b</storyId>
+    <title>Wire PDF Pipeline to Database Persistence &amp; Semantic Search</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-30</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/5-4b-wire-pdf-pipeline-to-database-persistence.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>seller uploading a condition report PDF</asA>
+    <iWant>my vehicle listing to be saved to the database and immediately searchable</iWant>
+    <soThat>buyers can discover my vehicle through Otto AI conversations and semantic search</soThat>
+    <tasks>
+      <task id="1">Implement _store_vehicle_embeddings() in vehicle_embedding_service.py with Supabase inserts</task>
+      <task id="2">Create listing_repository.py for vehicle_listings CRUD operations</task>
+      <task id="3">Create image_repository.py for vehicle_images CRUD operations</task>
+      <task id="4">Wire listings_api.py endpoints to database queries (remove placeholders)</task>
+      <task id="5">Call embedding service from pdf_ingestion_service.py after processing</task>
+      <task id="6">Implement pgvector similarity search for /similar endpoint</task>
+      <task id="7">Write unit and integration tests</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" title="Vehicle Listing Persistence">
+      Vehicle data saved to vehicle_listings table in Supabase with VIN, specs, status='active', listing_id generated
+    </criterion>
+    <criterion id="AC2" title="Image Persistence &amp; Storage URLs">
+      Images saved to vehicle_images table, uploaded to Supabase Storage, URLs stored (original, web, thumbnail)
+    </criterion>
+    <criterion id="AC3" title="Text Embedding Generation &amp; Storage">
+      Text embedding generated from vehicle description, stored in text_embedding column (vector(3072)), pgvector index updated
+    </criterion>
+    <criterion id="AC4" title="Condition Issues Persistence">
+      Condition issues saved to vehicle_condition_issues table with category and severity
+    </criterion>
+    <criterion id="AC5" title="API Endpoints Return Real Data">
+      GET /api/listings returns real database data; GET /api/listings/{id} returns complete listing
+    </criterion>
+    <criterion id="AC6" title="Semantic Search Works">
+      GET /api/listings/{id}/similar returns semantically similar vehicles via pgvector
+    </criterion>
+    <criterion id="AC7" title="Otto AI Can Query Vehicles">
+      Uploaded vehicles appear in Otto AI search results
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Otto.AI Architecture</title>
+        <section>Database Schema, API Contracts, Implementation Patterns</section>
+        <snippet>Uses Supabase PostgreSQL + pgvector for vector similarity. Database schema includes vehicle_listings, vehicle_images, vehicle_condition_issues tables with pgvector embeddings.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/stories/5-4-create-seller-vehicle-listings-management-partial.md</path>
+        <title>Story 5.4 Partial Completion Report</title>
+        <section>Gap Analysis</section>
+        <snippet>PDF extraction works but database persistence NOT implemented. AC4 not met - listings processed but not persisted.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/services/pdf_ingestion_service.py</path>
+        <kind>service</kind>
+        <symbol>PDFIngestionService, VehicleListingArtifact</symbol>
+        <lines>1-700</lines>
+        <reason>Core PDF processing - generates VehicleListingArtifact that needs persistence</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/vehicle_embedding_service.py</path>
+        <kind>service</kind>
+        <symbol>VehicleEmbeddingService, _store_vehicle_embeddings</symbol>
+        <lines>148-197</lines>
+        <reason>Contains TODO stub for database persistence - PRIMARY TARGET for implementation</reason>
+      </artifact>
+      <artifact>
+        <path>src/api/listings_api.py</path>
+        <kind>api</kind>
+        <symbol>listings_router, list_listings, get_listing</symbol>
+        <lines>297-366</lines>
+        <reason>Contains placeholder endpoints returning TODO - need real database queries</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/supabase_client.py</path>
+        <kind>service</kind>
+        <symbol>get_supabase_client_singleton</symbol>
+        <lines>1-51</lines>
+        <reason>Existing Supabase client pattern to reuse for database operations</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/database_schema.sql</path>
+        <kind>schema</kind>
+        <symbol>vehicle_listings, vehicle_images, vehicle_condition_issues</symbol>
+        <lines>1-348</lines>
+        <reason>Complete schema definition with pgvector columns - target tables for persistence</reason>
+      </artifact>
+      <artifact>
+        <path>src/semantic/embedding_service.py</path>
+        <kind>service</kind>
+        <symbol>OttoAIEmbeddingService</symbol>
+        <lines>all</lines>
+        <reason>Embedding generation service to integrate with vehicle persistence</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/storage_service.py</path>
+        <kind>service</kind>
+        <symbol>get_storage_service, upload_vehicle_image</symbol>
+        <lines>all</lines>
+        <reason>Supabase Storage integration for image uploads</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="supabase" version="latest">Supabase Python client for database operations</package>
+        <package name="pgvector" version="latest">PostgreSQL vector extension support</package>
+        <package name="openai" version="latest">Embedding generation via OpenAI API</package>
+        <package name="raganything" version="1.2.8+">Multimodal semantic search</package>
+        <package name="fastapi" version="latest">API framework</package>
+        <package name="pydantic" version="latest">Data validation</package>
+        <package name="pytest" version="latest">Testing framework</package>
+        <package name="pytest-asyncio" version="latest">Async test support</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Use async/await for all database operations</constraint>
+    <constraint type="pattern">Follow existing service pattern: class with __init__ taking dependencies</constraint>
+    <constraint type="pattern">Use get_supabase_client_singleton() for database access</constraint>
+    <constraint type="pattern">Repository pattern for data access layer (listing_repository, image_repository)</constraint>
+    <constraint type="naming">Tables: snake_case (vehicle_listings, vehicle_images)</constraint>
+    <constraint type="naming">Python: snake_case functions, PascalCase classes</constraint>
+    <constraint type="embedding">Text embedding dimension: 3072 (OpenAI text-embedding-3-large)</constraint>
+    <constraint type="security">No raw SQL - use Supabase client methods</constraint>
+    <constraint type="testing">80% code coverage required (pytest.ini)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Supabase Table Insert</name>
+      <kind>database</kind>
+      <signature>supabase.table('vehicle_listings').insert({...}).execute()</signature>
+      <path>src/services/supabase_client.py</path>
+    </interface>
+    <interface>
+      <name>ListingsAPI GET /api/listings</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/listings?limit=20&amp;offset=0&amp;make=&amp;model= -> List[ListingSummary]</signature>
+      <path>src/api/listings_api.py:309-342</path>
+    </interface>
+    <interface>
+      <name>ListingsAPI GET /api/listings/{id}</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/listings/{listing_id} -> ListingDetail</signature>
+      <path>src/api/listings_api.py:297-306</path>
+    </interface>
+    <interface>
+      <name>ListingsAPI GET /api/listings/{id}/similar</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/listings/{listing_id}/similar?limit=5 -> List[SimilarListing]</signature>
+      <path>src/api/listings_api.py:359-366</path>
+    </interface>
+    <interface>
+      <name>VehicleEmbeddingService.process_vehicle_for_search</name>
+      <kind>async method</kind>
+      <signature>async def process_vehicle_for_search(artifact: VehicleListingArtifact) -> Dict[str, Any]</signature>
+      <path>src/services/vehicle_embedding_service.py:34-101</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use pytest with pytest-asyncio for async tests. Follow existing test patterns in tests/ directory.
+      Markers: @pytest.mark.unit, @pytest.mark.integration. Coverage threshold: 80%.
+      Mock external services (Supabase, OpenAI) in unit tests. Use real services in integration tests.
+    </standards>
+    <locations>
+      <location>tests/unit/</location>
+      <location>tests/integration/</location>
+      <location>src/services/test_*.py (inline tests)</location>
+    </locations>
+    <ideas>
+      <testIdea ac="AC1">test_listing_repository_save_creates_record - Verify insert returns listing_id and VIN stored correctly</testIdea>
+      <testIdea ac="AC2">test_image_repository_links_to_listing - Verify images linked via listing_id foreign key</testIdea>
+      <testIdea ac="AC3">test_embedding_dimension_3072 - Verify generated embedding has correct dimension</testIdea>
+      <testIdea ac="AC5">test_list_listings_returns_real_data - Verify GET /api/listings returns non-placeholder data</testIdea>
+      <testIdea ac="AC5">test_get_listing_by_id - Verify GET /api/listings/{id} returns complete listing</testIdea>
+      <testIdea ac="AC6">test_similar_listings_uses_pgvector - Verify similarity search uses vector_cosine_ops</testIdea>
+      <testIdea ac="AC7">test_otto_ai_finds_uploaded_vehicle - End-to-end: upload PDF, verify Otto can discuss it</testIdea>
+    </ideas>
+  </tests>
+</story-context>

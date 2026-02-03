@@ -1,0 +1,117 @@
+# Workflow Status Template
+
+# This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
+# Implementation phase is tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-11-29"
+project: "Otto.AI"
+project_type: "AI-Powered Lead Intelligence Platform"
+selected_track: "method"
+field_type: "greenfield"
+workflow_path: ".bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+workflow_status: |
+  discovery:
+    brainstorm-project:
+      status: skipped
+      agent: analyst
+      command: brainstorm-project
+    research:
+      status: skipped
+      agent: analyst
+      command: research
+    product-brief:
+      status: skipped
+      agent: analyst
+      command: product-brief
+  planning:
+    prd:
+      status: docs/prd.md
+      agent: pm
+      command: prd
+      output: "Product Requirements Document with FRs and NFRs"
+      completed: "2025-11-29"
+    validate-prd:
+      status: optional
+      agent: pm
+      command: validate-prd
+    create-design:
+      status: conditional
+      condition: if_has_ui
+      agent: ux-designer
+      command: create-design
+  solutioning:
+    create-architecture:
+      status: docs/architecture.md
+      agent: architect
+      command: create-architecture
+      output: "System architecture document"
+      completed: "2025-11-29"
+    create-epics-and-stories:
+      status: docs/epics.md
+      agent: pm
+      command: create-epics-and-stories
+      output: "82 detailed stories across 8 epics with BDD criteria"
+      completed: "2025-11-29"
+    test-design:
+      status: docs/test-design-system.md
+      agent: tea
+      command: test-design
+      output: "System-level testability review"
+      completed: "2025-11-29"
+    validate-architecture:
+      status: optional
+      agent: architect
+      command: validate-architecture
+    implementation-readiness:
+      status: docs/implementation-readiness-report-2025-12-14.md
+      agent: architect
+      command: implementation-readiness
+      output: "Implementation readiness assessment - 98/100 score, VEHICLE INGESTION PIPELINE COMPLETED"
+      completed: "2025-12-14"
+  implementation:
+    sprint-planning:
+      status: docs/sprint-artifacts/sprint-status.yaml
+      agent: sm
+      command: sprint-planning
+      output: "Sprint planning completed with 8 epics and 82 stories ready for development"
+      completed: "2025-11-30"
+    story-5-4-completion:
+      status: docs/sprint-artifacts/stories/5-4-create-seller-vehicle-listings-management-completed.md
+      agent: dev
+      command: dev-story
+      output: "MAJOR MILESTONE: Vehicle ingestion pipeline implemented with 99.5% PDF processing success rate"
+      completed: "2025-12-14"
+    architecture-updated:
+      status: docs/architecture.md
+      agent: architect
+      command: update-architecture
+      output: "Architecture documentation updated to reflect actual implemented reality"
+      completed: "2025-12-14"
+    learning-roadmap-created:
+      status: docs/development-learning-roadmap.md
+      agent: sm
+      command: create-learning-roadmap
+      output: "Learning-oriented incremental development roadmap created"
+      completed: "2025-12-14"
+    next-phase-planned:
+      status: ready
+      agent: sm
+      command: plan-next-phase
+      output: "Step 1: Story 2-5 - Market Data Integration (Learning-Oriented Approach)"
+      completed: "2025-12-14"
+brainstorm_requested: false
+research_requested: false
+product_brief_requested: false
+user_description: "Building an AI-Powered Lead Intelligence Platform that uses conversational AI to qualify car buyers and sell high-intent leads to dealerships through a Bumble-style matching marketplace."

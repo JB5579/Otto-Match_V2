@@ -1,0 +1,391 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>6</storyId>
+    <title>Implement Vehicle Comparison Tools</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-6-implement-vehicle-comparison-tools.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>buyer</asA>
+    <iWant>to compare vehicles side-by-side with feature highlights and Otto's recommendation</iWant>
+    <soThat>I can make an informed decision between my top choices</soThat>
+    <tasks>
+      <task id="3-6.1" status="pending">Create ComparisonContext for state management</task>
+      <task id="3-6.2" status="pending">Create useComparison hook for API integration</task>
+      <task id="3-6.3" status="pending">Add "Add to Compare" button to VehicleCard</task>
+      <task id="3-6.4" status="pending">Create ComparisonFab component</task>
+      <task id="3-6.5" status="pending">Create ComparisonView modal component</task>
+      <task id="3-6.6" status="pending">Create ComparisonTable component</task>
+      <task id="3-6.7" status="pending">Implement best value highlighting logic</task>
+      <task id="3-6.8" status="pending">Add Otto recommendation section</task>
+      <task id="3-6.9" status="pending">Implement empty state and guidelines</task>
+      <task id="3-6.10" status="pending">Add comparison persistence logic</task>
+      <task id="3-6.11" status="pending">Write unit tests for ComparisonContext</task>
+      <task id="3-6.12" status="pending">Write unit tests for useComparison hook</task>
+      <task id="3-6.13" status="pending">Write unit tests for best value highlighting</task>
+      <task id="3-6.14" status="pending">Write integration tests for comparison flow</task>
+      <task id="3-6.15" status="pending">Test accessibility compliance</task>
+      <task id="3-6.16" status="pending">Verify backend comparison API</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" priority="critical">
+      <description>Add to Compare Button on VehicleCard</description>
+      <given>the vehicle grid is displayed</given>
+      <when>user views any VehicleCard</when>
+      <then>
+        <expectation>an "Add to Compare" button is visible (icon button + tooltip)</expectation>
+        <expectation>button is glass-morphism styled (consistent with other actions)</expectation>
+        <expectation>button shows selected state when vehicle already in comparison list</expectation>
+        <expectation>clicking toggles vehicle in/out of comparison (max 3 vehicles)</expectation>
+        <expectation>visual feedback when max reached (shake animation + tooltip message)</expectation>
+      </then>
+    </criterion>
+    <criterion id="AC2" priority="critical">
+      <description>Comparison FAB with Count Badge</description>
+      <given>user has added 1-3 vehicles to comparison</given>
+      <when>vehicles are in comparison list</when>
+      <then>
+        <expectation>floating action button (FAB) appears in bottom-right corner</expectation>
+        <expectation>FAB shows count badge (1, 2, or 3)</expectation>
+        <expectation>FAB has subtle pulse animation when count > 0</expectation>
+        <expectation>clicking FAB opens ComparisonView modal</expectation>
+        <expectation>when list is empty, FAB is hidden</expectation>
+      </then>
+    </criterion>
+    <criterion id="AC3" priority="critical">
+      <description>ComparisonView Modal Layout</description>
+      <given>user clicks comparison FAB with 2-3 vehicles selected</given>
+      <when>ComparisonView modal opens</when>
+      <then>
+        <expectation>modal displays as overlay with backdrop blur (grid preserved below)</expectation>
+        <expectation>modal is responsive: full-width on mobile, centered panel on tablet/desktop</expectation>
+        <expectation>header shows vehicle count (e.g., "Comparing 3 Vehicles")</expectation>
+        <expectation>close button (X) top-right, close on Escape key, close on backdrop click</expectation>
+        <expectation>Otto's recommendation section at top (if available)</expectation>
+      </then>
+    </criterion>
+    <criterion id="AC4" priority="critical">
+      <description>ComparisonTable Feature Matrix</description>
+      <given>ComparisonView modal is open with 2-3 vehicles</given>
+      <when>rendering the comparison table</when>
+      <then>
+        <expectation>table displays side-by-side vehicle columns</expectation>
+        <expectation>rows include: Price, Mileage, Year, Range (EV only), Acceleration (0-60), Key Features (3-5)</expectation>
+        <expectation>best values in each row highlighted in green (#22C55E)</expectation>
+        <expectation>missing features shown as dash (-)</expectation>
+        <expectation>table is horizontally scrollable on mobile if needed</expectation>
+        <expectation>row labels are sticky on mobile (always visible)</expectation>
+      </then>
+    </criterion>
+    <criterion id="AC5" priority="high">
+      <description>Best Value Highlighting Logic</description>
+      <given>comparison table displays 2-3 vehicles</given>
+      <when>determining best values</when>
+      <then>
+        <expectation>Price: lowest value highlighted</expectation>
+        <expectation>Mileage: lowest value highlighted</expectation>
+        <expectation>Year: highest value highlighted</expectation>
+        <expectation>Range (EV): highest value highlighted</expectation>
+        <expectation>Acceleration (0-60): lowest time highlighted</expectation>
+        <expectation>Features: most features (count) highlighted</expectation>
+        <expectation>ties result in multiple cells highlighted</expectation>
+      </then>
+    </criterion>
+    <criterion id="AC6" priority="high">
+      <description>Remove from Comparison</description>
+      <given>ComparisonView modal is open</given>
+      <when>user clicks "Remove" button on any vehicle column</when>
+      <then>
+        <expectation>vehicle is removed from comparison immediately</expectation>
+        <expectation>modal updates to show remaining vehicles</expectation>
+        <expectation>if only 1 vehicle remains, show message: "Add at least one more vehicle to compare"</expectation>
+        <expectation>FAB count badge updates accordingly</expectation>
+        <expectation>grid "Add to Compare" buttons update their selected state</expectation>
+      </then>
+    </criterion>
+    <criterion id="AC7" priority="high">
+      <description>Otto's Recommendation in Comparison</description>
+      <given>user has 2-3 vehicles in comparison</given>
+      <when>ComparisonView modal opens</when>
+      <then>
+        <expectation>Otto recommendation section appears at top of modal</expectation>
+        <expectation>message format: "Based on your need for [lifestyle_context], I recommend [vehicle_name] because [reason]"</expectation>
+        <expectation>recommendation text is in dark glass panel with cyan glow border</expectation>
+        <expectation>if no lifestyle context available, show: "Here's how these vehicles compare"</expectation>
+        <expectation>Otto avatar appears alongside recommendation (consistent with chat widget)</expectation>
+      </then>
+    </criterion>
+    <criterion id="AC8" priority="medium">
+      <description>Empty State and Guidelines</description>
+      <given>user clicks comparison FAB with only 0-1 vehicles selected</given>
+      <when>comparison view is insufficient</when>
+      <then>
+        <expectation>show friendly message: "Select 2-3 vehicles to compare"</expectation>
+        <expectation>show visual hints: icons of 2-3 vehicles with plus signs</expectation>
+        <expectation>provide CTA: "Browse vehicles" button that scrolls to grid</expectation>
+        <expectation>do NOT open modal - show as inline message or tooltip instead</expectation>
+      </then>
+    </criterion>
+    <criterion id="AC9" priority="medium">
+      <description>Comparison Persistence</description>
+      <given>user has vehicles in comparison list</given>
+      <when>user navigates to different pages or refreshes</when>
+      <then>
+        <expectation>comparison selection persists in sessionStorage</expectation>
+        <expectation>on page reload, FAB reappears with previous selections</expectation>
+        <expectation>vehicle grid "Add to Compare" buttons show correct selected state</expectation>
+        <expectation>selections clear after 30 minutes of inactivity</expectation>
+      </then>
+    </criterion>
+    <criterion id="AC10" priority="high">
+      <description>Accessibility Compliance</description>
+      <given>user using keyboard navigation or screen reader</given>
+      <when>interacting with comparison features</when>
+      <then>
+        <expectation>all comparison controls keyboard-accessible (Tab, Enter, Space)</expectation>
+        <expectation>"Add to Compare" buttons have ARIA labels: "Add [Vehicle Name] to comparison"</expectation>
+        <expectation>FAB has ARIA label: "View comparison (X vehicles)"</expectation>
+        <expectation>ComparisonTable has proper TH/ARIA headers for column/row relationships</expectation>
+        <expectation>best value highlights have ARIA attributes: "Best value: [value]"</expectation>
+        <expectation>modal trap focus within comparison view when open</expectation>
+        <expectation>Escape key closes modal and returns focus to FAB</expectation>
+      </then>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Workflow 4: Vehicle Comparison (lines 673-685)</section>
+        <snippet>Workflow 4: Vehicle Comparison - User clicks "Add to Compare" on VehicleCard (2-3 vehicles) → ComparisonContext adds vehicles to comparison list → ComparisonFab appears with count badge → User clicks fab → ComparisonView opens as modal → ComparisonTable renders feature-by-feature matrix with best values highlighted in green → OttoRecommendation shows personalized recommendation based on lifestyle context.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Frontend Module Structure</title>
+        <section>Components: comparison/ (lines 210-213)</section>
+        <snippet>Comparison components directory structure: ComparisonView.tsx, ComparisonTable.tsx, useComparison.ts. These components use React Context (ComparisonContext) for state management with sessionStorage persistence (30min expiry) and API caching with 5min TTL.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 API Contract - Vehicle Comparison</title>
+        <section>REST API Clients (lines 490-553)</section>
+        <snippet>VehicleAPIClient.compareVehicles(vehicleIds: string[]): Promise&lt;ComparisonResult&gt; - POST /api/compare with vehicle_ids array. Returns ComparisonResult with vehicles array, differences object (price, mileage, etc. with best/delta fields), and computed comparison scores.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Glass-Morphism Design Tokens</title>
+        <section>Design System Integration (lines 336-347)</section>
+        <snippet>Glass-Morphism Tokens from Story 3-2: Background - rgba(255, 255, 255, 0.85) (light glass), Dark glass (Otto) - rgba(15, 23, 42, 0.85) with cyan glow border, Backdrop blur - 20px or 24px (enhanced), Border - 1px solid rgba(255, 255, 255, 0.18). Best value highlight: #22C55E (green), Otto glow border: cyan (#06B6D4).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/stories/3-3b-migrate-vehicle-updates-websocket-to-sse.md</path>
+        <title>Story 3-3b: SSE Migration Patterns</title>
+        <section>Learnings from Previous Story (lines 46-66)</section>
+        <snippet>New Context Created: VehicleContext now uses SSE (useVehicleUpdates hook) for real-time updates. New Service: useVehicleUpdates hook (EventSource-based) at frontend/src/hooks/useVehicleUpdates.ts - use this pattern for other data fetching hooks. New Patterns: TypeScript type guards (isVehicleUpdateSSEEvent) for discriminated unions, vi.stubGlobal() for mocking native browser APIs in Vitest.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/stories/3-4-add-comprehensive-vehicle-details-and-media.md</path>
+        <title>Story 3-4: Modal Pattern Reference</title>
+        <section>Component Architecture - VehicleDetailModal</section>
+        <snippet>VehicleDetailModal uses Radix UI Dialog primitive with backdrop blur overlay (12px blur), glass-morphism styling (rgba(255, 255, 255, 0.85) background), close on Escape/backdrop click, focus trap within modal, smooth animations (0.3s spring). Reuse this pattern for ComparisonView modal.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/api/vehicle_comparison_api.py</path>
+        <kind>endpoint</kind>
+        <symbol>POST /api/vehicles/compare</symbol>
+        <lines>865-933</lines>
+        <reason>Existing backend comparison endpoint from Epic 1. Accepts VehicleComparisonRequest with vehicle_ids array (2-4 vehicles), returns VehicleComparisonResponse with comparison_results (vehicle data with overall scores), feature_differences (semantic analysis), semantic_similarity (pairwise scores), and recommendation_summary. Includes Redis caching with 3600s TTL and rate limiting (10 req/min).</reason>
+      </artifact>
+      <artifact>
+        <path>src/recommendation/comparison_engine.py</path>
+        <kind>service</kind>
+        <symbol>ComparisonEngine.compare_vehicles</symbol>
+        <lines>72-145</lines>
+        <reason>Core comparison logic from Epic 1. Generates vehicle comparison results with specifications extraction, feature categorization (safety, technology, comfort, exterior, performance), price analysis (market position, savings), overall scoring (0-1 scale), and semantic similarity using embedding service. Handles 2-4 vehicles with detailed pairwise analysis.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleCard.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleCard</symbol>
+        <lines>1-100</lines>
+        <reason>Existing vehicle card component with glass-morphism styling (rgba(255, 255, 255, 0.85) background, 20px backdrop blur), hover animations (Framer Motion whileHover), and action button patterns. Already has onCompare prop handler (line 15, 53-56) that can be integrated with ComparisonContext. Use this as reference for "Add to Compare" button styling and placement.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-detail/VehicleDetailModal.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleDetailModal</symbol>
+        <lines>1-100</lines>
+        <reason>Modal pattern reference using Radix UI Dialog with backdrop blur (12px), glass-morphism content, close on Escape/backdrop/X button, focus trap, smooth animations (0.3s spring). Reuse this structure for ComparisonView modal layout and behavior.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/context/VehicleContext.tsx</path>
+        <kind>context</kind>
+        <symbol>VehicleContext</symbol>
+        <lines>1-100</lines>
+        <reason>Existing React Context pattern for global state management. Uses useState with useCallback for optimized updates, provides toggleFavorite, openModal, closeModal functions. Follow this pattern for ComparisonContext: create context, provider component, useComparison hook, and state management for vehicleIds array (max 3).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useVehicleUpdates.ts</path>
+        <kind>hook</kind>
+        <symbol>useVehicleUpdates</symbol>
+        <reason>Story 3-3b SSE hook pattern (217 lines). Uses EventSource for server-sent events, provides connected/lastUpdate/error state, handles connection lifecycle with useEffect cleanup, implements retry logic with exponential backoff. Follow this pattern for useComparison hook: fetch API data, caching (5min TTL), error handling, loading state.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/package.json</path>
+        <kind>manifest</kind>
+        <symbol>dependencies</symbol>
+        <lines>19-29</lines>
+        <reason>Frontend dependencies available for comparison features: Radix UI Dialog (^1.1.15) for modal, Framer Motion (^12.23.26) for animations, Lucide React (^0.562.0) for compare icon (GitCompare or Columns icons). No new dependencies needed for comparison functionality.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <framework>React 19.2.0</framework>
+        <language>TypeScript 5.9.3</language>
+        <build>Vite 7.2.4</build>
+        <animation>Framer Motion 12.23.26</animation>
+        <ui_components>Radix UI Dialog 1.1.15</ui_components>
+        <icons>Lucide React 0.562.0</icons>
+      </frontend>
+      <backend>
+        <api>FastAPI comparison endpoint at /api/vehicles/compare</api>
+        <service>ComparisonEngine from src/recommendation/comparison_engine.py</service>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Max 3 vehicles in comparison list - enforce in ComparisonContext and show visual feedback when limit reached</constraint>
+    <constraint type="architecture">Use React Context (ComparisonContext) for state management - no Redux/Zustand needed for this simple state</constraint>
+    <constraint type="persistence">SessionStorage with 30min expiry - handle quota exceeded errors with fallback to in-memory only</constraint>
+    <constraint type="caching">API response cache with 5min TTL in useComparison hook - use Map&lt;string, {data: ComparisonResult, timestamp: number}&gt;</constraint>
+    <constraint type="accessibility">WCAG 2.1 AA compliance - all comparison controls keyboard-accessible, ARIA labels on buttons, focus trap in modal, best value highlights announced to screen readers</constraint>
+    <constraint type="design">Glass-morphism styling must match existing design tokens - rgba(255, 255, 255, 0.85) background, 20px backdrop blur, 1px white/18% border</constraint>
+    <constraint type="performance">Code-split ComparisonView with React.lazy() - target &lt;50KB additional gzipped bundle size</constraint>
+    <constraint type="testing">80% test coverage target for comparison logic - unit tests for Context, hook, best value highlighting, integration tests for full flow</constraint>
+    <constraint type="browser">Support Chrome 90+, Safari 14+, Firefox 88+, Edge 90+ - sessionStorage API universal, backdrop-filter progressive enhancement</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/vehicles/compare</name>
+      <kind>REST endpoint</kind>
+      <signature>
+POST /api/vehicles/compare
+Request: { vehicle_ids: string[], comparison_criteria?: string[], include_semantic_similarity?: boolean, include_price_analysis?: boolean, user_id?: string }
+Response: { comparison_id: string, vehicle_ids: string[], comparison_results: VehicleComparisonResult[], feature_differences: FeatureDifference[], semantic_similarity?: Dict[str, SemanticSimilarity], recommendation_summary?: string, processing_time: float, cached: boolean, timestamp: datetime }
+      </signature>
+      <path>src/api/vehicle_comparison_api.py:865-933</path>
+    </interface>
+    <interface>
+      <name>ComparisonContext</name>
+      <kind>React Context</kind>
+      <signature>
+interface ComparisonContextValue {
+  comparisonList: string[]; // vehicle IDs, max 3
+  addVehicle: (vehicleId: string) => void;
+  removeVehicle: (vehicleId: string) => void;
+  clearComparison: () => void;
+  isInComparison: (vehicleId: string) => boolean;
+  canAddMore: boolean;
+}
+export const ComparisonContext: Context&lt;ComparisonContextValue | null&gt;;
+export const useComparison: () => ComparisonContextValue;
+      </signature>
+      <path>frontend/src/context/ComparisonContext.tsx (to be created)</path>
+    </interface>
+    <interface>
+      <name>useComparison</name>
+      <kind>React Hook</kind>
+      <signature>
+interface UseComparisonResult {
+  comparison: ComparisonResult | null;
+  loading: boolean;
+  error: string | null;
+  fetchComparison: (vehicleIds: string[]) => Promise&lt;void&gt;;
+  refetch: () => Promise&lt;void&gt;;
+}
+export function useComparison(): UseComparisonResult;
+      </signature>
+      <path>frontend/src/hooks/useComparison.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>getBestValues</name>
+      <kind>utility function</kind>
+      <signature>
+interface BestValues {
+  price: string | null; // vehicle ID with lowest price
+  mileage: string | null; // vehicle ID with lowest mileage
+  year: string | null; // vehicle ID with highest year
+  range?: string | null; // vehicle ID with highest range (EV only)
+  acceleration?: string | null; // vehicle ID with lowest 0-60 time
+  features: string[]; // vehicle IDs with most features (may be multiple for ties)
+}
+function getBestValues(vehicles: Vehicle[]): BestValues;
+      </signature>
+      <path>frontend/src/utils/getBestValues.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>ComparisonStorage</name>
+      <kind>utility module</kind>
+      <signature>
+interface ComparisonStorageData {
+  vehicleIds: string[];
+  timestamp: number; // for 30min expiry check
+}
+const COMPARISON_STORAGE_KEY = 'otto_vehicle_comparison';
+function saveComparison(vehicleIds: string[]): void;
+function loadComparison(): string[] | null; // returns null if expired or invalid
+function clearComparison(): void;
+function isExpired(data: ComparisonStorageData): boolean; // 30min check
+      </signature>
+      <path>frontend/src/utils/comparisonStorage.ts (to be created)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest + React Testing Library (from Story 3-1/3-2).
+      Coverage target: 80% for comparison logic (Context, hook, best value highlighting).
+      Test structure: follow frontend/src/components/**/__tests__/ pattern with .test.tsx files.
+      Mocking: MSW for API mocking (POST /api/compare), vi.stubGlobal() for sessionStorage mocking.
+      Accessibility: axe-core testing with jest-axe for 0 WCAG violations.
+      Visual regression: Chromatic for component snapshots across breakpoints (mobile 375px, tablet 768px, desktop 1440px).
+    </standards>
+    <locations>
+      <location>frontend/src/context/__tests__/ComparisonContext.test.tsx</location>
+      <location>frontend/src/hooks/__tests__/useComparison.test.ts</location>
+      <location>frontend/src/utils/__tests__/getBestValues.test.ts</location>
+      <location>frontend/src/components/comparison/__tests__/ComparisonView.test.tsx</location>
+      <location>frontend/src/components/comparison/__tests__/ComparisonTable.test.tsx</location>
+      <location>frontend/src/components/comparison/__tests__/ComparisonFab.test.tsx</location>
+      <location>frontend/src/components/comparison/__tests__/ComparisonIntegration.test.tsx</location>
+      <location>frontend/src/components/comparison/__tests__/ComparisonAccessibility.test.tsx</location>
+    </locations>
+    <ideas>
+      <idea criterion="AC1">Test "Add to Compare" button toggles vehicle in/out of comparison, shows selected state, enforces max 3 limit with shake animation</idea>
+      <idea criterion="AC2">Test ComparisonFab appears with correct count badge (1-3), pulse animation when count > 0, hidden when list empty</idea>
+      <idea criterion="AC3">Test ComparisonView modal: backdrop blur, responsive layout, close on Escape/backdrop/X, vehicle count header</idea>
+      <idea criterion="AC4">Test ComparisonTable: side-by-side columns, all required rows (Price, Mileage, Year, Range, Acceleration, Features), green highlights (#22C55E), horizontal scroll mobile, sticky row labels</idea>
+      <idea criterion="AC5">Test getBestValues utility: price (min), mileage (min), year (max), range (max EV), acceleration (min), features (max count), tie handling</idea>
+      <idea criterion="AC6">Test remove vehicle: immediate update, modal refresh, 1-vehicle message, FAB update, button state sync</idea>
+      <idea criterion="AC7">Test Otto recommendation: lifestyle context format, dark glass panel with cyan glow, avatar display, fallback message</idea>
+      <idea criterion="AC8">Test empty state: 0-1 vehicle message, visual hints, CTA button, no modal open</idea>
+      <idea criterion="AC9">Test sessionStorage persistence: save/load, 30min expiry, page reload recovery, quota exceeded fallback</idea>
+      <idea criterion="AC10">Test accessibility: keyboard nav (Tab, Enter, Escape), ARIA labels, TH/ARIA headers, focus trap, screen reader announcements</idea>
+      <idea integration="full-flow">Test complete comparison flow: add vehicles → FAB appears → open modal → compare → remove vehicle → update</idea>
+      <idea integration="api">Test useComparison hook with MSW: API call success/error, loading state, 5min cache TTL</idea>
+      <idea integration="persistence">Test ComparisonContext with sessionStorage mock: persistence across renders, expiry cleanup</idea>
+    </ideas>
+  </tests>
+</story-context>

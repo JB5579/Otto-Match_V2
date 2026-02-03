@@ -1,0 +1,83 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>Implement Multimodal Vehicle Data Processing</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-01</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-2-implement-multimodal-vehicle-data-processing.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>system processor</asA>
+    <iWant>process vehicle listings through RAG-Anything to generate semantic embeddings</iWant>
+    <soThat>users can search vehicles using natural language with multimodal understanding</soThat>
+    <tasks>Implement vehicle data processing service, Create database storage and indexing system, Implement performance optimization, Build batch processing system</tasks>
+  </story>
+
+  <acceptanceCriteria>1. Vehicle Data Processing: Generate embeddings for vehicle description text, vehicle images, and vehicle metadata
+2. Storage and Indexing: Store embeddings in Supabase pgvector with similarity indexes and semantic tags
+3. Performance Requirement: Processing completes within &lt; 2 seconds per vehicle
+4. Batch Processing: Process 1000 vehicle listings in parallel with progress tracking and error handling
+5. Throughput Performance: Performance metrics show &gt; 50 vehicles processed per minute</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Otto.AI Architecture" section="Semantic Search Integration" snippet="RAG-Anything + Supabase pgvector for multimodal search with vector similarity. Dynamic cascade discovery system where Otto AI builds conversational memory and triggers real-time vehicle grid updates." />
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 1.2" snippet="Vehicle Data Processing: Generate embeddings for vehicle description text, vehicle images (exterior, interior, detail shots), and vehicle metadata. Store in Supabase pgvector with similarity indexes and semantic tags." />
+      <doc path="docs/sprint-artifacts/1-1-initialize-semantic-search-infrastructure.md" title="Previous Story Implementation" section="Dev Agent Record" snippet="RAG-Anything integration with Gemini 2.5 Flash Image model for multimodal processing. EmbeddingService base class with proven async/await patterns and database connection methods." />
+      <doc path=".bmad/mcp-integration-guide.md" title="MCP Integration Guide" section="Database Assistance" snippet="Supabase MCP: Database setup validation, schema research, testing assistance. Context7 MCP: Library documentation, API research, best practices for multimodal processing." />
+    </docs>
+    <code>
+      <artifact path="src/semantic/embedding_service.py" kind="service" symbol="OttoAIEmbeddingService" lines="1-100" reason="Base embedding service with RAG-Anything integration and OpenRouter API. Provides async/await patterns and database connection methods to extend for vehicle processing." />
+      <artifact path="src/semantic/setup_database.py" kind="database" symbol="DatabaseSetup" lines="1-50" reason="PostgreSQL schema setup with pgvector extension. Provides database foundation for vehicle embedding storage and similarity indexes." />
+      <artifact path="src/semantic/validate_setup.py" kind="validation" symbol="validate_setup" lines="1-50" reason="Setup validation patterns for dependencies and database connectivity. Extend with vehicle-specific validation requirements." />
+      <artifact path="src/semantic/test_gemini_integration.py" kind="test" symbol="test_gemini_integration" lines="1-50" reason="Gemini 2.5 Flash Image integration test patterns. Extend for vehicle image processing validation." />
+      <artifact path="src/semantic/sample_vehicle_data.py" kind="data" symbol="VehicleData" lines="1-50" reason="Vehicle data structure definitions and sample data. Use as foundation for vehicle processing data models." />
+      <artifact path="src/api/test_endpoints.py" kind="api" symbol="test_endpoints" lines="1-50" reason="FastAPI test endpoints for development and integration testing. Extend with vehicle processing endpoints." />
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="raganything[all]" version="latest" reason="Core multimodal processing with BatchParser for parallel vehicle processing" />
+        <package name="supabase" version="latest" reason="Database client and connection management" />
+        <package name="pgvector" version="latest" reason="Vector similarity search with HNSW indexes" />
+        <package name="psycopg[binary]" version="latest" reason="PostgreSQL database connectivity" />
+        <package name="openai" version="latest" reason="OpenRouter API integration for embeddings" />
+        <package name="fastapi" version="latest" reason="API framework for vehicle processing endpoints" />
+        <package name="pydantic" version="latest" reason="Type safety and data validation" />
+        <package name="numpy" version="latest" reason="Numerical operations for embedding processing" />
+        <package name="pytest" version="latest" reason="Testing framework for vehicle processing validation" />
+        <package name="pytest-asyncio" version="latest" reason="Async testing for parallel processing validation" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint name="Architecture Patterns" description="Extend existing async/await patterns from EmbeddingService. Use RAG-Anything BatchParser with max_concurrent_files=4+ for vehicle processing." />
+    <constraint name="Database Integration" description="Build upon existing pgvector schema with HNSW indexes (m=16-32, ef_construction=64-80, ef_search=40-100) for optimal vehicle search performance." />
+    <constraint name="Performance Requirements" description="Maintain &lt;2 second processing per vehicle through async patterns and proper compute sizing. Achieve &gt;50 vehicles/minute throughput." />
+    <constraint name="Error Handling" description="Implement retry mechanisms for failed vehicles with process_with_retry() patterns. Use real-time progress tracking with show_progress=True." />
+    <constraint name="MCP Development Tools" description="Use Context7 MCP for vehicle processing research and Supabase MCP for database optimization validation. Do not use MCP in production runtime." />
+  </constraints>
+
+  <interfaces>
+    <interface name="Vehicle Processing Service" kind="class" signature="class VehicleProcessingService(OttoAIEmbeddingService): async def process_vehicle_data(vehicle_data: VehicleData) -> EmbeddingResponse: async def process_batch_vehicles(vehicle_batch: List[VehicleData]) -> BatchProcessingResult:" path="src/semantic/vehicle_processing_service.py" />
+    <interface name="Database Storage" kind="function" signature="async def store_vehicle_embedding(vehicle_id: str, embedding: List[float], metadata: Dict) -> bool: async def create_vehicle_similarity_index() -> bool:" path="src/semantic/vehicle_storage.py" />
+    <interface name="Batch Processing API" kind="REST endpoint" signature="POST /api/vehicles/process-batch - Process 1000+ vehicles with progress tracking" path="src/api/vehicle_endpoints.py" />
+    <interface name="Semantic Search" kind="function" signature="async def search_similar_vehicles(query_embedding: List[float], limit: int = 10) -> List[VehicleMatch]:" path="src/semantic/vehicle_search.py" />
+  </interfaces>
+
+  <tests>
+    <standards>Follow existing test patterns from Story 1.1. Use pytest with asyncio for parallel processing tests. Validate performance requirements (&lt;2s processing, &gt;50/min throughput). Test error handling and retry mechanisms for failed vehicles.</standards>
+    <locations>src/semantic/tests/vehicle_processing_test.py, src/semantic/tests/batch_processing_test.py, src/semantic/tests/performance_test.py, src/api/tests/test_vehicle_endpoints.py</locations>
+    <ideas>
+      <test idea="Test individual vehicle processing &lt;2 seconds" ac="AC3" />
+      <test idea="Test 1000 vehicle batch processing with &gt;50/min throughput" ac="AC4, AC5" />
+      <test idea="Test vehicle image processing with exterior/interior classification" ac="AC1" />
+      <test idea="Test semantic tag extraction and storage" ac="AC2" />
+      <test idea="Test error handling and retry mechanisms" ac="AC4" />
+      <test idea="Test HNSW index performance with vehicle embeddings" ac="AC2" />
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-01-31T20:30:47.161026",
+  "pdf_path": "docs\\Sample_Vehicle_Condition_Reports\\2022LexusES350117484.pdf",
+  "steps": {
+    "read_pdf": {
+      "status": "success",
+      "file_size_mb": 0.6243247985839844
+    },
+    "process_and_persist": {
+      "status": "success",
+      "listing_id": "b7ba50a5-6e12-482f-a520-70225136b280",
+      "vin": "58ADZ1B17NU117484",
+      "image_count": 1,
+      "issue_count": 0
+    },
+    "verify_database": {
+      "status": "success",
+      "listing_found": true,
+      "image_count": 2
+    },
+    "verify_search_api": {
+      "status": "success",
+      "found_in_search": true
+    },
+    "verify_frontend": {
+      "status": "success",
+      "frontend_compatible": true,
+      "image_urls_available": true
+    }
+  },
+  "overall_status": "success"
+}

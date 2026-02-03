@@ -1,0 +1,292 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>5</storyId>
+    <title>Build Real-Time Availability Status and Updates</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2026-01-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-5-build-real-time-availability-status-and-updates.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to see current vehicle availability status and receive immediate notifications about changes</iWant>
+    <soThat>I can act quickly on opportunities and avoid disappointment with unavailable vehicles</soThat>
+    <tasks>
+      <task id="3-5.1">Create AvailabilityBadge component with color-coded status (green/amber/gray), icons (Check/Clock/X/Sparkles), Framer Motion animations, responsive text sizing, glass-morphism styling</task>
+      <task id="3-5.2">Create StatusIndicator for vehicle cards - badge overlay positioned top-left/right, "Newly Available" pulsing animation, unavailable state with grayed-out overlay, responsive sizing</task>
+      <task id="3-5.3">Create VehicleStatusOverlay component - semi-transparent overlay for unavailable vehicles, reduced opacity (50-60%), "Sold"/"Reserved" stamp, disable hover/click actions, smooth transitions</task>
+      <task id="3-5.4">Create AvailabilityNotification component - toast notification with vehicle thumbnail/name/status change, "View Vehicle" action button, dismiss button (X), auto-dismiss after 30s, queue multiple notifications, glass-morphism styling</task>
+      <task id="3-5.5">Create NotificationContext and useNotifications hook - state management for notification queue, addNotification/dismissNotification/dismissAll functions, filter by type, localStorage persistence</task>
+      <task id="3-5.6">Integrate notifications with VehicleContext - listen for WebSocket availability updates, check favorites, trigger notifications, update vehicle status, trigger grid re-animation</task>
+      <task id="3-5.7">Extend useWebSocket for availability updates - handle availability_status_update message type, parse payload (vehicle_id, old_status, new_status, timestamp), call VehicleContext callback, sync missed updates on reconnection</task>
+      <task id="3-5.8">Implement status update API client - subscribe/unsubscribe to updates, fetch current status for multiple vehicles, fetch availability history</task>
+      <task id="3-5.9">Update VehicleCard with status handling - integrate AvailabilityBadge and VehicleStatusOverlay, reduce opacity for unavailable, disable onClick, animate status changes, responsive positioning</task>
+      <task id="3-5.10">Update VehicleGrid with status filtering - handle status change WebSocket messages, update individual card without full re-render, animate grid reorganization, prioritize newly available vehicles</task>
+      <task id="3-5.11">Create StatusHistory component - status change timeline with timestamps and duration, visual timeline with icons, collapse/expand for details</task>
+      <task id="3-5.12">Integrate status components into VehicleDetailModal - add AvailabilityBadge in header, StatusHistory section, reservation expiry countdown, "Newly Available" highlight</task>
+      <task id="3-5.13">Write unit tests for availability components - status rendering, colors, icons, responsive sizing, animations, unavailable card state</task>
+      <task id="3-5.14">Write unit tests for notification components - creation, dismissal, queuing, persistence, action button clicks</task>
+      <task id="3-5.15">Write integration tests for availability updates - mock WebSocket messages, test status change animation, notification trigger for favorites, grid reorganization, priority placement</task>
+      <task id="3-5.16">Write accessibility tests for status indicators - ARIA attributes, screen reader announcements, keyboard navigation, color contrast, touch target sizes (44x44px)</task>
+      <task id="3-5.17">Write E2E tests for availability workflow - vehicle becomes reserved → card updates, favorites vehicle → sold → notification, becomes available again → badge shown, multiple status changes → queue behavior</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="AC1">Vehicle Unavailable Status Update - Card immediately updates with "Unavailable" status, visually changes (grayed out, reduced opacity), in-app notification if in favorites, grid smoothly rearranges to fill space</ac>
+    <ac id="AC2">Vehicle Newly Available Status Update - Vehicle appears with "Newly Available" highlight, users with similar preferences receive notifications, priority placement in search results for 24 hours</ac>
+    <ac id="AC3">Status Indicator Visual Design - Available: green badge/checkmark, Reserved: amber badge/clock, Sold: gray badge/text, Newly Available: pulsing green badge/"New" highlight, smooth transition animations</ac>
+    <ac id="AC4">In-App Notification System - Notification with vehicle info (make, model, year), status change description, action button to view, dismiss option, persists until dismissed/acted upon, queued for multiple changes</ac>
+    <ac id="AC5">WebSocket Real-Time Updates - Vehicle card updates within 100ms, smooth update animation (fade out/in or slide), no page refresh, WebSocket reconnection handles missed updates with sync</ac>
+    <ac id="AC6">Status History and Analytics - Status change timestamps visible, status duration displayed (e.g., "Reserved for 3 days"), analytics track status changes for seller insights</ac>
+    <ac id="AC7">Responsive Status Indicators - Mobile: compact badges with icons only, Tablet: badges with icons + abbreviated text, Desktop: full badges with icons + complete text, touch targets minimum 44x44px</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>O4: Real-Time Features &amp; Social Proof</section>
+        <snippet>Real-time availability status tracking with WebSocket updates. Status indicators on vehicle cards with color coding (available=green, reserved=amber, sold=gray). In-app notifications for status changes on favorites.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models and Contracts - Frontend Vehicle Type</section>
+        <snippet>Vehicle interface includes: availabilityStatus: 'available' | 'reserved' | 'sold', currentViewers: number, isFavorited: boolean. Status changes trigger WebSocket updates.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Animation Configuration</section>
+        <snippet>Spring animations with stiffness: 300, damping: 25. Status change animations: scale [0.8, 1.05, 1], opacity transitions, grayscale filter for unavailable. Pulse animation for newly available vehicles.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>WebSocket Client</section>
+        <snippet>WebSocket endpoint: ws://localhost:8000/ws/availability. Message types: availability_status_update, vehicle_update, preference_change. Exponential backoff reconnection: 5s, 10s, 20s, 30s max.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/stories/3-4-add-comprehensive-vehicle-details-and-media.md</path>
+        <title>Story 3-4 Learnings</title>
+        <section>Key Patterns to Reuse</section>
+        <snippet>Glass-morphism styling: rgba(255,255,255,0.92) background, 24px backdrop-filter blur. Framer Motion animations with spring easing (stiffness: 300, damping: 25). React Context for state management. Responsive CSS breakpoints: mobile 375px, tablet 768px, desktop 1024px+.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/stories/3-3-implement-dynamic-cascade-updates-from-conversation.md</path>
+        <title>Story 3-3 Learnings</title>
+        <section>WebSocket Infrastructure</section>
+        <snippet>useWebSocket hook handles connection management, JWT auth in handshake, message queue for offline messages, exponential backoff reconnection. Located at frontend/src/hooks/useWebSocket.ts.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Design System Foundation - Glass-morphism Specifications</section>
+        <snippet>Light Glass: background rgba(255,255,255,0.85), backdrop-filter blur 20px, border 1px solid rgba(255,255,255,0.18). Status colors: Match Green #22C55E, Warning Amber #F59E0B.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-200</lines>
+        <reason>WebSocket connection management with automatic reconnection, exponential backoff (5s, 10s, 20s, 30s), JWT auth, message queue. Need to extend for availability_status_update message type. UseWebSocketOptions: url, token, reconnect, onMessage callback. UseWebSocketReturn: isConnected, lastMessage, sendMessage, reconnect, error.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/context/VehicleContext.tsx</path>
+        <kind>context</kind>
+        <symbol>VehicleContextValue</symbol>
+        <lines>6-27</lines>
+        <reason>Vehicle state management interface. Need to add: updateVehicleStatus, getStatusHistory, favoritesWithAvailability, monitorFavoritesAvailability. Existing: vehicles, favoriteIds (Set&lt;string&gt;), updateVehicles, toggleFavorite. Modal state: selectedVehicle, isModalOpen, openModal, closeModal.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/context/VehicleContext.tsx</path>
+        <kind>context</kind>
+        <symbol>VehicleProvider</symbol>
+        <lines>49-255</lines>
+        <reason>Context provider with vehicle list management, delta calculation, state preservation (favorites, expanded cards). Integration with ConversationContext for real-time updates. Pattern to follow for NotificationContext. useCallback for handlers, useState for state.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleCard.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleCard</symbol>
+        <lines>1-324</lines>
+        <reason>Vehicle card structure to extend with status indicators. Already has availabilityStatus display (lines 144-163) with basic styling. Glass-morphism: rgba(255,255,255,0.85), backdrop-filter blur 20px. Framer Motion whileHover={{ y: -8 }}. Need to integrate AvailabilityBadge and VehicleStatusOverlay. React.memo optimization pattern (lines 307-322).</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/VehicleGrid.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleGrid</symbol>
+        <lines>1-259</lines>
+        <reason>Grid container with AnimatePresence mode="popLayout" for smooth transitions. useVehicleCascade hook for delta animation. Handle status change WebSocket messages to update individual cards without full re-render. Responsive grid: 3 columns desktop, 2 tablet, 1 mobile.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/app/types/api.ts</path>
+        <kind>type</kind>
+        <symbol>Vehicle</symbol>
+        <lines>2-31</lines>
+        <reason>Vehicle interface includes availabilityStatus: 'available' | 'reserved' | 'sold', currentViewers: number, isFavorited: boolean. Status changes will be reflected in this type and trigger UI updates.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/types/conversation.ts</path>
+        <kind>type</kind>
+        <symbol>WebSocketMessageType</symbol>
+        <lines>6</lines>
+        <reason>Existing WebSocket message types: 'vehicle_update' | 'preference_change' | 'error' | 'ping' | 'pong'. Need to add 'availability_status_update' type for story implementation.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/types/conversation.ts</path>
+        <kind>type</kind>
+        <symbol>VehicleUpdateMessage</symbol>
+        <lines>62-67</lines>
+        <reason>Pattern for WebSocket message structure: type, timestamp, requestId, data payload. Follow this pattern for AvailabilityStatusUpdate message.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-detail/VehicleImageCarousel.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleImageCarousel</symbol>
+        <lines>1-375</lines>
+        <reason>Pattern for image preloading and error handling to potentially reuse for vehicle thumbnails in notifications. Lazy loading, adjacent image preloading, error fallback UI.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/vehicle-detail/VehicleDetailModal.css</path>
+        <kind>stylesheet</kind>
+        <symbol>Responsive Styles</symbol>
+        <lines>89-301</lines>
+        <reason>Responsive CSS breakpoints pattern: mobile (375px, max-width: 767px), tablet (768px-1023px), desktop (1024px+), large desktop (1440px+). Glass-morphism styling pattern to reuse for status badges and notifications.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^19.2.0" />
+        <package name="react-dom" version="^19.2.0" />
+        <package name="typescript" version="~5.9.3" />
+        <package name="vite" version="^7.2.4" />
+        <package name="framer-motion" version="^12.23.26" />
+        <package name="@supabase/supabase-js" version="^2.89.0" />
+        <package name="lucide-react" version="^0.562.0" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" />
+        <package name="react-router-dom" version="^7.11.0" />
+      </ecosystem>
+      <missing>
+        <package name="date-fns" reason="For status duration formatting (e.g., 'Reserved for 3 days')" action="npm install date-fns" optional="true" />
+      </missing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Reuse existing WebSocket infrastructure (useWebSocket hook) - extend for availability_status_update message type, don't create new WebSocket connection</constraint>
+    <constraint>Follow glass-morphism design system: status badges use rgba() backgrounds with backdrop-filter blur, consistent with VehicleCard styling</constraint>
+    <constraint>Status badge colors: available=green (#16A34A), reserved=amber (#D97706), sold=gray (#6B7280), newly available=pulsing green with opacity variation</constraint>
+    <constraint>Framer Motion animations: spring easing (stiffness: 300, damping: 25), 0.3s duration for status changes, pulse animation for newly available (2s infinite)</constraint>
+    <constraint>Responsive breakpoints: mobile 375px (icon-only badges), tablet 768px (abbreviated text), desktop 1024px+ (full text)</constraint>
+    <constraint>Touch targets minimum 44x44px on mobile for accessibility</constraint>
+    <constraint>Use React.memo optimization to prevent unnecessary grid re-renders on status updates - update individual cards only</constraint>
+    <constraint>WebSocket reconnection with exponential backoff: 5s, 10s, 20s, 30s max - sync missed updates on reconnect</constraint>
+    <constraint>Notification queue limit: max 10 notifications, auto-dismiss after 30s, collapse similar notifications</constraint>
+    <constraint>Accessibility: ARIA attributes (role="status", aria-live="polite"), screen reader announcements, color contrast minimum 4.5:1</constraint>
+    <constraint>Integrate with VehicleContext for state management - don't create parallel state, extend existing context</constraint>
+    <constraint>Create NotificationContext following VehicleContext pattern: createContext, useContext hook, Provider component with state and callbacks</constraint>
+    <constraint>Subscribe only to visible vehicles + favorites for WebSocket efficiency, unsubscribe from off-screen vehicles</constraint>
+    <constraint>Vitest + React Testing Library for unit tests, MSW for WebSocket mocking, Playwright for E2E</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>useWebSocket extensions</name>
+      <kind>React Hook</kind>
+      <signature>Handle 'availability_status_update' message type in onMessage callback. Parse payload: { vehicle_id, old_status, new_status, timestamp, reservation_expiry?, priority_until? }</signature>
+      <path>frontend/src/hooks/useWebSocket.ts</path>
+    </interface>
+    <interface>
+      <name>VehicleContext additions</name>
+      <kind>React Context</kind>
+      <signature>updateVehicleStatus: (vehicleId: string, newStatus: VehicleStatus) => void; getStatusHistory: (vehicleId: string) => Promise&lt;StatusChange[]&gt;; favoritesWithAvailability: Vehicle[]; monitorFavoritesAvailability: boolean</signature>
+      <path>frontend/src/context/VehicleContext.tsx</path>
+    </interface>
+    <interface>
+      <name>NotificationContext new interface</name>
+      <kind>React Context</kind>
+      <signature>notifications: Notification[]; addNotification: (notification: Omit&lt;Notification, 'id' | 'timestamp'&gt;) => void; dismissNotification: (id: string) => void; dismissAll: () => void; notificationsByType: (type: NotificationType) => Notification[]</signature>
+      <path>frontend/src/context/NotificationContext.tsx</path>
+    </interface>
+    <interface>
+      <name>AvailabilityStatusUpdate WebSocket message</name>
+      <kind>TypeScript Interface</kind>
+      <signature>interface AvailabilityStatusUpdate { type: 'availability_status_update'; data: { vehicle_id: string; old_status: 'available' | 'reserved' | 'sold'; new_status: 'available' | 'reserved' | 'sold'; timestamp: string; reservation_expiry?: string; priority_until?: string } }</signature>
+      <path>frontend/src/types/conversation.ts</path>
+    </interface>
+    <interface>
+      <name>StatusHistoryResponse API</name>
+      <kind>TypeScript Interface</kind>
+      <signature>interface StatusHistoryResponse { vehicle_id: string; history: StatusChange[] } where StatusChange = { from_status, to_status, changed_at: string, duration_seconds?: number }</signature>
+      <path>frontend/src/lib/availabilityApi.ts</path>
+    </interface>
+    <interface>
+      <name>AvailabilityBadge props</name>
+      <kind>React Component Props</kind>
+      <signature>interface AvailabilityBadgeProps { status: 'available' | 'reserved' | 'sold' | 'newlyAvailable'; size?: 'compact' | 'default'; showLabel?: boolean }</signature>
+      <path>frontend/src/components/availability/AvailabilityBadge.tsx</path>
+    </interface>
+    <interface>
+      <name>AvailabilityNotification props</name>
+      <kind>React Component Props</kind>
+      <signature>interface AvailabilityNotificationProps { notification: Notification; onDismiss: () => void; onViewVehicle: (vehicleId: string) => void }</signature>
+      <path>frontend/src/components/notifications/AvailabilityNotification.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing uses Vitest + React Testing Library for unit tests, MSW for WebSocket mocking, Playwright for E2E. Test files in __tests__ directories adjacent to components. Aim for 80% coverage. AC-driven test naming: describe('AC1: Vehicle Unavailable Status'), test('should gray out card when unavailable'). Accessibility tests with jest-axe for WCAG 2.1 AA compliance.</standards>
+    <locations>
+      <location>frontend/src/components/availability/__tests__/*.test.tsx</location>
+      <location>frontend/src/components/availability/__tests__/*.integration.test.tsx</location>
+      <location>frontend/src/components/availability/__tests__/*.a11y.test.tsx</location>
+      <location>frontend/src/components/notifications/__tests__/*.test.tsx</location>
+      <location>frontend/src/context/__tests__/NotificationContext.test.tsx</location>
+      <location>frontend/tests/e2e/availability-flow.spec.ts</location>
+    </locations>
+    <ideas>
+      <test for="AC1">Test vehicle card updates with 'Unavailable' status when WebSocket sends availability_status_update with new_status='sold'</test>
+      <test for="AC1">Test card opacity reduces to 50-60% and grayscale filter applies when unavailable</test>
+      <test for="AC1">Test grid smoothly rearranges using AnimatePresence layout animation when vehicle becomes unavailable</test>
+      <test for="AC1">Test notification triggered when favorited vehicle becomes unavailable</test>
+      <test for="AC2">Test 'Newly Available' badge displays with pulsing animation for priority vehicles</test>
+      <test for="AC2">Test newly available vehicles sort to top of grid (priority placement for 24 hours)</test>
+      <test for="AC2">Test notification sent to users with similar preferences when vehicle becomes available</test>
+      <test for="AC3">Test status badge colors: available=green, reserved=amber, sold=gray, newly available=pulsing green</test>
+      <test for="AC3">Test status icons render: Check (available), Clock (reserved), X (sold), Sparkles (newly available)</test>
+      <test for="AC3">Test status change animation with Framer Motion: scale and opacity transitions</test>
+      <test for="AC3">Test responsive badge sizing: mobile icon-only, tablet abbreviated, desktop full text</test>
+      <test for="AC4">Test notification displays vehicle thumbnail, name, status change message</test>
+      <test for="AC4">Test notification has 'View Vehicle' action button that opens detail modal</test>
+      <test for="AC4">Test notification dismiss button removes from queue</test>
+      <test for="AC4">Test notification persists until dismissed or acted upon</test>
+      <test for="AC4">Test multiple notifications queue vertically (max 10)</test>
+      <test for="AC4">Test similar notifications collapse when triggered in quick succession</test>
+      <test for="AC5">Test vehicle card updates within 100ms of WebSocket message receipt</test>
+      <test for="AC5">Test no page refresh required for status update (reactive state)</test>
+      <test for="AC5">Test WebSocket reconnection syncs missed updates via status API call</test>
+      <test for="AC5">Test exponential backoff on reconnect: 5s, 10s, 20s, 30s max</test>
+      <test for="AC6">Test status history timeline displays timestamps and duration for each status</test>
+      <test for="AC6">Test StatusHistory component collapse/expand functionality</test>
+      <test for="AC6">Test analytics events fire on status changes (tracking for seller insights)</test>
+      <test for="AC7">Test status badge touch targets minimum 44x44px on mobile</test>
+      <test for="AC7">Test notification keyboard navigation: Tab to buttons, Enter/Space to activate, Escape to dismiss</test>
+      <test for="Accessibility">Test status badges have role='status' and aria-label describing status</test>
+      <test for="Accessibility">Test notifications have role='alert', aria-live='assertive', aria-atomic='true'</test>
+      <test for="Accessibility">Test color contrast ratios meet WCAG 2.1 AA (4.5:1 minimum)</test>
+      <test for="Accessibility">Test screen reader announces status changes appropriately</test>
+      <test for="Integration">Test WebSocket message flow: backend → useWebSocket → VehicleContext → VehicleCard update</test>
+      <test for="Integration">Test notification flow: WebSocket status update → check favorites → addNotification → render in NotificationStack</test>
+      <test for="Integration">Test VehicleGrid reorganization on status change without full re-render (React.memo)</test>
+      <test for="E2E">Test full workflow: user views grid → vehicle becomes reserved → card grays out → notification if favorited</test>
+      <test for="E2E">Test newly available workflow: sold vehicle becomes available → appears with 'New' badge → priority placement</test>
+    </ideas>
+  </tests>
+</story-context>

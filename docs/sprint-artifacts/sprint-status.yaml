@@ -1,0 +1,155 @@
+# generated: 2025-12-11T00:00:00.000Z
+# project: Otto.AI
+# project_key: otto-ai
+# tracking_system: file-system
+# story_location: "{project-root}/docs/sprint-artifacts"
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic exists in epic file but not contexted
+#   - contexted: Epic tech context created (required before drafting stories)
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - drafted: Story file created in stories folder
+#   - ready-for-dev: Draft approved and story context created
+#   - in-progress: Developer actively working on implementation
+#   - partial: Code exists but incomplete (e.g., backend only, no UI)
+#   - review: Under SM review (via code-review workflow)
+#   - done: Story completed and verified
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - completed: Retrospective has been done
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epics should be 'contexted' before stories can be 'drafted'
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically drafts next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', SM reviews, then Dev moves to 'done'
+
+generated: 2026-02-01T01:45:00.000Z
+project: Otto.AI
+project_key: otto-ai
+tracking_system: file-system
+story_location: "{project-root}/docs/sprint-artifacts"
+
+# CORRECT-COURSE WORKFLOW COMPLETED (2026-01-12):
+# ===================================================
+# Issue: Forced login blocking homepage access - conversion funnel killer
+# Root Cause: Product strategy ambiguity (PRD didn't specify public vs private access)
+# Solution: Progressive authentication pattern - browse freely, login for personalization
+# Impact: Epic 2, 3, 4 affected; PRD, Architecture, Epics documentation updated
+# Files Modified: 6 code files, 4 documentation files
+# Sprint Change Proposal: docs/sprint-change-proposal-2025-01-12.md
+# Workflow Record: docs/sprint-artifacts/correct-course-workflow-completion-2025-01-12.md
+
+development_status:
+  # Epic 1: Semantic Vehicle Intelligence
+  epic-1: done  # VERIFIED 2026-01-02 - All 12 stories complete (original 8 + RAG enhancements 1-9 to 1-12)
+  1-1-initialize-semantic-search-infrastructure: done
+  1-2-implement-multimodal-vehicle-data-processing: done
+  1-3-build-semantic-search-api-endpoints: done
+  1-4-implement-intelligent-vehicle-filtering-with-context: done
+  1-5-build-vehicle-comparison-and-recommendation-engine: done
+  1-6-implement-vehicle-favorites-and-notifications: done
+  1-7-add-curated-vehicle-collections-and-categories: done
+  1-8-optimize-semantic-search-performance-and-scaling: done
+  1-9-implement-hybrid-search-with-fts: done  # COMPLETED 2025-12-31 - FTS migration applied, hybrid_search_vehicles function active
+  1-10-add-query-expansion-service: done  # COMPLETED 2025-12-31 - QueryExpansionService with Groq LLM
+  1-11-implement-reranking-layer: done  # COMPLETED 2025-12-31 - RerankingService with BGE cross-encoder
+  1-12-add-contextual-embeddings: done  # COMPLETED 2025-12-31 - ContextualEmbeddingService with category prefixes
+  epic-1-retrospective: done  # COMPLETED 2025-12-31 - Full retrospective with Epic 2 design review
+
+  # Epic 2: Conversational Discovery Interface
+  epic-2: contexted
+  2-1-initialize-conversational-ai-infrastructure: done  # UPDATED 2026-01-12 - Guest user ACs added for session-based memory, no auth required for Otto AI chat
+  2-2-build-natural-language-understanding-and-response-generation: done  # ENHANCED 2025-12-31 - Phase 1: Advisory extractors, lifestyle entities, decision signals; UPDATED 2026-01-12 - Guest user ACs added for session-based context
+  2-3-implement-persistent-memory-and-preference-learning: done  # UPDATED 2026-01-12 - Guest user ACs added for session-based memory with 30-day cookie expiry
+  2-4-add-targeted-questioning-and-preference-discovery: done  # UPDATED 2026-01-12 - Guest user ACs added for session-based questioning without authentication
+  2-5-implement-real-time-vehicle-information-and-market-data: done  # ENHANCED 2025-12-31 - Phase 2: External research service; UPDATED 2026-01-12 - Guest user ACs added for real-time market data access
+  2-6-add-voice-input-and-speech-to-text-conversion: deferred  # DEFERRED 2026-01-22 - Voice input is enhancement, not core. Text conversation validates discovery UX. Code preserved in voice_input_service.py (489 lines). See docs/future-features.md
+  2-7-implement-conversation-history-and-session-summaries: deferred  # DEFERRED 2026-01-25 - Retention feature, not MVP-critical. Core discovery journey validates in single session. Code preserved (~3,600 lines). Blocked by circular import (ProfileService ↔ ConversationAgent). See docs/future-features.md
+  2-8-handle-multiple-conversation-threads-and-contexts: deferred  # DEFERRED 2026-01-22 - Single conversation thread validates discovery UX. Multi-thread is enhancement for post-MVP. See docs/future-features.md
+  2-9-optimize-conversation-performance-and-scalability: deferred  # DEFERRED 2026-01-22 - Premature optimization. Address when user load demands it. See docs/future-features.md
+  2-10-design-and-implement-otto-ai-avatar-system: deferred  # DEFERRED 2026-01-22 - Visual polish, not core UX validation. See docs/future-features.md
+  epic-2-retrospective: optional
+
+  # Epic 3: Dynamic Vehicle Grid Interface
+  epic-3: contexted  # CONTEXTED 2026-01-03 - Tech spec generated: docs/sprint-artifacts/tech-spec-epic-3.md
+  3-1-initialize-real-time-grid-infrastructure: done  # COMPLETED 2026-01-04 - React 19.2.0 + TypeScript 5.9.3 frontend infrastructure; UPDATED 2026-01-12 - Public access ACs added for session-based SSE, no auth required
+  3-2-build-responsive-vehicle-grid-component: done  # COMPLETED 2026-01-04 - Responsive vehicle grid (3/2/1 columns), glass-morphism, 46 tests; UPDATED 2026-01-12 - Public access ACs added for browsing without authentication
+  3-3-implement-dynamic-cascade-updates-from-conversation: partial  # VERIFIED 2026-01-11 - AC1, AC4 complete; UPDATED 2026-01-15 - AC2/AC3 blocked by WebSocket test issues - Story 3-3b created for SSE migration; UPDATED 2026-02-01 - SSE endpoint (/api/vehicles/updates) now returns vehicles with images from Supabase Storage
+  3-3b-migrate-vehicle-updates-websocket-to-sse: done  # VERIFIED 2026-01-15 - All 5 ACs met, all 11 tasks complete; SSE migration complete: useVehicleUpdates hook (217 lines), SSE endpoint (315 lines), tests (472 lines), architecture updated; UPDATED 2026-02-01 - Verified SSE returns vehicles with images (92 images across 5 vehicles)
+  3-4-add-comprehensive-vehicle-details-and-media: done  # VERIFIED 2026-01-14 - Vehicle detail modal with responsive layout, image carousel, comprehensive tests (~3,737 lines); CODE REVIEW APPROVED 2026-01-14 - All 9 ACs verified, all 19 tasks complete, 2,873 test lines, production-ready; UPDATED 2026-01-12 - Public access ACs added for viewing vehicle details without auth (basic access)
+  3-5-build-real-time-availability-status-and-updates: done  # VERIFIED 2026-01-14 - Real-time availability status system with components, notifications, integration tests (25/25 pass); Ready for VehicleCard/Grid/DetailModal integration
+  3-6-implement-vehicle-comparison-tools: done  # VERIFIED 2026-01-18 - All test fixes complete, 33/33 tests passing. AC1-AC9 verified (AC10 has minor ARIA label deviation - acceptable). sessionStorage 30min expiry, sticky row labels, empty state with visuals+CTA.
+  3-7-add-intelligent-grid-filtering-and-sorting: done  # VERIFIED 2026-01-19 - Complete implementation including backend multi-select support (makes, vehicle_types via .in_() clause), effective_price sorting with NULL handling, frontend updates (removed efficiency sort and features filter due to no database support), FilterContext (342 lines), FilterBar (217 lines), SortDropdown (256 lines), FilterModal (598 lines), FilterChips (267 lines), FilterEmptyState (168 lines), VehicleGrid integration, VehicleContext integration, 6 test files (~1,200 lines). Backend files modified: semantic_search_api.py, vehicle_database_service.py, vehicles_api.py, database_schema.sql. sessionStorage 30min expiry, glass-morphism styling, ARIA compliance, SSE filter preservation. UPDATED 2026-02-01 - Fixed buggy "/" endpoint (Query parameter issue), all clients use "/search" endpoint. Fixed vehicles_api.py to batch fetch images from vehicle_images table.
+  3-8-implement-performance-optimization-and-edge-caching: done  # COMPLETED 2026-01-19 - All 20/22 tasks complete (skipped: 3-5 responsive images, 3-12 virtual scrolling as future optimization). CODE REVIEW APPROVED 2026-01-19 - Senior Developer Review completed: APPROVED with minor improvement recommended. 20/22 tasks verified with evidence, all 15 new files (~1,950 lines) confirmed, 8 modified files confirmed, 620 test lines, 320 doc lines. Finding: Task 3-8.7 (React.memo on VehicleCard) not implemented - should be addressed for optimal performance. Overall: PRODUCTION-READY with excellent code quality, comprehensive performance patterns, strong test coverage.
+  3-9-add-analytics-and-user-behavior-tracking: partial  # VERIFIED 2026-01-23 - Backend analytics code exists (1,489 lines): favorites_analytics_service.py (779 lines), preference_analytics.py (691 lines). Story file never drafted. Frontend analytics dashboard NOT implemented. See docs/sprint-artifacts/tech-spec-epic-3.md Story 3.9 AC13 for requirements.
+  3-10-design-and-implement-glass-morphism-design-system-components: partial  # VERIFIED 2026-01-23 - Glass-morphism styles exist across components (VehicleDetailModal, OttoChatWidget, etc.) but no dedicated design system file. Story file never drafted. See docs/sprint-artifacts/tech-spec-epic-3.md AC6 for requirements.
+  3-11-build-vehicle-card-with-match-score-badge: done  # VERIFIED 2026-01-23 - MatchScoreBadge.tsx exists (186 lines) with color coding (90%+ green, 80-89% lime, 70-79% yellow, <70% orange), pulsing animation for 95%+, Otto's Pick variant. Used in VehicleCard.tsx. Story file never drafted but code complete per tech-spec AC5.
+  3-12-implement-vehicle-detail-modal-with-image-carousel: done  # VERIFIED 2026-01-23 - VehicleDetailModal.tsx exists (188 lines) with glass-morphism styling, image carousel (VehicleImageCarousel), specs display, pricing panel, Otto recommendation, social proof badges. Tests exist (3 test files). Story file never drafted but code complete per tech-spec AC3/AC4.
+  3-13-build-otto-ai-floating-chat-widget: done  # VERIFIED 2026-01-23 - OttoChatWidget.tsx exists (394 lines) with floating FAB, expandable interface, glass-morphism design, WebSocket integration via ConversationContext, typing indicator, error handling. Story file never drafted but code complete per tech-spec AC7.
+  epic-3-retrospective: optional
+
+  # Epic 4: User Authentication & Profiles
+  epic-4: backlog
+  4-1-initialize-authentication-infrastructure: backlog
+  4-2-implement-user-registration-and-email-verification: backlog
+  4-3-build-secure-login-and-session-management: backlog
+  4-4-add-password-reset-and-account-recovery: backlog
+  4-5-build-user-profile-management: backlog
+  4-6-implement-role-based-access-control: backlog
+  4-7-add-multi-tenancy-data-isolation: backlog
+  4-8-implement-account-deletion-and-data-export: backlog
+  4-9-add-security-monitoring-and-compliance: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Lead Intelligence Generation
+  epic-5: contexted
+  5-1-initialize-lead-intelligence-infrastructure: backlog
+  5-2-build-vehicle-reservation-system: backlog
+  5-3-implement-conversation-intelligence-extraction: backlog
+  5-4-create-seller-vehicle-listings-management: partial  # BACKEND ONLY - PDF extraction + database persistence work, NO SELLER UI exists. UPDATED 2026-02-01 - Images now uploaded to Supabase Storage (92 images from 6 PDFs). Verified via REST API and SSE endpoint. Image pipeline: PDF extraction → Supabase Storage upload → vehicle_images table with URLs.
+  5-4b-wire-pdf-pipeline-to-database-persistence: done  # VERIFIED 2026-01-02 - pdf_ingestion_service.py + vehicle_processing_service.py functional. ENHANCED 2026-02-01 - Added Supabase Storage image upload with reprocess_pdf_images.py script (92 images uploaded, URLs in vehicle_images table)
+  5-5-build-real-time-lead-notifications: backlog
+  5-6-implement-lead-pipeline-management: backlog
+  5-7-add-seller-analytics-and-performance-tracking: backlog
+  5-8-build-subscription-tier-management: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Seller Dashboard & Analytics
+  epic-6: backlog
+  6-1-initialize-seller-dashboard-infrastructure: backlog
+  6-2-build-inventory-management-interface: backlog
+  6-3-create-lead-management-dashboard: backlog
+  6-4-implement-advanced-analytics-and-reporting: backlog
+  6-5-build-integration-framework-for-external-systems: backlog
+  6-6-create-marketplace-and-third-party-integrations: backlog
+  6-7-add-team-management-and-collaboration-tools: backlog
+  6-8-implement-mobile-seller-app: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Deployment Infrastructure
+  epic-7: backlog
+  7-1-initialize-production-infrastructure: backlog
+  7-2-implement-security-and-compliance-infrastructure: backlog
+  7-3-build-monitoring-and-alerting-system: backlog
+  7-4-create-administrative-tools-and-features: backlog
+  7-5-implement-backup-and-disaster-recovery: backlog
+  7-6-add-feature-flag-and-controlled-rollout-system: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8: Performance Optimization
+  epic-8: backlog
+  8-1-initialize-performance-optimization-framework: backlog
+  8-2-optimize-database-performance-and-caching: backlog
+  8-3-implement-global-content-delivery-and-edge-computing: backlog
+  8-4-optimize-frontend-performance-and-user-experience: backlog
+  8-5-build-scalable-background-processing: backlog
+  8-6-add-predictive-scaling-and-auto-optimization: backlog
+  8-7-implement-performance-analytics-and-continuous-optimization: backlog
+  epic-8-retrospective: optional

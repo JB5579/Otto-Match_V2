@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-01-31T01:43:39.234021",
+  "pdf_path": "docs\\Sample_Vehicle_Condition_Reports\\2022LexusES350117484.pdf",
+  "steps": {
+    "read_pdf": {
+      "status": "success",
+      "file_size_mb": 0.6243247985839844
+    }
+  },
+  "overall_status": "failed",
+  "error": "{'message': 'duplicate key value violates unique constraint \"vehicle_listings_vin_key\"', 'code': '23505', 'hint': None, 'details': 'Key (vin)=(58ADZ1B17NU117484) already exists.'}"
+}

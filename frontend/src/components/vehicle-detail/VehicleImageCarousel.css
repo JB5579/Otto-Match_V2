@@ -1,0 +1,86 @@
+/**
+ * VehicleImageCarousel Animations and Styles
+ *
+ * Includes skeleton loading animation and transitions
+ */
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Image loading shimmer effect */
+.image-loading-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.image-loading-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Thumbnail hover enhancement */
+.thumbnail-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.thumbnail-button:hover {
+  transform: scale(1.05);
+}
+
+.thumbnail-button:active {
+  transform: scale(0.95);
+}
+
+/* Navigation button pulse on mobile */
+@media (max-width: 767px) {
+  .nav-button {
+    animation: pulse-hint 2s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-hint {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Image transition optimization */
+.carousel-image {
+  will-change: opacity;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Preload hint for browser */
+.image-preload {
+  content: url(var(--preload-url));
+}

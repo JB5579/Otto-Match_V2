@@ -1,0 +1,218 @@
+<story-context id="{bmad_folder}/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>3</storyId>
+    <title>Implement Persistent Memory and Preference Learning</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>D:\Otto_AI_v2\docs\sprint-artifacts\2-3-implement-persistent-memory-and-preference-learning.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>Otto AI to remember our conversations and learn my preferences over time</iWant>
+    <soThat>the vehicle discovery experience becomes more personalized and efficient with each interaction</soThat>
+    <tasks>Implement temporal memory management using Zep Cloud knowledge graphs (AC: #1, #2)
+  - Create memory consolidation for long-term preference storage
+  - Build preference evolution tracking with timestamps
+  - Implement memory retrieval with relevance decay algorithms
+  - Add cross-session context reconstruction
+
+Create preference_engine.py to extract and weight user preferences from conversations (AC: #1, #2)
+  - Build preference extraction from natural language with confidence scoring
+  - Implement preference conflict detection and resolution
+  - Create dynamic weight adjustment based on feedback and behavior
+  - Add preference validation and consistency checking
+  - Build cross-referencing between explicit and implicit preferences
+
+Build preference evolution tracking to show how user needs change over time (AC: #2, #3)
+  - Create temporal preference modeling with decay functions
+  - Implement preference change detection and significance scoring
+  - Build preference timeline visualization components
+  - Add periodic preference re-evaluation triggers
+
+Implement conversation summarization for efficient context retrieval (AC: #1)
+  - Create automatic summarization of long conversations
+  - Build key decision point extraction and storage
+  - Implement summary-based context reconstruction
+  - Add summary quality validation and feedback loops
+
+Add preference confidence scoring based on frequency and consistency (AC: #2, #3)
+  - Build confidence algorithms for preference reliability
+  - Implement confidence decay over time
+  - Create confidence boosting through repeated validation
+  - Add minimum confidence thresholds for preference application
+
+Create user profile updates based on learned preferences (AC: #1, #2, #3)
+  - Implement incremental profile updates
+  - Build profile change notifications for users
+  - Create profile versioning with rollback capability
+  - Add profile synchronization across sessions
+
+Implement privacy controls allowing users to view and manage their memory (AC: #4)
+  - Create preference transparency dashboard
+  - Build preference editing and correction interface
+  - Implement selective forgetting mechanisms
+  - Add preference export and deletion capabilities
+
+Create comprehensive testing suite
+  - Build unit tests for preference extraction accuracy (>90%)
+  - Add integration tests for cross-session memory persistence
+  - Create performance tests for memory retrieval (<500ms)
+  - Implement user acceptance testing for personalization quality
+  - Add privacy compliance testing</tasks>
+  </story>
+
+  <acceptanceCriteria>1. Cross-Session Memory Retention: Given I've had several conversations with Otto AI over multiple days, when I return for a new conversation, then Otto AI greets me with context from previous discussions, asks relevant follow-up questions about my evolving preferences, remembers key details like family size, budget constraints, and preferred brands, and provides increasingly relevant vehicle recommendations based on learned preferences
+
+2. Preference Weight Evolution: Given I previously mentioned preferring Japanese brands for reliability, when I search for vehicles in a new conversation, then Otto AI prioritizes Japanese brands in recommendations, asks if I'd like to consider other brands with similar reliability ratings, and explains why it's suggesting certain brands based on my historical preferences
+
+3. Adaptive Learning from Behavior: Given I interact with vehicle recommendations over multiple sessions, when I return to the platform, then Otto AI has learned from my click patterns, saved vehicles, and comparison activities, adjusts preference weights based on demonstrated interests versus stated preferences, and provides nuanced recommendations that reflect both explicit and implicit preferences
+
+4. Privacy and Memory Management: Given I'm using the platform, when I want to review my learned preferences, then I can view a summary of what Otto AI has learned about me, can correct or override specific preferences, can request forgetting certain information, and can see how preferences have evolved over time</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>AI Memory &amp; Personalization</section>
+        <snippet>FR51: Otto AI remembers user preferences, past conversations, and learned insights across sessions
+FR52: System maintains user preference profiles including vehicle types, brands, features, and budget considerations
+FR53: Otto AI provides personalized recommendations based on accumulated user data and behavior patterns
+FR54: Users can review and manage their memory profile including preferences and conversation history
+FR55: System adapts conversation style and recommendations based on user engagement patterns and feedback
+FR56: Otto AI recognizes returning users and provides contextual greetings and follow-ups based on previous sessions
+FR57: System supports preference learning from both explicit statements and implicit behavior patterns</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Hierarchical Memory Management Pattern (Epic 2)</section>
+        <snippet>Working Memory: Last 5-10 conversation turns for immediate context
+Episodic Memory: Key conversation points, preferences, and decision moments
+Semantic Memory: General vehicle knowledge and learned patterns
+Memory Retrieval: Vector-based semantic search with relevance scoring (&gt;0.7 similarity)
+Memory Compression: Summarization for conversations longer than 20 turns
+Adaptive Allocation: Dynamic memory sizing based on conversation complexity</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Temporal Memory Integration</section>
+        <snippet># Zep Cloud + preference engine integration
+async def update_conversation_memory(user_id: str, message: str, response: str):
+    # Store conversation in Zep Cloud temporal graph
+    await zep_service.add_conversation_turn(user_id, message, response)
+
+    # Extract and update preferences
+    new_preferences = await preference_engine.extract_preferences(message, response)
+    await temporal_memory.update_user_preferences(user_id, new_preferences)</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 2: Conversational Discovery Interface</title>
+        <section>Epic Overview</section>
+        <snippet>Goal: Create Otto AI conversation system with persistent memory via Zep Cloud, enabling natural vehicle discovery through conversational AI that understands user preferences and evolves recommendations over time.
+FR Coverage: FR8-FR15 (Conversational AI) + FR51-FR57 (AI Memory &amp; Personalization)
+Architecture Components: WebSocket_manager, cascade_engine.py, Zep Cloud temporal memory, Groq compound-beta</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/memory/zep_client.py</path>
+        <kind>memory client</kind>
+        <symbol>ZepClient</symbol>
+        <lines>55-100</lines>
+        <reason>Existing Zep Cloud integration for temporal memory storage. Provides session management, conversation storage, and retrieval capabilities that can be extended for long-term preference storage.</reason>
+      </file>
+      <file>
+        <path>src/memory/zep_client.py</path>
+        <kind>memory client</kind>
+        <symbol>ConversationContext</symbol>
+        <lines>47-53</lines>
+        <reason>Data structure for context retrieval including working_memory, episodic_memory, semantic_memory, and user_preferences - exactly what's needed for hierarchical memory management.</reason>
+      </file>
+      <file>
+        <path>src/conversation/nlu_service.py</path>
+        <kind>nlu service</kind>
+        <symbol>UserPreference</symbol>
+        <lines>40-52</lines>
+        <reason>Defines preference structure with category, value, weight, source, and timestamp. This is the foundation for preference extraction and tracking.</reason>
+      </file>
+      <file>
+        <path>src/conversation/conversation_agent.py</path>
+        <kind>conversation manager</kind>
+        <symbol>DialogueState</symbol>
+        <lines>38-44</lines>
+        <reason>Current conversation state tracking with collected_info dict that stores entities and preferences. Can be enhanced for cross-session persistence.</reason>
+      </file>
+      <file>
+        <path>src/conversation/conversation_agent.py</path>
+        <kind>conversation manager</kind>
+        <symbol>_update_enhanced_dialogue_state</symbol>
+        <lines>528-603</lines>
+        <reason>Shows how preferences are currently stored in collected_info with timestamps and weights. Pattern can be extended for long-term preference evolution tracking.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="zep-python" version="latest" purpose="Zep Cloud temporal memory client for conversation storage and retrieval"/>
+        <package name="raganything[all]" version="1.2.8" purpose="Multimodal semantic search for understanding vehicle context and preferences"/>
+        <package name="supabase" version="latest" purpose="Database client for user profile and preference persistence"/>
+        <package name="pydantic" version="latest" purpose="Data validation and type safety for preference models"/>
+        <package name="numpy" version="latest" purpose="Numerical operations for preference weight calculations and decay functions"/>
+        <package name="tiktoken" version="latest" purpose="Token counting for conversation summarization"/>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Temporal Memory Layer: Use hierarchical memory management with working memory (last 10 turns), episodic memory (key decisions), and semantic memory (generalized preferences)</constraint>
+    <constraint>Preference Evolution: Implement time-decay weighting where recent interactions have higher influence but historical preferences maintain baseline influence</constraint>
+    <constraint>Privacy by Design: All preference storage must be transparent to users with easy correction/deletion mechanisms</constraint>
+    <constraint>Performance: Memory retrieval must complete within 500ms to maintain conversational flow</constraint>
+    <constraint>Cross-Session Persistence: Preferences must survive browser sessions and device changes through user profile storage</constraint>
+    <constraint>Confidence Scoring: All preferences must maintain confidence scores that affect their application in recommendations</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Zep Cloud Memory API</name>
+      <kind>External Service API</kind>
+      <signature>async store_conversation(user_id: str, conversation: ConversationData) -> bool
+async get_contextual_memory(user_id: str, current_query: str) -> ConversationContext
+async search_conversations(user_id: str, query: str, limit: int = 5) -> List[Message]</signature>
+      <path>src/memory/zep_client.py</path>
+    </interface>
+    <interface>
+      <name>Preference Engine</name>
+      <kind>Internal Service</kind>
+      <signature>async extract_preferences(message: str, entities: List[Entity], context: Dict) -> List[UserPreference]
+async update_preference_weights(user_id: str, feedback: Dict[str, float]) -> bool
+async get_user_preferences(user_id: str, category: Optional[str] = None) -> List[UserPreference]</signature>
+      <path>src/intelligence/preference_engine.py</path>
+    </interface>
+    <interface>
+      <name>User Profile Service</name>
+      <kind>Internal Service</kind>
+      <signature>async update_profile_preferences(user_id: str, preferences: Dict[str, Any]) -> bool
+async get_profile(user_id: str) -> UserProfile
+async create_preference_timeline(user_id: str, days: int = 30) -> List[PreferenceChange]</signature>
+      <path>src/services/profile_service.py</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Preference extraction accuracy testing with labeled conversation data, cross-session memory persistence validation, personalization quality measurement through user feedback, privacy compliance testing for GDPR/CCPA requirements, performance testing for memory retrieval operations</standards>
+    <locations>src/intelligence/tests/test_preference_engine.py, src/memory/tests/test_temporal_memory.py, src/services/tests/test_profile_service.py, src/api/tests/test_privacy_controller.py, src/conversation/tests/test_memory_integration.py</locations>
+    <ideas>
+      <test ac="AC1" idea="Test cross-session memory by simulating multiple conversations over days and verifying Otto greets with appropriate context"/>
+      <test ac="AC2" idea="Test preference evolution by stating brand preferences, then changing them, and verifying Otto adapts recommendations appropriately"/>
+      <test ac="AC3" idea="Test adaptive learning by simulating click patterns and saved vehicles, then verifying implicit preferences are detected"/>
+      <test ac="AC4" idea="Test privacy controls by implementing preference dashboard and verifying users can view/edit/delete their data"/>
+      <test idea="Performance test memory retrieval with various conversation lengths (10, 100, 1000 turns) to ensure &lt;500ms response"/>
+      <test idea="Test preference confidence scoring by extracting same preference multiple times and verifying confidence increases"/>
+      <test idea="Test time-decay functions by storing preferences and verifying their weights decrease appropriately over time"/>
+    </ideas>
+  </tests>
+</story-context>

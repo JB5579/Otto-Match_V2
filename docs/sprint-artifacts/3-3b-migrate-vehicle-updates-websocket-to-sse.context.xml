@@ -1,0 +1,400 @@
+<story-context id="3-3b-migrate-vehicle-updates-websocket-to-sse" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3b</storyId>
+    <title>Migrate Vehicle Updates from WebSocket to SSE</title>
+    <status>drafted</status>
+    <generatedAt>2026-01-15T22:00:00.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-3b-migrate-vehicle-updates-websocket-to-sse.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>vehicle updates to use Server-Sent Events instead of WebSocket</iWant>
+    <soThat>the architecture is simpler, tests are reliable, and there are no reconnection loop issues</soThat>
+    <tasks>11 tasks organized into 6 categories:
+- Frontend SSE Hook (3-3b.1, 3-3b.2): Create useVehicleUpdates hook with EventSource API
+- VehicleContext Integration (3-3b.3, 3-3b.4): Replace WebSocket with SSE, isolate ConversationContext to chat only
+- Component Updates (3-3b.5): Update availability components to remove WebSocket dependencies
+- Testing (3-3b.6, 3-3b.7): Write unit tests for SSE hook, update CascadeIntegration tests
+- Backend Implementation (3-3b.8, 3-3b.9): Create SSE endpoint for vehicle updates, register in main app
+- Cleanup (3-3b.10, 3-3b.11): Remove old WebSocket handlers, update documentation</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" title="Vehicle Updates Use SSE, Not WebSocket">
+      <given>the vehicle grid is displayed and listening for updates</given>
+      <when>the backend sends a vehicle update event</when>
+      <then>updates are received via Server-Sent Events (EventSource API)</then>
+      <and>the SSE endpoint is GET /api/vehicles/updates</and>
+      <and>events use text/event-stream Content-Type</and>
+      <and>event type is vehicle_update</and>
+      <and>event data contains: vehicles[], timestamp, requestId</and>
+      <and>no WebSocket connection exists for vehicle updates</and>
+    </criterion>
+
+    <criterion id="AC2" title="All CascadeIntegration Tests Pass">
+      <given>the CascadeIntegration test suite runs</given>
+      <when>testing vehicle update scenarios (AC1-AC9 from Story 3-3)</when>
+      <then>all tests pass without WebSocket mock complexity</then>
+      <and>EventSource is trivial to mock (vs complex WebSocket mock)</and>
+      <and>no reconnection loop issues occur</and>
+      <and>test suite completes in &lt;30 seconds</and>
+      <and>all 9 AC tests from Story 3-3 pass with SSE</and>
+    </criterion>
+
+    <criterion id="AC3" title="No Reconnection Loop in Tests">
+      <given>a test component mounts with SSE connection</given>
+      <when>the component unmounts</when>
+      <then>EventSource closes cleanly without triggering reconnection</then>
+      <and>no infinite loop occurs in test output</and>
+      <and>cleanup function executes exactly once</and>
+      <and>no "act(...)" warnings appear</and>
+      <and>test completes without timeout</and>
+    </criterion>
+
+    <criterion id="AC4" title="Otto Chat WebSocket Isolated and Unchanged">
+      <given>the Otto chat widget is open</given>
+      <when>user sends messages to Otto</when>
+      <then>WebSocket connection remains at ws://localhost:8000/ws/conversation</then>
+      <and>WebSocket handles ONLY chat messages (not vehicle updates)</and>
+      <and>vehicle updates are received via separate SSE connection</and>
+      <and>no conflicts occur between WebSocket and SSE connections</and>
+      <and>Otto chat functionality is unchanged from Story 3-3</and>
+    </criterion>
+
+    <criterion id="AC5" title="Backend SSE Endpoint Implemented">
+      <given>the backend FastAPI server is running</given>
+      <when>frontend connects to GET /api/vehicles/updates</when>
+      <then>endpoint returns text/event-stream Content-Type</then>
+      <and>endpoint sends events when vehicles change</and>
+      <and>events are formatted as SSE (event:, data:, id: fields)</and>
+      <and>connection remains open for server push</and>
+      <and>endpoint supports JWT authentication via query param or header</and>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Real-Time Communication (AC3, AC12)</section>
+        <snippet>WebSocket connection at ws://localhost:8000/ws/conversation handles both Otto chat messages AND vehicle updates. After SSE migration: WebSocket (ws://localhost:8000/ws/conversation) → Otto chat messages ONLY (bidirectional), SSE (http://localhost:8000/api/vehicles/updates) → Vehicle updates ONLY (server push).</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/sprint-artifacts/stories/3-3-implement-dynamic-cascade-updates-from-conversation.md</path>
+        <title>Story 3-3 (Split Story)</title>
+        <section>Test Issues Being Resolved</section>
+        <snippet>PROBLEM: Infinite loop in tests. MockWebSocket connects → React cleanup closes → useWebSocket detects close → Reconnects → Loop. SOLUTION: SSE doesn't have this issue. EventSource connects → React cleanup closes → No auto-reconnect in tests → Clean exit.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Epic 3</title>
+        <section>Cross-Epic Dependencies</section>
+        <snippet>Epic 2 → Epic 3 Dependencies: Conversation Triggers (Epic 2's conversation insights trigger Epic 3's cascade updates), Preference Updates (Epic 2's preference learning sends real-time updates to Epic 3's vehicle grid), Context Changes (Epic 2's dialogue state changes update Epic 3's UI filters and sorting).</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Real-time Communication</section>
+        <snippet>WebSocket for real-time updates - Basic real-time updates for favorites and collections. After SSE migration, WebSocket will handle chat messages only, while SSE handles vehicle updates.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-200</lines>
+        <reason>Current WebSocket hook with reconnection logic that causes test issues. Will be replaced by useVehicleUpdates (SSE-based) for vehicle updates, but kept for Otto chat WebSocket connection.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/context/VehicleContext.tsx</path>
+        <kind>context</kind>
+        <symbol>VehicleContext</symbol>
+        <lines>1-329</lines>
+        <reason>Must be updated to consume SSE events instead of WebSocket vehicle_update messages. Lines 89-103 handle WebSocket vehicle updates - will be replaced with SSE integration.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/context/ConversationContext.tsx</path>
+        <kind>context</kind>
+        <symbol>ConversationContext</symbol>
+        <lines>1-258</lines>
+        <reason>Must be isolated to handle ONLY chat messages (not vehicle updates). Lines 98-105 handle vehicle_update messages - these will be removed after SSE migration. WebSocket connection for Otto chat remains unchanged.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/types/conversation.ts</path>
+        <kind>types</kind>
+        <symbol>VehicleUpdateMessage, AvailabilityStatusUpdateMessage</symbol>
+        <lines>63-94</lines>
+        <reason>Type definitions for WebSocket messages. Will need SSE event type definitions added (VehicleUpdateEvent interface). Existing VehicleUpdateMessage may be repurposed or replaced.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/components/availability/VehicleStatusOverlay.tsx</path>
+        <kind>component</kind>
+        <symbol>VehicleStatusOverlay</symbol>
+        <lines>1-144</lines>
+        <reason>Availability component that must be verified to have no WebSocket dependencies after SSE migration. Uses VehicleContext for status updates via updateVehicleStatus callback.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/lib/availabilityApi.ts</path>
+        <kind>api-client</kind>
+        <symbol>subscribeToAvailability, fetchStatusHistory</symbol>
+        <lines>1-239</lines>
+        <reason>Availability API client for subscribing to status updates. Must be verified to work with SSE instead of WebSocket for availability_status_update messages.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/src/components/vehicle-grid/__tests__/CascadeIntegration.test.tsx</path>
+        <kind>test</kind>
+        <symbol>CascadeIntegration tests</symbol>
+        <lines>1-303</lines>
+        <reason>Integration tests that currently fail with WebSocket reconnection loops. Must be updated to mock EventSource instead of WebSocket. Lines 19-42 contain MockWebSocket class that will be replaced with simpler EventSource mock.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/api/websocket_endpoints.py</path>
+        <kind>router</kind>
+        <symbol>conversation_router, ConnectionManager</symbol>
+        <lines>1-150</lines>
+        <reason>Backend WebSocket infrastructure for Otto chat. Will remain unchanged for chat messages. New SSE endpoint will be created separately for vehicle updates.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/api/main_app.py</path>
+        <kind>app-entry</kind>
+        <symbol>app, include_router</symbol>
+        <reason>Main FastAPI application where SSE router must be registered. Must add vehicle_updates_sse router to include SSE endpoint.</reason>
+      </artifact>
+
+      <artifact>
+        <path>frontend/package.json</path>
+        <kind>config</kind>
+        <symbol>dependencies</symbol>
+        <lines>1-58</lines>
+        <reason>Frontend dependencies - no new packages needed for SSE (EventSource is native browser API). Current dependencies: React 19.2.0, TypeScript 5.9.3, Vite 7.2.4, Vitest 4.0.16, Framer Motion 12.23.26, @supabase/supabase-js 2.89.0.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <frontend>
+        <package name="react" version="^19.2.0" />
+        <package name="typescript" version="~5.9.3" />
+        <package name="vite" version="^7.2.4" />
+        <package name="vitest" version="^4.0.16" />
+        <package name="@testing-library/react" version="^16.3.1" />
+        <package name="framer-motion" version="^12.23.26" />
+        <package name="@supabase/supabase-js" version="^2.89.0" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" />
+        <package name="lucide-react" version="^0.562.0" />
+      </frontend>
+      <note>No new dependencies required - EventSource is native browser API</note>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture" severity="high">
+      <description>SSE is unidirectional (server→client) only</description>
+      <rationale>EventSource API does not support client→server messaging. All vehicle updates must flow from backend to frontend via SSE. If bidirectional communication is needed for a feature, it must use WebSocket (Otto chat) or REST API.</rationale>
+    </constraint>
+
+    <constraint type="testing" severity="high">
+      <description>Must eliminate reconnection loop in tests</description>
+      <rationale>The primary issue with WebSocket is MockWebSocket triggers reconnection on cleanup. SSE must close cleanly in tests without triggering any reconnection logic. Test cleanup must execute exactly once.</rationale>
+    </constraint>
+
+    <constraint type="architecture" severity="medium">
+      <description>Otto chat WebSocket must remain unchanged</description>
+      <rationale>WebSocket at ws://localhost:8000/ws/conversation handles ONLY chat messages. No changes to ConversationContext's WebSocket connection for Otto chat. Only vehicle update handling is removed from ConversationContext.</rationale>
+    </constraint>
+
+    <constraint type="implementation" severity="medium">
+      <description>EventSource is native browser API - no library needed</description>
+      <rationale>Do not install any EventSource/SSE library packages. Use native window.EventSource API directly in useVehicleUpdates hook. The only external API needed is backend SSE endpoint.</rationale>
+    </constraint>
+
+    <constraint type="authentication" severity="high">
+      <description>SSE endpoint must support JWT authentication</description>
+      <rationale>SSE endpoint must validate Supabase JWT tokens. Token can be passed via query parameter (?token=xxx) or Authorization header. Use existing getAuthToken() from supabaseClient.ts to obtain token.</rationale>
+    </constraint>
+
+    <constraint type="performance" severity="medium">
+      <description>SSE connection must support auto-reconnect in production</description>
+      <rationale>EventSource has built-in auto-reconnect that works in production. In tests, bypass EventSource creation entirely with testMode flag to avoid reconnection issues.</rationale>
+    </constraint>
+
+    <constraint type="testing" severity="medium">
+      <description>Test suite must complete in &lt;30 seconds</description>
+      <rationale>Simpler EventSource mocking (vs complex WebSocket mock) should reduce test execution time. All 9 AC tests from Story 3-3 must pass with SSE implementation.</rationale>
+    </constraint>
+
+    <constraint type="documentation" severity="low">
+      <description>Update architecture.md to reflect SSE architecture</description>
+      <rationale>Document that WebSocket handles chat only, SSE handles vehicle updates. Update real-time communication section with SSE endpoint details.</rationale>
+    </constraint>
+
+    <constraint type="code-organization" severity="medium">
+      <description>Follow existing file structure and patterns</description>
+      <rationale>New useVehicleUpdates hook goes in frontend/src/hooks/. SSE event types added to frontend/src/types/conversation.ts. Backend SSE endpoint in src/api/vehicle_updates_sse.py (new file).</rationale>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>useVehicleUpdates (NEW - SSE Hook)</name>
+      <kind>React Hook</kind>
+      <signature>
+function useVehicleUpdates(callback: (vehicles: Vehicle[]) => void): {
+  connected: boolean;
+  lastUpdate: Date | null;
+  error: Error | null;
+}
+      </signature>
+      <path>frontend/src/hooks/useVehicleUpdates.ts (NEW)</path>
+      <description>Native EventSource-based hook for vehicle updates. Connects to GET /api/vehicles/updates with JWT token. Handles onmessage for vehicle_update events. Includes testMode bypass for testing.</description>
+    </interface>
+
+    <interface>
+      <name>VehicleUpdateEvent (NEW - SSE Event Type)</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface VehicleUpdateEvent {
+  type: 'vehicle_update';
+  data: {
+    vehicles: Vehicle[];
+    timestamp: string;
+    requestId: string;
+  };
+  id: string;
+  event: string;
+}
+      </signature>
+      <path>frontend/src/types/conversation.ts (MODIFY)</path>
+      <description>SSE event type for vehicle updates. Similar to VehicleUpdateMessage but with SSE-specific fields (id, event). Parsed from EventSource message event.</description>
+    </interface>
+
+    <interface>
+      <name>GET /api/vehicles/updates (NEW - SSE Endpoint)</name>
+      <kind>REST SSE Endpoint</kind>
+      <signature>
+GET /api/vehicles/updates?token={jwt}
+Response-Type: text/event-stream
+Event-Format: "event: vehicle_update\ndata: {...}\nid: {requestId}\n\n"
+      </signature>
+      <path>src/api/vehicle_updates_sse.py (NEW)</path>
+      <description>Server-Sent Events endpoint for real-time vehicle updates. Validates JWT token, returns StreamingResponse with text/event-stream. Yields events when vehicles change from conversation or backend.</description>
+    </interface>
+
+    <interface>
+      <name>VehicleContext (MODIFIED - SSE Integration)</name>
+      <kind>React Context</kind>
+      <signature>
+VehicleContextValue {
+  vehicles: Vehicle[];
+  updateVehicles: (newVehicles: Vehicle[]) => void;
+  // ... other properties unchanged
+}
+      </signature>
+      <path>frontend/src/context/VehicleContext.tsx (MODIFY lines 89-103)</path>
+      <description>Replace WebSocket vehicle update handler with SSE useVehicleUpdates hook integration. Remove lines 89-103 (WebSocket listen logic), add useEffect with useVehicleUpdates hook calling updateVehicles callback.</description>
+    </interface>
+
+    <interface>
+      <name>ConversationContext (ISOLATED - Chat Only)</name>
+      <kind>React Context</kind>
+      <signature>
+ConversationContextValue {
+  messages: ConversationMessage[];
+  sendMessage: (text: string) => void;
+  isConnected: boolean; // From WebSocket for chat only
+  // No vehicle update handling
+}
+      </signature>
+      <path>frontend/src/context/ConversationContext.tsx (MODIFY lines 98-105, 108-135)</path>
+      <description>Remove vehicle_update message handling from WebSocket. Keep WebSocket for chat messages only (conversation_message type). Remove handleVehicleUpdate callback, keep handlePreferenceChange and handleError.</description>
+    </interface>
+
+    <interface>
+      <name>ws://localhost:8000/ws/conversation (UNCHANGED)</name>
+      <kind>WebSocket Endpoint</kind>
+      <signature>ws://localhost:8000/ws/conversation?token={jwt}</signature>
+      <path>src/api/websocket_endpoints.py (UNCHANGED)</path>
+      <description>WebSocket connection for Otto AI chat ONLY. Handles conversation_message type messages. No vehicle_update messages after SSE migration. ConnectionManager and conversation_router remain unchanged.</description>
+    </interface>
+
+    <interface>
+      <name>EventSource (NATIVE BROWSER API)</name>
+      <kind>Browser API</kind>
+      <signature>
+class EventSource {
+  constructor(url: string);
+  onopen: ((event: Event) => void) | null;
+  onmessage: ((event: MessageEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  readyState: number; // CONNECTING=0, OPEN=1, CLOSED=2
+  close(): void;
+  addEventListener(type: string, handler: (event: MessageEvent) => void): void;
+  removeEventListener(type: string, handler: (event: MessageEvent) => void): void;
+}
+      </signature>
+      <path>Native Browser API (no import needed)</path>
+      <description>Browser-native SSE client. Automatically reconnects on connection loss (can be disabled with close()). Used in useVehicleUpdates hook to connect to /api/vehicles/updates endpoint.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Frontend testing uses Vitest v4.0.16 with React Testing Library @16.3.1. Test environment includes jsdom 27.4.0 and MSW 2.7.2 for API mocking. No external SSE/EventSource libraries - mock native EventSource using vi.stubGlobal(). Tests must pass without reconnection loops (cleanup executes exactly once). Unit tests target 80% coverage for business logic hooks. Integration tests verify SSE message handling and VehicleContext updates. Visual regression tests (if applicable) verify no UI changes from SSE migration. Test execution time must be &lt;30 seconds for full CascadeIntegration suite.
+    </standards>
+
+    <locations>
+      <location>frontend/src/hooks/__tests__/useVehicleUpdates.test.ts (NEW)</location>
+      <location>frontend/src/components/vehicle-grid/__tests__/CascadeIntegration.test.tsx (MODIFY)</location>
+      <location>frontend/src/context/__tests__/VehicleContext.test.tsx (VERIFY existing tests still pass)</location>
+      <location>frontend/src/context/__tests__/ConversationContext.test.tsx (VERIFY existing tests still pass)</location>
+    </locations>
+
+    <ideas>
+      <test-criterion ac="AC1">
+        <idea>Test SSE connection establishment by mocking EventSource with vi.stubGlobal(). Verify onopen callback sets connected=true. Test message parsing by dispatching MessageEvent with SSE data format. Verify callback invoked with parsed vehicles array.</idea>
+        <idea>Test JWT token is appended to SSE URL as query parameter. Verify getAuthToken() called and token included in EventSource constructor URL.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC2">
+        <idea>Update all 9 AC tests from Story 3-3 to use SSE instead of WebSocket. Replace MockWebSocket class with simple EventSource mock. Remove vi.useFakeTimers() that caused issues. Verify all tests pass with EventSource mocking.</idea>
+        <idea>Test rapid updates (AC4 from Story 3-3) with SSE - dispatch 4 rapid SSE events, verify no performance degradation. Verify favorites preserved (AC7) during SSE updates.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC3">
+        <idea>Test component unmount triggers EventSource.close() exactly once. Use vi.spyOn() to track close() calls. Verify readyState transitions to CLOSED (2). Verify no reconnection timeout scheduled after cleanup.</idea>
+        <idea>Test with testMode bypass enabled - verify EventSource not created in test environment. Return early from useVehicleUpdates when import.meta.env.TEST_MODE is true.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC4">
+        <idea>Verify WebSocket connection for Otto chat remains unchanged. Test sendMessage() still uses WebSocket. Verify vehicle_update messages no longer handled by ConversationContext. Verify chat message flow works independently of SSE connection.</idea>
+        <idea>Test both WebSocket (chat) and SSE (vehicles) connections active simultaneously. Verify no conflicts between connections. Verify both can be closed independently.</idea>
+      </test-criterion>
+
+      <test-criterion ac="AC5">
+        <idea>Backend test: GET /api/vehicles/returns text/event-stream Content-Type. Test SSE event format with event:, data:, id: fields. Verify JWT validation rejects requests without valid token. Test event streaming yields multiple events over time.</idea>
+        <idea>Integration test: Connect frontend to backend SSE endpoint, verify vehicle updates received. Test authentication flow with Supabase JWT token. Verify connection stays open for streaming (no immediate close).</idea>
+      </test-criterion>
+
+      <integration-idea>
+        <name>Full Flow Test</name>
+        <description>Test complete flow: User expresses preference in Otto chat → Backend processes → SSE event sent with updated vehicles → Frontend receives via useVehicleUpdates → VehicleContext.updateVehicles called → VehicleGrid re-renders with cascade animation. Verify end-to-end flow works with SSE instead of WebSocket.</description>
+      </integration-idea>
+    </ideas>
+  </tests>
+</story-context>

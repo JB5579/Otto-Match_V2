@@ -1,0 +1,166 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Initialize Semantic Search Infrastructure</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-30</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-1-initialize-semantic-search-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>to set up the foundational semantic search infrastructure with RAG-Anything and Supabase pgvector</iWant>
+    <soThat>we can process and index vehicle data for intelligent search capabilities</soThat>
+    <tasks>Set up Supabase database with pgvector extension (AC: #1), Configure RAG-Anything service integration (AC: #2), Implement embedding_service.py core functionality (AC: #3), Develop dependency installation and validation scripts (AC: #4), Create sample data and testing suite (AC: #5)</tasks>
+  </story>
+
+  <acceptanceCriteria>1. Database Setup: Given we have a clean development environment, when I run the setup scripts, then the system creates all necessary database tables with pgvector extensions
+2. Service Integration: When I run the setup scripts, then RAG-Anything service is configured and connected to Supabase
+3. Embedding Generation: When setup is complete, then embedding_service.py can generate embeddings for text, images, and vehicle data
+4. Dependency Management: When setup is complete, then all required Python dependencies (RAG-Anything, Supabase, pgvector) are installed and tested
+5. Search Functionality: When setup is complete, then the vector store similarity search returns expected results for sample data</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture and Decisions</title>
+        <section>Semantic Search Integration</section>
+        <snippet>Implement RAG-Anything for multimodal processing combined with Supabase pgvector for vector similarity search. RAG-Anything handles text, images, and video seamlessly.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Decision Record ADR-002</title>
+        <section>ADR-002: Semantic Search Architecture</section>
+        <snippet>Use RAG-Anything + Supabase pgvector for semantic vehicle search because it handles text, images, and video seamlessly and provides vector similarity capabilities.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Database Strategy</title>
+        <section>Database Strategy</section>
+        <snippet>Supabase PostgreSQL + pgvector for vector similarity + relational data in single system. Use PostgreSQL with pgvector extension for vector similarity search.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Project Structure</title>
+        <section>Project Structure</section>
+        <snippet>src/semantic/ - Semantic search and embedding services. Implement embedding_service.py at this location for embedding generation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>API Specifications</title>
+        <section>Semantic Search API</section>
+        <snippet>POST /api/search/semantic - Perform semantic vehicle search with multimodal understanding using RAG-Anything embeddings and vector similarity.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 1: Semantic Vehicle Intelligence</title>
+        <section>Story 1.1 Requirements</section>
+        <snippet>Story 1.1: Initialize Semantic Search Infrastructure - Set up foundational semantic search with RAG-Anything and Supabase pgvector for intelligent vehicle discovery.</snippet>
+      </doc>
+      <doc>
+        <path>docs/.env</path>
+        <title>Environment Configuration</title>
+        <section>API Configuration</section>
+        <snippet>SUPABASE_URL, SUPABASE_DB_PASSWORD, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY for database connection. OPENROUTER_API_KEY for embeddings API. ZEP_API_KEY for conversation memory.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- This is a greenfield project, so no existing code artifacts yet -->
+      <!-- Expected structure based on architecture: -->
+      <code>
+        <path>src/semantic/embedding_service.py</path>
+        <kind>service</kind>
+        <symbol>EmbeddingService</symbol>
+        <reason>Core service for generating embeddings using RAG-Anything</reason>
+      </code>
+      <code>
+        <path>src/semantic/vector_store.py</path>
+        <kind>service</kind>
+        <symbol>VectorStore</symbol>
+        <reason>Supabase pgvector integration for similarity search operations</reason>
+      </code>
+      <code>
+        <path>src/api/routes/search.py</path>
+        <kind>controller</kind>
+        <symbol>semantic_search</symbol>
+        <reason>API endpoint for semantic search functionality</reason>
+      </code>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="raganything[all]" version="latest" />
+        <package name="lightrag" version="latest" />
+        <package name="supabase" version="latest" />
+        <package name="pgvector" version="latest" />
+        <package name="psycopg[binary]" version="latest" />
+        <package name="fastapi" version="latest" />
+        <package name="pydantic" version="latest" />
+        <package name="requests" version="latest" />
+        <package name="sentence-transformers" version="latest" />
+        <package name="numpy" version="latest" />
+        <package name="openrouter" version="latest" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use OpenRouter API for embeddings with openai/text-embedding-3-large model (3072 dimensions)</constraint>
+    <constraint>Use RAGAnythingConfig for initialization with parser="mineru" and parse_method="auto"</constraint>
+    <constraint>Use async/await pattern for embedding generation and similarity search operations</constraint>
+    <constraint>Use embedding_dim=3072 for OpenRouter text-embedding-3-large compatibility</constraint>
+    <constraint>Implement proper error handling and logging as per architectural standards</constraint>
+    <constraint>Follow modular monolith structure with semantic search as separate service module</constraint>
+    <constraint>Use environment variables for OpenRouter API key, Supabase connection, and RAG-Anything settings</constraint>
+    <constraint>Create HNSW indexes using vector_cosine_ops for optimal similarity search performance</constraint>
+    <constraint>Implement comprehensive testing including unit, integration, and performance tests</constraint>
+    <constraint>Follow established coding standards and patterns from architecture documentation</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/search/semantic</name>
+      <kind>REST endpoint</kind>
+      <signature>async def semantic_search(request: SemanticSearchRequest) -> SemanticSearchResponse</signature>
+      <path>src/api/routes/search.py</path>
+    </interface>
+    <interface>
+      <name>OpenRouter Embeddings API</name>
+      <kind>REST endpoint</kind>
+      <signature>POST https://openrouter.ai/api/v1/embeddings - Generate embeddings using OpenRouter API with openai/text-embedding-3-large model</signature>
+      <path>OpenRouter External API</path>
+    </interface>
+    <interface>
+      <name>EmbeddingService.generate_embeddings</name>
+      <kind>class method</kind>
+      <signature>async def generate_embeddings(query: str, images: List[str], context: Dict) -> List[float]</signature>
+      <path>src/semantic/embedding_service.py</path>
+    </interface>
+    <interface>
+      <name>RAGAnythingConfig</name>
+      <kind>configuration class</kind>
+      <signature>RAGAnythingConfig(parser="mineru", parse_method="auto", enable_image_processing=True, enable_table_processing=True)</signature>
+      <path>src/semantic/embedding_service.py</path>
+    </interface>
+    <interface>
+      <name>VectorStore.similarity_search</name>
+      <kind>class method</kind>
+      <signature>async def similarity_search(embeddings: List[float], filters: Dict) -> List[Vehicle]</signature>
+      <path>src/semantic/vector_store.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Unit tests for embedding generation, database connectivity, and similarity search. Integration tests for end-to-end semantic search pipeline with sample data. Performance tests to validate response times for similarity search operations. Dependency validation tests for all required packages and services.</standards>
+    <locations>tests/unit/semantic/embedding_service_test.py, tests/integration/semantic_search_test.py, tests/performance/similarity_search_test.py</locations>
+    <ideas>
+      <test idea="Test embedding generation with sample vehicle descriptions" ac="3" />
+      <test idea="Test pgvector similarity search with sample embeddings" ac="5" />
+      <test idea="Test RAG-Anything service integration with Supabase" ac="2" />
+      <test idea="Test database schema creation with pgvector extension" ac="1" />
+      <test idea="Test dependency installation and validation scripts" ac="4" />
+    </ideas>
+  </tests>
+</story-context>
